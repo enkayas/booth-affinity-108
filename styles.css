@@ -137,6 +137,7 @@ button:disabled {
   margin: 0;
   font-size: 32px;
   line-height: 1.1;
+  color: #f97316;
 }
 
 #userMeta {
@@ -147,6 +148,13 @@ button:disabled {
 
 .topbar button {
   min-width: 140px;
+}
+
+.app-slogan {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
 .booth-toolbar {
@@ -222,7 +230,7 @@ button:disabled {
 .summary-label {
   display: block;
   margin-bottom: 6px;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -282,9 +290,23 @@ button:disabled {
   background: #fafafa;
 }
 
+.voter-row-saved {
+  background: #4b5563;
+  border-color: #4b5563;
+  color: #fff;
+}
+
 .sl-box {
   min-width: 90px;
   font-weight: 700;
+  background: #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.voter-row-saved .sl-box {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .affinity-group {

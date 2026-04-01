@@ -4,11 +4,14 @@ const state = {
   staticData: null,
   user: null,
   booths: [],
+  boothMap: new Map(),
   selectedBooth: null,
   boothData: null,
   currentPage: 1,
   pageSize: 20,
   pageCache: {},
+  pendingBoothLoads: {},
+  prefetchStarted: false,
   editingRows: new Set(),
   pendingSaveTimer: null
 };
@@ -132,7 +135,7 @@ function renderBoothDetails() {
   `;
 }
 
-function calculateSummary(voters) {
+function calculateSummary(voters, totalVoters = state.selectedBooth?.totalVoters || 0) {
   const summary = { A: 0, B: 0, C: 0, D: 0, E: 0 };
   let filled = 0;
 
@@ -141,11 +144,47 @@ function calculateSummary(voters) {
     if (v.affinity) filled++;
   });
 
-  const completionPct = state.selectedBooth?.totalVoters
-    ? Math.round((filled / state.selectedBooth.totalVoters) * 100)
+  const completionPct = totalVoters
+    ? Math.round((filled / totalVoters) * 100)
     : 0;
 
   return { summary, completionPct };
+}
+
+function createBoothData(totalVoters) {
+  return {
+    voters: buildBoothVoters(Number(totalVoters) || 0),
+    summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+    completionPct: 0
+  };
+}
+
+function cloneBoothData(boothData) {
+  if (!boothData) return null;
+
+  return {
+    voters: Array.isArray(boothData.voters)
+      ? boothData.voters.map(v => ({ slNo: v.slNo, affinity: v.affinity || '' }))
+      : [],
+    summary: {
+      A: boothData.summary?.A || 0,
+      B: boothData.summary?.B || 0,
+      C: boothData.summary?.C || 0,
+      D: boothData.summary?.D || 0,
+      E: boothData.summary?.E || 0
+    },
+    completionPct: boothData.completionPct || 0
+  };
+}
+
+function cacheCurrentBoothData() {
+  const boothNo = Number(state.selectedBooth?.booth);
+  if (!boothNo || !state.boothData) return;
+  state.pageCache[boothNo] = cloneBoothData(state.boothData);
+}
+
+function getBoothConfig(booth) {
+  return state.boothMap.get(Number(booth)) || null;
 }
 
 function renderSummary() {
@@ -185,10 +224,20 @@ function getCurrentPageBounds() {
   return { start, end, totalPages };
 }
 
+function canEditSavedRows() {
+  const role = String(state.user?.role || '').trim().toLowerCase();
+  return role === 'sakthi kendra' || role === 'mandal president' || role === 'admin';
+}
+
+function isRowSaved(slNo) {
+  const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
+  return !!voter?.affinity;
+}
+
 function isRowLocked(slNo) {
   const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   if (!voter) return false;
-  return !!voter.affinity && !state.editingRows.has(slNo);
+  return !!voter.affinity && !canEditSavedRows() && !state.editingRows.has(slNo);
 }
 
 function renderVoters() {
@@ -212,11 +261,12 @@ function renderVoters() {
     </div>
 
     ${pageRows.map(v => {
+      const saved = isRowSaved(v.slNo);
       const locked = isRowLocked(v.slNo);
-      const rowClass = locked ? ' voter-row-locked' : '';
+      const rowClass = saved ? ' voter-row-saved' : '';
       return `
         <div class="voter-row${rowClass}">
-          <div class="sl-box" style="${locked ? 'background:#d1d5db;' : 'background:#e5e7eb;'}">SL# ${v.slNo}</div>
+          <div class="sl-box">SL# ${v.slNo}</div>
           <div class="affinity-group">
             ${affinityButton('A', v.affinity, v.slNo)}
             ${affinityButton('B', v.affinity, v.slNo)}
@@ -248,24 +298,21 @@ function buildBoothVoters(totalVoters) {
   return voters;
 }
 
-function applySavedAffinity(savedRows) {
-  if (!state.boothData || !Array.isArray(state.boothData.voters)) return;
+function applySavedAffinity(savedRows, boothData = state.boothData, totalVoters = state.selectedBooth?.totalVoters || 0) {
+  if (!boothData || !Array.isArray(boothData.voters)) return;
 
   const map = {};
   savedRows.forEach(r => {
     map[Number(r.slNo)] = String(r.affinity || '');
   });
 
-  state.boothData.voters.forEach(v => {
+  boothData.voters.forEach(v => {
     v.affinity = map[v.slNo] || '';
   });
 
-  const calc = calculateSummary(state.boothData.voters);
-  state.boothData.summary = calc.summary;
-  state.boothData.completionPct = calc.completionPct;
-
-  renderSummary();
-  renderVoters();
+  const calc = calculateSummary(boothData.voters, totalVoters);
+  boothData.summary = calc.summary;
+  boothData.completionPct = calc.completionPct;
 }
 
 function updateLocalSelection(slNo, affinity) {
@@ -275,9 +322,10 @@ function updateLocalSelection(slNo, affinity) {
   voter.affinity = affinity;
   state.editingRows.delete(slNo);
 
-  const calc = calculateSummary(state.boothData.voters);
+  const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
   state.boothData.summary = calc.summary;
   state.boothData.completionPct = calc.completionPct;
+  cacheCurrentBoothData();
 
   renderSummary();
   renderVoters();
@@ -335,6 +383,7 @@ async function saveCurrentBoothSilently() {
 
     state.boothData.summary = result.summary || state.boothData.summary;
     state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
+    cacheCurrentBoothData();
     renderSummary();
     return true;
   } catch (err) {
@@ -376,11 +425,68 @@ async function loadSavedAffinity(booth) {
     throw new Error(result.message || 'Failed to load saved affinity');
   }
 
-  applySavedAffinity(result.saved || []);
+  return result.saved || [];
+}
+
+function fetchBoothData(booth) {
+  const boothNo = Number(booth);
+  const selected = getBoothConfig(boothNo);
+  if (!selected) {
+    return Promise.reject(new Error('Booth not found'));
+  }
+
+  if (state.pageCache[boothNo]) {
+    return Promise.resolve(cloneBoothData(state.pageCache[boothNo]));
+  }
+
+  if (state.pendingBoothLoads[boothNo]) {
+    return state.pendingBoothLoads[boothNo].then(cloneBoothData);
+  }
+
+  const request = (async () => {
+    const boothData = createBoothData(selected.totalVoters);
+    const savedRows = await loadSavedAffinity(boothNo);
+    applySavedAffinity(savedRows, boothData, selected.totalVoters || 0);
+    state.pageCache[boothNo] = cloneBoothData(boothData);
+    return boothData;
+  })();
+
+  state.pendingBoothLoads[boothNo] = request;
+
+  return request
+    .then(cloneBoothData)
+    .finally(() => {
+      delete state.pendingBoothLoads[boothNo];
+    });
+}
+
+function warmBoothCache() {
+  if (state.prefetchStarted || !state.booths.length) return;
+  state.prefetchStarted = true;
+
+  const boothNumbers = state.booths.map(b => Number(b.booth));
+  const concurrency = Math.min(6, boothNumbers.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < boothNumbers.length) {
+      const boothNo = boothNumbers[nextIndex++];
+      if (state.pageCache[boothNo]) continue;
+      try {
+        await fetchBoothData(boothNo);
+      } catch (err) {
+        console.error(`Warm cache failed for booth ${boothNo}:`, err.message || err);
+      }
+    }
+  };
+
+  for (let i = 0; i < concurrency; i++) {
+    worker();
+  }
 }
 
 async function loadBoothData(booth) {
-  const selected = state.booths.find(b => Number(b.booth) === Number(booth));
+  const selected = getBoothConfig(booth);
   if (!selected) throw new Error('Booth not found');
 
   state.selectedBooth = selected;
@@ -391,19 +497,17 @@ async function loadBoothData(booth) {
     state.pendingSaveTimer = null;
   }
 
-  state.boothData = {
-    voters: buildBoothVoters(Number(selected.totalVoters) || 0),
-    summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
-    completionPct: 0
-  };
-
   renderBoothDetails();
+  setAffinitySaveStatus('');
+  state.boothData = null;
+  renderSummary();
+  els.votersContainer.innerHTML = '<div class="muted">Loading booth data...</div>';
+  updateSubmitButton();
+
+  state.boothData = await fetchBoothData(booth);
   renderSummary();
   renderVoters();
   updateSubmitButton();
-  setAffinitySaveStatus('');
-
-  await loadSavedAffinity(booth);
 }
 
 async function onBoothChange() {
@@ -420,12 +524,19 @@ async function onBoothChange() {
     return;
   }
 
+  let loadingTimer = null;
+
   try {
-    showLoading(true);
+    if (!state.pageCache[booth]) {
+      loadingTimer = setTimeout(() => {
+        showLoading(true);
+      }, 120);
+    }
     await loadBoothData(booth);
   } catch (err) {
     alert(err.message || 'Unable to load booth');
   } finally {
+    if (loadingTimer) clearTimeout(loadingTimer);
     showLoading(false);
   }
 }
@@ -444,6 +555,10 @@ function getUserFromStatic(phone, password) {
 
 function getBoothsForUser(user) {
   if (!state.staticData || !state.staticData.booths) return [];
+
+  if (user.booths === 'all') {
+    return [...state.staticData.booths].sort((a, b) => a.booth - b.booth);
+  }
 
   const allowed = Array.isArray(user.booths)
     ? user.booths.map(x => Number(x))
@@ -481,6 +596,10 @@ function onLoginSubmit(e) {
   };
 
   state.booths = getBoothsForUser(user);
+  state.boothMap = new Map(state.booths.map(b => [Number(b.booth), b]));
+  state.pageCache = {};
+  state.pendingBoothLoads = {};
+  state.prefetchStarted = false;
 
   els.loginSection.style.display = 'none';
   els.appSection.style.display = 'block';
@@ -490,13 +609,18 @@ function onLoginSubmit(e) {
   renderBoothDetails();
   renderSummary();
   renderVoters();
+  warmBoothCache();
 }
 
 function logout() {
   state.user = null;
   state.booths = [];
+  state.boothMap = new Map();
   state.selectedBooth = null;
   state.boothData = null;
+  state.pageCache = {};
+  state.pendingBoothLoads = {};
+  state.prefetchStarted = false;
 
   els.phone.value = '';
   els.password.value = '';

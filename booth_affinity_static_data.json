@@ -1782,6 +1782,20 @@
   ],
   "users": [
     {
+      "phone": "9962541214",
+      "name": "ADMIN",
+      "role": "Admin",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9740067042",
+      "name": "ADMIN",
+      "role": "Admin",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
       "phone": "6369084038",
       "name": "SUNMUGAN",
       "role": "BLA2",
