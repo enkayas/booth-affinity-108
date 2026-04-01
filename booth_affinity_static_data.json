@@ -1,0 +1,6983 @@
+{
+  "version": "2026-04-01",
+  "booths": [
+    {
+      "booth": 1,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( LEFT SIDE), KOOKALTHORAI-643217",
+      "totalVoters": 734
+    },
+    {
+      "booth": 2,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( RIGHT SIDE), KOOKALTHORAI- 643217",
+      "totalVoters": 632
+    },
+    {
+      "booth": 3,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, KOOKALTHORAI - 643217",
+      "totalVoters": 964
+    },
+    {
+      "booth": 4,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "COMMUNITY HALL, SIRIYUR-643214",
+      "totalVoters": 138
+    },
+    {
+      "booth": 5,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( RIGHT SIDE), THEKILI - 643217",
+      "totalVoters": 731
+    },
+    {
+      "booth": 6,
+      "village": "KOOKAL",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( LEFT SIDE), KOOKAL - 643217",
+      "totalVoters": 572
+    },
+    {
+      "booth": 7,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( RIGHT SIDE), AJJOOR - 643214",
+      "totalVoters": 937
+    },
+    {
+      "booth": 8,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, DHOTTANY - 643214",
+      "totalVoters": 795
+    },
+    {
+      "booth": 9,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT TRIBAL RESIDENTIAL SCHOOL, TIRUCHIKADI- 643002",
+      "totalVoters": 803
+    },
+    {
+      "booth": 10,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, DHEENATTY- 643217",
+      "totalVoters": 645
+    },
+    {
+      "booth": 11,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( LEFT SIDE), KAGGUCHI - 643214",
+      "totalVoters": 1012
+    },
+    {
+      "booth": 12,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( LEFT SIDE), BILLICOMBAI - 643214",
+      "totalVoters": 801
+    },
+    {
+      "booth": 13,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( RIGHT SIDE), BILLICAMBAI - 643214",
+      "totalVoters": 1183
+    },
+    {
+      "booth": 14,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL (RIGHT SIDE), BAKIA NAGAR - 643214",
+      "totalVoters": 535
+    },
+    {
+      "booth": 15,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), BAKIA NAGAR - 643214",
+      "totalVoters": 460
+    },
+    {
+      "booth": 16,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), T .MANIHATTY - 643214",
+      "totalVoters": 940
+    },
+    {
+      "booth": 17,
+      "village": "KAGGUCHI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "COMMUNITY HALL, KALINGANATTY-643214",
+      "totalVoters": 373
+    },
+    {
+      "booth": 18,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), KENTHORAI - 643002",
+      "totalVoters": 946
+    },
+    {
+      "booth": 19,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL (RIGHTSIDE), KENTHORAI - 643002",
+      "totalVoters": 389
+    },
+    {
+      "booth": 20,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( RIGHT SIDE), MORIKAL - 643002",
+      "totalVoters": 885
+    },
+    {
+      "booth": 21,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (RIGHTSIDE), KAMBATTY-643002",
+      "totalVoters": 887
+    },
+    {
+      "booth": 22,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, KAPPACHI - 643214",
+      "totalVoters": 1086
+    },
+    {
+      "booth": 23,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, (RIGHT SIDE),KUNDHASAPPAI-643002",
+      "totalVoters": 1027
+    },
+    {
+      "booth": 24,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, LEFT SIDE,THUMMANATTY-643002",
+      "totalVoters": 1039
+    },
+    {
+      "booth": 25,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL , T.MAINALAI - 643002",
+      "totalVoters": 636
+    },
+    {
+      "booth": 26,
+      "village": "THUMMANATTY",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, MADITHORAI - 643002",
+      "totalVoters": 949
+    },
+    {
+      "booth": 27,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL,ANIKKORAI-643206",
+      "totalVoters": 623
+    },
+    {
+      "booth": 28,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL ADDITIONAL BUILDING (RIGHT SIDE), ANNIKORAI -  643206",
+      "totalVoters": 607
+    },
+    {
+      "booth": 29,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL,ADDITIONAL BUILDING(LEFT SIDE),ANNIKORAI-643206",
+      "totalVoters": 595
+    },
+    {
+      "booth": 30,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (MAIN BUILDING SOUTH FACING LEFT SIDE ROOM), THORAIYATTY - 643206",
+      "totalVoters": 1087
+    },
+    {
+      "booth": 31,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (MAIN BUILDING SOUTH FACING RIGHT SIDE ROOM), THORAIYATTY - 643206",
+      "totalVoters": 778
+    },
+    {
+      "booth": 32,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (HM ROOM) , THUNERI - 643002",
+      "totalVoters": 976
+    },
+    {
+      "booth": 33,
+      "village": "THUNERI",
+      "mandal": "OOTY EAST",
+      "pollingStation": "COMMUNITY HALL , MORADACOMBAI - 643002",
+      "totalVoters": 708
+    },
+    {
+      "booth": 34,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GTR PRIMARY SCHOOL, ANNAIKATTY - 643206",
+      "totalVoters": 427
+    },
+    {
+      "booth": 35,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( LEFTSIDE), EBBANADU - 643206",
+      "totalVoters": 1080
+    },
+    {
+      "booth": 36,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( RIGHT SIDE), EBBANADU - 643206",
+      "totalVoters": 1058
+    },
+    {
+      "booth": 37,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (RIGHT WING), KOTHUMUDI - 643002",
+      "totalVoters": 1135
+    },
+    {
+      "booth": 38,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL , BERAGAL- 643002",
+      "totalVoters": 544
+    },
+    {
+      "booth": 39,
+      "village": "EBBANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (LEFT WING), IDUHATTY - 643002",
+      "totalVoters": 1090
+    },
+    {
+      "booth": 40,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, KAVILORAI - 643206",
+      "totalVoters": 956
+    },
+    {
+      "booth": 41,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "COMMUNITY HALL,NEW BUILDING, CHOKKANALLI-643206",
+      "totalVoters": 120
+    },
+    {
+      "booth": 42,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (RIGHT SIDE), BENTHATTY - 643206",
+      "totalVoters": 769
+    },
+    {
+      "booth": 43,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (LEFT SIDE), BENTHATTY - 643206",
+      "totalVoters": 629
+    },
+    {
+      "booth": 44,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( LEFT SIDE), KADANAD - 643206",
+      "totalVoters": 651
+    },
+    {
+      "booth": 45,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( RIGHT SIDE), KADANAD - 643206",
+      "totalVoters": 995
+    },
+    {
+      "booth": 46,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL ( LEFT SIDE), DHAVANI - 643007",
+      "totalVoters": 898
+    },
+    {
+      "booth": 47,
+      "village": "KADANAD",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL ( RIGHT SIDE), DHAVANI - 643007",
+      "totalVoters": 576
+    },
+    {
+      "booth": 48,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( LEFT SIDE), EKKUNI - 643005",
+      "totalVoters": 1059
+    },
+    {
+      "booth": 49,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "COMMUNITY HALL, KAVARATTY- 643005",
+      "totalVoters": 582
+    },
+    {
+      "booth": 50,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( RIGHT SIDE), ULLATHI - 643007",
+      "totalVoters": 909
+    },
+    {
+      "booth": 51,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), ULLATHI - 643007",
+      "totalVoters": 618
+    },
+    {
+      "booth": 52,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "C.S.| PRIMARY SCHOOL ( LEFTSIDE), KALLATY - 643005",
+      "totalVoters": 1048
+    },
+    {
+      "booth": 53,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "C.S..PRIMARY SCHOOL ( RIGHT SIDE), KALLATY - 643005",
+      "totalVoters": 1079
+    },
+    {
+      "booth": 54,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (ADDITIONAL BUILDING) (LEFT SIDE) THALAIKUNDAH - 643005",
+      "totalVoters": 931
+    },
+    {
+      "booth": 55,
+      "village": "HULLATHY",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (ADDITIONAL BUILDING), THALAIKUNDAH - 643005",
+      "totalVoters": 825
+    },
+    {
+      "booth": 56,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, GLENMARGAN ESTATE - 643237",
+      "totalVoters": 759
+    },
+    {
+      "booth": 57,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL ( LEFT SIDE), NAGARTHANAI - 643005",
+      "totalVoters": 955
+    },
+    {
+      "booth": 58,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL ( RIGHT SIDE), NAGARTHANAI - 643005",
+      "totalVoters": 1060
+    },
+    {
+      "booth": 59,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "C.S.l. AIDED PRIMARY SCHOOL ( LEFT SIDE), DUNSANDAL - 643005",
+      "totalVoters": 755
+    },
+    {
+      "booth": 60,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "SHEEP BREEDING CENTRE, SANDY NALLAH - 643237",
+      "totalVoters": 542
+    },
+    {
+      "booth": 61,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVT. HIGH SCHOOL, ( LEFT SIDE) KOKKAL - 643005",
+      "totalVoters": 1038
+    },
+    {
+      "booth": 62,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "GOVT. HIGH SCHOOL, (RIGHT SIDE) KOKKAL - 643005",
+      "totalVoters": 1022
+    },
+    {
+      "booth": 63,
+      "village": "SHOLUR (TP)",
+      "mandal": "OOTY NORTH",
+      "pollingStation": "G.T.R MIDDLE SCHOOL, BOKKAPURAM - 643223",
+      "totalVoters": 942
+    },
+    {
+      "booth": 64,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "THAKKARBABA GURUKULAM AIDED MIDDLE SCHOOL, NIRGACHIMUND - 643004",
+      "totalVoters": 522
+    },
+    {
+      "booth": 65,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "ST.FRANCIS XAVIER MIDDLE SCHOOL ( RIGHT SIDE ), KURUTHUKULI - 643004",
+      "totalVoters": 968
+    },
+    {
+      "booth": 66,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "ST.FRANCIS XAVIER MIDDLE SCHOOL ( ADDITIONAL BUILDING), KURUTHUKULI - 643004",
+      "totalVoters": 404
+    },
+    {
+      "booth": 67,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "COMMUNITY HALL, GOVERNORSHOLAI - 643001",
+      "totalVoters": 307
+    },
+    {
+      "booth": 68,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, ( LEFT SIDE), ( ADDITIONAL BUILDING), MELKAVATTY -  643004",
+      "totalVoters": 1024
+    },
+    {
+      "booth": 69,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, KILKAVATTY-643004",
+      "totalVoters": 485
+    },
+    {
+      "booth": 70,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "TRIBAL RESEARCH CENTER, MEETING HALL, M.PALADA - 643004",
+      "totalVoters": 606
+    },
+    {
+      "booth": 71,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "EKALAIVA MODERN RESIDENTIAL SCHOOL,10TH STD A,M PALADA-643004",
+      "totalVoters": 569
+    },
+    {
+      "booth": 72,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( RIGHT SIDE ), NANJANAD - 643004",
+      "totalVoters": 822
+    },
+    {
+      "booth": 73,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( LEFT SIDE )» NANJANAD - 643004",
+      "totalVoters": 633
+    },
+    {
+      "booth": 74,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( LEFT SIDE ), ( NEW BUILDING ), NANJANAD - 643004",
+      "totalVoters": 949
+    },
+    {
+      "booth": 75,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (RIGHTSIDE), NANJANAD - 643004",
+      "totalVoters": 819
+    },
+    {
+      "booth": 76,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL (RIGHT SIDE), (NEW BUILDING), NANJANAD - 643004",
+      "totalVoters": 775
+    },
+    {
+      "booth": 77,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "ANGANWADI CENTRE, REDHILL, INDRA NAGAR- 643209",
+      "totalVoters": 472
+    },
+    {
+      "booth": 78,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, (RIGHT SIDE) PORTHIYADA - 643004",
+      "totalVoters": 626
+    },
+    {
+      "booth": 79,
+      "village": "NANJANAD",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL,, PARSONS VALLEY - 643004",
+      "totalVoters": 153
+    },
+    {
+      "booth": 80,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (LEFT SIDE) ODAIKADU - 643007",
+      "totalVoters": 890
+    },
+    {
+      "booth": 81,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (RIGHT SIDE) ODAIKADU - 643007",
+      "totalVoters": 1117
+    },
+    {
+      "booth": 82,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (LEFT SIDE) AADASOLAI - 643007",
+      "totalVoters": 856
+    },
+    {
+      "booth": 83,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ADI DRAVIDAR WELFARE MIDDLE SCHOOL, DOTTABETTA - 643002",
+      "totalVoters": 857
+    },
+    {
+      "booth": 84,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "CENTRAL POTATO RESEARCH CENTER (NORTH PART), MUTHORAI - 643004",
+      "totalVoters": 780
+    },
+    {
+      "booth": 85,
+      "village": "OOTY RURAL",
+      "mandal": "OOTY WEST",
+      "pollingStation": "CENTRAL POTATO RESEARCH CENTER, (SOUTH PART) MUTHORAI - 643004",
+      "totalVoters": 704
+    },
+    {
+      "booth": 86,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "NIRMALA PRIMARY SCHOOL, 3rd STD CLASS ROOM (L.S) , KAKKATHOPE- 643005",
+      "totalVoters": 575
+    },
+    {
+      "booth": 87,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "NIRMALA PRIMARY SCHOOL,MAIN BUILDING,RIGHT SIDE,STORE ROOM,  KAKKATHOPPU-643005",
+      "totalVoters": 563
+    },
+    {
+      "booth": 88,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "NIRMALA PRIMARY SCHOOL, (MIDDLE PORTION) , KAKKATHOPE- 643005",
+      "totalVoters": 1012
+    },
+    {
+      "booth": 89,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "NIRMALA PRIMARY SCHOOL, 5th STD CLASS ROOM (R.S) , KAKKATHOPE- 643005",
+      "totalVoters": 949
+    },
+    {
+      "booth": 90,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "GOVERNMENT POLYTECHNIC (NEW BUILDING LEFT SIDE), KAKKATHOPPU - 643005",
+      "totalVoters": 737
+    },
+    {
+      "booth": 91,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "GOVERNMENT POLYTECHNIC ( NEW BUILDING RIGHT SIDE), KAKKATHOPPU - 643005",
+      "totalVoters": 689
+    },
+    {
+      "booth": 92,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNCIPAL PRIMARY SCHOOL(LEFT SIDE) ,DR.BASUVAIYAH NAGAR, PUDUMUND - 643007",
+      "totalVoters": 946
+    },
+    {
+      "booth": 93,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNCIPAL PRIMARY SCHOOL(RIGHT SIDE) ,DR.BASUVAIYAH NAGAR,PUDUMUND - 643007",
+      "totalVoters": 784
+    },
+    {
+      "booth": 94,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNCIPAL PRIMARY SCHOOL,MAIN BUILDING,LEFT SIDE,DINING HALL,DR BASUVAIYAH  NAGAR, PUDUMUND-643007",
+      "totalVoters": 453
+    },
+    {
+      "booth": 95,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SACRED HEART HR SEC SCHOOL ( LEFTSIDE), KIL LAKSHMI NARAYANAPURAM -643001",
+      "totalVoters": 996
+    },
+    {
+      "booth": 96,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SACRED HEART HR SEC SCHOOL ( MIDDLE PORTION )(12-D CLASSROOM), KIL LAKSHMI  NARAYANAPURAM - 643001",
+      "totalVoters": 744
+    },
+    {
+      "booth": 97,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SACRED HEART HR SEC SCHOOL ( RIGHT SIDE), KIL LAKSHMI NARAYANAPURAM -643001",
+      "totalVoters": 968
+    },
+    {
+      "booth": 98,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH COLLEGE OF EDUCATION ADDITIONAL BUILDING (RIGHT SIDE), ST.MARYS HILL  - 643001",
+      "totalVoters": 1094
+    },
+    {
+      "booth": 99,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH COLLEGE OF EDUCATION, ADDITIONAL BUILDING (MIDDLE PORTION),  ST.MARYS HILL - 643001",
+      "totalVoters": 758
+    },
+    {
+      "booth": 100,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH COLLEGE OF EDUCATION ADDITIONAL BUILDING (LEFT SIDE), ST.MARYS HILL -  643001",
+      "totalVoters": 997
+    },
+    {
+      "booth": 101,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH HIGHER SEC SCHOOL( MAIN BUILDING RIGHT SIDE) ROOM NO.5, ST. MARYS HILL  - 643001",
+      "totalVoters": 1114
+    },
+    {
+      "booth": 102,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH HIGHER SEC SCHOOL MAIN BUILDING ( ROOM NO 4) , ST. MARYS HILL - 643001",
+      "totalVoters": 536
+    },
+    {
+      "booth": 103,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH HIGHER SEC SCHOOL,MAIN BUILDING,RIGHT SIDE,ROOM NO 5, ST MARYS HILL-  643001",
+      "totalVoters": 612
+    },
+    {
+      "booth": 104,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST JOSEPH HIGHER SEC SCHOOL MAIN BUILDING ( LEFT SIDE)(ROOM NO.3) , ST. MARYS  HILL - 643001",
+      "totalVoters": 1024
+    },
+    {
+      "booth": 105,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "BETHLEHEM GIRLS HIGHER SECONDARY SCHOOL, 6 th C CLASSROOM (LEFT SIDE), MARYS  HILL - 643001",
+      "totalVoters": 660
+    },
+    {
+      "booth": 106,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "BETHLEHEM GIRLS HIGHER SECONDARY SCHOOL, 7th C CLASSROOM (RIGHT SIDE) , MARYS  HILL - 643001",
+      "totalVoters": 681
+    },
+    {
+      "booth": 107,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERSA HIGH SCHOOL (LEFT SIDE) X-A ‘ CLASS ROOM, ANNA NAGAR,FINGERPOST -643006",
+      "totalVoters": 843
+    },
+    {
+      "booth": 108,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERSA HIGH SCHOOL (MIDDLE PORTION,VIII-B CLASS ROOM), ANNA  NAGAR,FINGERPOST -643006",
+      "totalVoters": 560
+    },
+    {
+      "booth": 109,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERSA HIGH SCHOOL (MIDDLE PORTION) 9TH A CLASS ROOM, ANNA NAGAR, FINGERPOST -  643006",
+      "totalVoters": 642
+    },
+    {
+      "booth": 110,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERESA HIGH SCHOOL (RIGHT SIDE),ViII-A CLASS ROOM, ANNA NAGAR,FINGERPOST -643006",
+      "totalVoters": 827
+    },
+    {
+      "booth": 111,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERESA PRIMARY SCHOOL MAIN HALL (LEFT SIDE) ,FINGERPOST -643006",
+      "totalVoters": 1009
+    },
+    {
+      "booth": 112,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THERESA PRIMARY SCHOOL MAIN HALL (RIGHT SIDE) , FINGERPOST - 643006",
+      "totalVoters": 925
+    },
+    {
+      "booth": 113,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SRI OMPRAKASH PRIMARY SCHOOL (5th from Left), KANDAL - 643006",
+      "totalVoters": 1036
+    },
+    {
+      "booth": 114,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "JOSEPH ITI,ENGG DRAWING ROOM(RIGHT SIDE) , FINGERPOST - 643006",
+      "totalVoters": 342
+    },
+    {
+      "booth": 115,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SRI OMPRAKASH PRIMARY SCHOOL (GROUND FLOOR - THIRD FROM LEFT), KANDAL - 643006",
+      "totalVoters": 875
+    },
+    {
+      "booth": 116,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SRI OMPRAKASH PRIMARY SCHOOL ,MAIN BUILDING,RIGHT SIDE,1ST STD A SECTION,KANDAL-  643006",
+      "totalVoters": 486
+    },
+    {
+      "booth": 117,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "C.S.l. PRIMARY SCHOOL ( LEFT SIDE), SULTHANPET , KANDAL - 643006",
+      "totalVoters": 719
+    },
+    {
+      "booth": 118,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "CSI PRIMARY SCHOOL ( RIGHT SIDE), SULTHANPETTA! KANDAL - 643006",
+      "totalVoters": 1077
+    },
+    {
+      "booth": 119,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "C.S.l. PRIMARY SCHOOL ( Store Room), SULTHANPET , KANDAL - 643006",
+      "totalVoters": 776
+    },
+    {
+      "booth": 120,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST ANTONYS PRIMARY SCHOOL , ( HM ROOM ) KANDAL BAZAAR - 643006",
+      "totalVoters": 616
+    },
+    {
+      "booth": 121,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST ANTONYS PRIMARY SCHOOL ( RIGHT SIDE), KANDAL BAZAAR - 643006",
+      "totalVoters": 742
+    },
+    {
+      "booth": 122,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "COMMERCIAL TAX OFFICE,STAFF WORKING HALL, JAILHILL, UDHAGAMANDALM - 643001",
+      "totalVoters": 528
+    },
+    {
+      "booth": 123,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "C.S.l. HIGHER SEC. SCHOQOL , BANK COLONY , UDHAGAMANDALAM - 643001",
+      "totalVoters": 663
+    },
+    {
+      "booth": 124,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "C S| HIGHER SEC SCHOOL,MAIN | BUILDING,RIGHT SIDE,CANTEEN,BANK COLONY,  UDHAGAMANDALAM-643001",
+      "totalVoters": 420
+    },
+    {
+      "booth": 125,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( NEW BUILDING ) (GROUND FLOOR - OPP. TO SSA OFFICE  - FIRST FROM LEFT) , GULMOHAMED ROAD,  UDHAGAMANDALAM - 643001",
+      "totalVoters": 765
+    },
+    {
+      "booth": 126,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL (NEW BUILDING ) ( GROUND FLOOR - OPP.TO SSA OFFICE  - THIRD FROM LEFT) , GULMOHAMED ROAD, : UDHAGAMANDALAM - 643001",
+      "totalVoters": 550
+    },
+    {
+      "booth": 127,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SRI SANTHI VIJAI GIRLS HIGHER SEC SCHOOL (LEFT SIDE), UDHAGAMANDALAM - 643001",
+      "totalVoters": 883
+    },
+    {
+      "booth": 128,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SRI SANTHI VIJAI GIRLS HIGHER SEC SCHOOL ( RIGHT SIDE), UDHAGAMANDALAM - 643001",
+      "totalVoters": 811
+    },
+    {
+      "booth": 129,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "C.S.l. HOBART MIDDLE SCHOOL ( MAIN BUILDING), LOWER BAZAAR , UDHAGAMANDALAM -  643001",
+      "totalVoters": 840
+    },
+    {
+      "booth": 130,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "CSI HOBART MIDDLE SCHOOL ( LEFT SIDE), LOWER BAZAAR, UDHAGAMANDALAM - 643001",
+      "totalVoters": 756
+    },
+    {
+      "booth": 131,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "CSI HOBART MIDDLE SCHOOL ( RIGHTSIDE), LOWER BAZAAR, UDHAGAMANDALAM - 643001",
+      "totalVoters": 553
+    },
+    {
+      "booth": 132,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "CS| HOBART MIDDLE SCHOOL SECOND ROOM (LEFT SIDE), LOWER BAZAAR, UDHAGAMANDALAM -  643001",
+      "totalVoters": 687
+    },
+    {
+      "booth": 133,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL ( LEFT SIDE) , MIYANGIPET, UDHAGAMANDALAM - 643001",
+      "totalVoters": 792
+    },
+    {
+      "booth": 134,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL ( RIGHT SIDE) , MIYANGIPET, UDHAGAMANDALAM - 643001",
+      "totalVoters": 682
+    },
+    {
+      "booth": 135,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL,ADDL. BUILDING ( RIGHT SIDE), MIYANGIPET, UDHAGAMANDALAM -  643001",
+      "totalVoters": 584
+    },
+    {
+      "booth": 136,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL BUILDING ( OLD BUILDING),( LEFT SIDE) , MULLIKORAI - 643004",
+      "totalVoters": 1114
+    },
+    {
+      "booth": 137,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL BUILDING (OLD BUILDING) (RIGHT SIDE), MULLIKORAI - 643004",
+      "totalVoters": 539
+    },
+    {
+      "booth": 138,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST FRANCIS PRIMARY SCHOOL ( LEFT SIDE) , MANJANAKORAI - 643004",
+      "totalVoters": 876
+    },
+    {
+      "booth": 139,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST FRANCIS PRIMARY SCHOOL ( RIGHT SIDE) , MANJANAKORAI - 643004",
+      "totalVoters": 638
+    },
+    {
+      "booth": 140,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST FRANCIS PRIMARY SCHOOL (MIDDLE BUILDING) , MANJANAKORAI - 643004",
+      "totalVoters": 835
+    },
+    {
+      "booth": 141,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "DIVISIONAL ENGINEERS OFFICE (NH), BOMBAY CASTLE - 643001",
+      "totalVoters": 647
+    },
+    {
+      "booth": 142,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "DIVISIONAL ENGINEERING OFFICE,(HIGHWAYS AND VILLAGE) (QUEST HOUSE),ADDITIONAL ROOM  BOMBAY CASTLE-643001",
+      "totalVoters": 563
+    },
+    {
+      "booth": 143,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "DIVISIONAL ENGINEERING OFFICE ( HIGHWAYS & VILLAGE) ( GUEST HOUSE), BOMBAY CASTLE -  643001",
+      "totalVoters": 574
+    },
+    {
+      "booth": 144,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "JD HORTICULTURE OFFICE,LIBRARY ROOM,ROSE GARDEN-643001",
+      "totalVoters": 583
+    },
+    {
+      "booth": 145,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "SUB-DIVISIONAL ENGINEERING OFFICE P W D, GARDEN ROAD , UDHAGAMANDALAM - 643001",
+      "totalVoters": 976
+    },
+    {
+      "booth": 146,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "OFFICE OF THE ASST. ENGINEER TWAD BOARD(LEFT SIDE), MOUNT PLEASANT,  UDHAGAMANDALAM - 643001",
+      "totalVoters": 991
+    },
+    {
+      "booth": 147,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "OFFICE OF THE ASST. ENGINEER TWAD BOARD,AE SQUARE(RIGHT SIDE), MOUNT  PLEASANT, UDHAGAMANDALAM - 643001",
+      "totalVoters": 704
+    },
+    {
+      "booth": 148,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "OFFICE OF THE ASST ENGINEER TWAD BOARD,AE SQUARE,LEFT SIDE,SECOND ROOM,  MOUNT PLEASANT,UDHAGAMANDALAM-643001",
+      "totalVoters": 482
+    },
+    {
+      "booth": 149,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL HIGH SCHOOL (LIBRARY & LAB ROOM) , KODAPAMUND - 643002",
+      "totalVoters": 535
+    },
+    {
+      "booth": 150,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL HIGH SCHOOL,(8TH STD CLASS ROOM),KODAPPAMUND - 643002",
+      "totalVoters": 657
+    },
+    {
+      "booth": 151,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL HIGH SCHOOL,LEFT SIDE,9TH STD CLASS ROOM),KODAPPAMUND - 643002",
+      "totalVoters": 724
+    },
+    {
+      "booth": 152,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL,MAIN BUILDING,RIGHT SIDE, YOGA CLASS ROOM,  VANNARAPETTAI - 643002",
+      "totalVoters": 570
+    },
+    {
+      "booth": 153,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL ( LEFT SIDE) , VANNARAPETTAI - 643002",
+      "totalVoters": 629
+    },
+    {
+      "booth": 154,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL,ADDL. BUILDING ( LEFT SIDE), VANNARAPETTAI - 643002",
+      "totalVoters": 653
+    },
+    {
+      "booth": 155,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "GOVERNMENT ARTS COLLEGE (RIGHT SIDE), STONE HOUSE HILL - 643002",
+      "totalVoters": 640
+    },
+    {
+      "booth": 156,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL,(LEFT WING) (LEFT SIDE), OLD OOTY - 643002",
+      "totalVoters": 674
+    },
+    {
+      "booth": 157,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL(LEFT SIDE) (MIDDLE PORTION), OLD OOTY - 643002",
+      "totalVoters": 601
+    },
+    {
+      "booth": 158,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL (LEFT WING - RIGHT PORTION), OLD QOTY - 643002",
+      "totalVoters": 737
+    },
+    {
+      "booth": 159,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL PRIMARY SCHOOL (RIGHT WING), OLD OOTY - 643002",
+      "totalVoters": 587
+    },
+    {
+      "booth": 160,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THOMAS CONVENT SCHOOL (NORTH FACING GROUND FLOOR-FIRST ROOM FROM THE  LEFT SIDE), NONDIMEDU- 643001",
+      "totalVoters": 915
+    },
+    {
+      "booth": 161,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THOMAS CONVENT SCHOOL(NORTH FACING GROUND FLOOR - SECOND ROOM FROM THE LEFT  SIDE), NONDIMEDU- 643001",
+      "totalVoters": 587
+    },
+    {
+      "booth": 162,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THOMAS CONVENT SCHOOLMAINBUILDING RIGHT SIDE,UKG CLASS ROCM,NONDIMEDU-443001",
+      "totalVoters": 667
+    },
+    {
+      "booth": 163,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL (RIGHT WING - RIGHT SIDE), THALAIYATTYMANDHU - 643001",
+      "totalVoters": 755
+    },
+    {
+      "booth": 164,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL ADDL. BUILDING ( RIGHT WING - LEFT SIDE), THALAIYATTYMANDHU -  643001",
+      "totalVoters": 899
+    },
+    {
+      "booth": 165,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST THOMAS CONVENT SCHOOL(NORTH FACING GROUND FLOOR-THIRD ROOM FROM THE  LEFT SIDE), NONDIMEDU-643001",
+      "totalVoters": 872
+    },
+    {
+      "booth": 166,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL (OLD KITCHEN ROOM - RIGHT SIDE), RAMAKRISHNAPURAM -  643004",
+      "totalVoters": 686
+    },
+    {
+      "booth": 167,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL { SECOND FROM ‘ RIGHT ), RAMAKRISHNAPURAM - 643004",
+      "totalVoters": 667
+    },
+    {
+      "booth": 168,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL ( THIRED FROM RIGHT ), RAMAKRISHNAPURAM - 643004",
+      "totalVoters": 511
+    },
+    {
+      "booth": 169,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL (MIDDLE PORTION - THIRD STD), RAMAKRISHNAPURAM - 643004",
+      "totalVoters": 966
+    },
+    {
+      "booth": 170,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "MUNICIPAL MIDDLE SCHOOL (MAIN BUILDING - SECOND FROM LEFT SIDE)7th STD,  RAMAKRISHNAPURAM - 643004",
+      "totalVoters": 281
+    },
+    {
+      "booth": 171,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "JEL MEMORIAL GIRLS HIGHER SEC SCHOOL ( RIGHT SIDE), DUNMEER - 643004",
+      "totalVoters": 982
+    },
+    {
+      "booth": 172,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "JEL MEMORIAL GIRLS HIGHER SEC SCHOOL ( ‘ LEFT SIDE), DUNMEER - 643004",
+      "totalVoters": 1009
+    },
+    {
+      "booth": 173,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "JEL MEMORIAL GIRLS HIGHER SEC SCHOOL ( OPP. H.M. ROOM), DUNMEER - 643004",
+      "totalVoters": 626
+    },
+    {
+      "booth": 174,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST ANTONYS HIGH SCHOOL ( LEFT SIDE), LOVEDALE - 643003",
+      "totalVoters": 1009
+    },
+    {
+      "booth": 175,
+      "village": "OOTY(M)",
+      "mandal": "OOTY NAGAR",
+      "pollingStation": "ST ANTONYS HIGH SCHOOL ( RIGHT SIDE), LOVEDALE - 643003",
+      "totalVoters": 1041
+    },
+    {
+      "booth": 176,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( RIGHT SIDE) BYKAMANDU-643003",
+      "totalVoters": 995
+    },
+    {
+      "booth": 177,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "LAWRANCE PRIMARY SCHOOL OLD BUILDING ( LEFT SIDE), LOVEDALE - 643003",
+      "totalVoters": 738
+    },
+    {
+      "booth": 178,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "LAWRANCE PRIMARY SCHOOL OLD BUILDING ( MIDDLE PORTION) , LOVEDALE - 643003",
+      "totalVoters": 546
+    },
+    {
+      "booth": 179,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, GANDHIPET - 643003",
+      "totalVoters": 811
+    },
+    {
+      "booth": 180,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "LAWRANCE PRIMARY SCHOOL ( NEW BUILDING) (RIGHT SIDE), LOVEDALE - 643003",
+      "totalVoters": 560
+    },
+    {
+      "booth": 181,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ST MICHAELS GOVERNMENT AIDED PRIMARY SCHOOL(RIGHT WING), SANTHUR - 643215",
+      "totalVoters": 579
+    },
+    {
+      "booth": 182,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ST MICHAELS GOVERNMENT AIDED PRIMARY SCHOOL(LEFT WING-LEFT SIDE), SANTHUR - 643215",
+      "totalVoters": 869
+    },
+    {
+      "booth": 183,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ST MICHAELS GOVERNMENT AIDED PRIMARY SCHOOL(LEFT WING-RIGHT SIDE), SANTHUR -  643215",
+      "totalVoters": 421
+    },
+    {
+      "booth": 184,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, MANTHADA - 643003",
+      "totalVoters": 711
+    },
+    {
+      "booth": 185,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ({ LEFT SIDE _ _ BUILDING), YELLANALLI - 643243",
+      "totalVoters": 796
+    },
+    {
+      "booth": 186,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( RIGHT SIDE BUILDING), YELLANALLI - 643243",
+      "totalVoters": 614
+    },
+    {
+      "booth": 187,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( NEW BUILDING), YELLANALLI - 643243",
+      "totalVoters": 1027
+    },
+    {
+      "booth": 188,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ST MICHAELS MATRICULATION SCHOOL, SANTHUR - 643215",
+      "totalVoters": 732
+    },
+    {
+      "booth": 189,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "ST MICHAELS MATRICULATION SCHOOL,2ND STD,SANTHUR - 643215",
+      "totalVoters": 777
+    },
+    {
+      "booth": 190,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "CSI HIGHER SECONDARY SCHOOL (SOUTH BUILDING), KETTY - -643215",
+      "totalVoters": 852
+    },
+    {
+      "booth": 191,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "CSI HIGHER SEC SCHOOL ( NORTH BUILDING), ( LEFT SIDE) KETTY - 643215",
+      "totalVoters": 1055
+    },
+    {
+      "booth": 192,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "NS IYYA MEMORAIL HIGHER SEC SCHOOL, KETTY PALADA - 643215",
+      "totalVoters": 763
+    },
+    {
+      "booth": 193,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "NS IYYA MEMORAIL HIGHER SEC SCHOOL,10TH STD B SECTION,KETTY PALADA - 643215",
+      "totalVoters": 460
+    },
+    {
+      "booth": 194,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL { NEW - _ BUILDING), { RIGHT SIDE) YELLANALLI - 643215",
+      "totalVoters": 716
+    },
+    {
+      "booth": 195,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "COMMUNITY HALL,ULLADA-643215",
+      "totalVoters": 534
+    },
+    {
+      "booth": 196,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "VILLAGE UPLIFTMENT PRIMARY SCHOOL, OLD ARUVANKADU-643202",
+      "totalVoters": 912
+    },
+    {
+      "booth": 197,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( RIGHT  SIDE), SOGATHORAI - 643102",
+      "totalVoters": 1122
+    },
+    {
+      "booth": 198,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), SOGATHORAI - 643102",
+      "totalVoters": 1057
+    },
+    {
+      "booth": 199,
+      "village": "KETTI (TP)",
+      "mandal": "OOTY WEST",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( NEW BUILDING), SOGATHORAI - 643102",
+      "totalVoters": 649
+    },
+    {
+      "booth": 200,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( LEFT SIDE), ITHALAR - 643004",
+      "totalVoters": 782
+    },
+    {
+      "booth": 201,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( CENTER LEFT SIDE) HALL NO.3, ITHALAR - 643004",
+      "totalVoters": 435
+    },
+    {
+      "booth": 202,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( RIGHT SIDE), ITHALAR - 643004",
+      "totalVoters": 493
+    },
+    {
+      "booth": 203,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "COMMUNITY HALL, THULITHALAI - 643004",
+      "totalVoters": 683
+    },
+    {
+      "booth": 204,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (STAFF ROOM UPPER SIDE) ,KALLAKORAI- 643004",
+      "totalVoters": 502
+    },
+    {
+      "booth": 205,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL , ( 8th STD CLASS ROOM UPPER SIDE),KALLAKORAI - 643004",
+      "totalVoters": 1098
+    },
+    {
+      "booth": 206,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL,NEW BUILDING, (Left Side),NUNTHALA - 643003",
+      "totalVoters": 879
+    },
+    {
+      "booth": 207,
+      "village": "THALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL,NEW BUILDING (Right Side),NUNTHALA - 643003",
+      "totalVoters": 259
+    },
+    {
+      "booth": 208,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( LEFT SIDE) , BEMBATTY - 643004",
+      "totalVoters": 368
+    },
+    {
+      "booth": 209,
+      "village": "THALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( LEFT SIDE) , BELITHALA- 643004",
+      "totalVoters": 666
+    },
+    {
+      "booth": 210,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL, (SOUTH FACING - LEFT SIDE), EMERALD - 643209",
+      "totalVoters": 672
+    },
+    {
+      "booth": 211,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (LEFT WING - LEFT SIDE), EMERALD - 643209",
+      "totalVoters": 623
+    },
+    {
+      "booth": 212,
+      "village": "ITHALAR",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (LEFT WING - RIGHT SIDE), EMERALD - 643209",
+      "totalVoters": 450
+    },
+    {
+      "booth": 213,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL(NEW BUILDING), BALACOLA - 643003",
+      "totalVoters": 1070
+    },
+    {
+      "booth": 214,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( RIGHT SIDE) BALACOLA - 643003",
+      "totalVoters": 495
+    },
+    {
+      "booth": 215,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SECONDARY SCHOOL, KATHADIMATTAM -643004",
+      "totalVoters": 953
+    },
+    {
+      "booth": 216,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (LEFT SIDE) MANIHATTY - 643003",
+      "totalVoters": 860
+    },
+    {
+      "booth": 217,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (RIGHT SIDE) MANIHATTY - 643003",
+      "totalVoters": 431
+    },
+    {
+      "booth": 218,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL, KANNERIMANTHANAI - 643003",
+      "totalVoters": 1048
+    },
+    {
+      "booth": 219,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL (LEFT SIDE), THANGADU - 643003",
+      "totalVoters": 618
+    },
+    {
+      "booth": 220,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( RIGHT SIDE), THANGADU - 643003",
+      "totalVoters": 433
+    },
+    {
+      "booth": 221,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (LEFT SIDE) DEVARSHOLAI - 643203",
+      "totalVoters": 676
+    },
+    {
+      "booth": 222,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL,NEW BUILDING (LEFT SIDE), ORANALLI - 643003",
+      "totalVoters": 669
+    },
+    {
+      "booth": 223,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL,NEW BUILDING (RIGHT SIDE), ORANALLI - 643003",
+      "totalVoters": 365
+    },
+    {
+      "booth": 224,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "UNTE PRIMARY SCHOOL, LOWER CHAMRAJ - 643204",
+      "totalVoters": 403
+    },
+    {
+      "booth": 225,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( LEFT SIDE) DENAD - 643204",
+      "totalVoters": 932
+    },
+    {
+      "booth": 226,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( RIGHT SIDE) DENAD - 643204",
+      "totalVoters": 975
+    },
+    {
+      "booth": 227,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "HORTICULTURE GODOWN (COMMUNITY HALL), MANJACOMBAI - 643221",
+      "totalVoters": 606
+    },
+    {
+      "booth": 228,
+      "village": "BALACOLA",
+      "mandal": "OOTY SOUTH",
+      "pollingStation": "COMMUNITY HALL, MELUR MELANAI- 643221",
+      "totalVoters": 485
+    },
+    {
+      "booth": 229,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( LEFT SIDE), ( OLD BUILDING) YEDAKKADU - 643209",
+      "totalVoters": 1139
+    },
+    {
+      "booth": 230,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL ( MIDDLE), YEDAKKADU - 643209",
+      "totalVoters": 1027
+    },
+    {
+      "booth": 231,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL(OLD BUILDING), ( RIGHT SIDE), YEDAKKADU - 643209",
+      "totalVoters": 669
+    },
+    {
+      "booth": 232,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL ( RIGHT SIDE), KUNDAH LOWER CAMP - 643219",
+      "totalVoters": 97
+    },
+    {
+      "booth": 233,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL, ( LEFT SIDE) BIKKATTY - 643209",
+      "totalVoters": 783
+    },
+    {
+      "booth": 234,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (RIGHT SIDE), BIKKATY - 643209",
+      "totalVoters": 673
+    },
+    {
+      "booth": 235,
+      "village": "BIKKATTY (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, SIVASHAKTHINAGAR- 643209",
+      "totalVoters": 539
+    },
+    {
+      "booth": 236,
+      "village": "MULLIGOOR",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (RIGHT WING - LEFT SIDE), EMERALD - 643209",
+      "totalVoters": 694
+    },
+    {
+      "booth": 237,
+      "village": "MULLIGOOR",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL (RIGHT WING - FIRST ROOM, LEFT SIDE), EMERALD - 643209",
+      "totalVoters": 920
+    },
+    {
+      "booth": 238,
+      "village": "MULLIGOOR",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, ( LEFT SIDE) GANDHIKANDY - 643209",
+      "totalVoters": 920
+    },
+    {
+      "booth": 239,
+      "village": "MULLIGOOR",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, ( LEFT SIDE) MULLIGOOR - 643219",
+      "totalVoters": 745
+    },
+    {
+      "booth": 240,
+      "village": "MULLIGOOR",
+      "mandal": "MANJOOR",
+      "pollingStation": "UNTE AIDED PRIMARY SCHOOL ( LEFT SIDE),KORAKUNDAH - 643219",
+      "totalVoters": 100
+    },
+    {
+      "booth": 241,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL ( LEFT SIDE), MULLIMALAI - 643219",
+      "totalVoters": 1043
+    },
+    {
+      "booth": 242,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION PRIMARY SCHOOL, KARIYAMALAI- 643219",
+      "totalVoters": 887
+    },
+    {
+      "booth": 243,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGH SCHOOL EASTERN SIDE LEFT WING, MULLIMALAI - 643219",
+      "totalVoters": 467
+    },
+    {
+      "booth": 244,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL, ( RIGHT SIDE) MANJOOR - 643219",
+      "totalVoters": 441
+    },
+    {
+      "booth": 245,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL (ADDL. BUILDING)ROOM NO.6, MANJOOR - 643219",
+      "totalVoters": 656
+    },
+    {
+      "booth": 246,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC SCHOOL, ( LEFT SIDE)HALL NO.1, MANJOOR - 643219",
+      "totalVoters": 1051
+    },
+    {
+      "booth": 247,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, (OLD BUILDING LEFT SIDE), KIL KUNDAH - 643219",
+      "totalVoters": 689
+    },
+    {
+      "booth": 248,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL(OLD BUILDING), ( RIGHT SIDE), KIL KUNDAH - 643219",
+      "totalVoters": 698
+    },
+    {
+      "booth": 249,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL,PWD ‘ CENTRE,KIL KUNDAH-643219",
+      "totalVoters": 564
+    },
+    {
+      "booth": 250,
+      "village": "KILKUNDAH (TP)",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL, PEGUMBALLA CAMP GEDDAI - 643219",
+      "totalVoters": 116
+    },
+    {
+      "booth": 251,
+      "village": "MEL KUNDAH",
+      "mandal": "MANJOOR",
+      "pollingStation": "PANCHAYAT UNION MIDDLE SCHOOL ( LEFT SIDE), MEL KUNDAH - 643219",
+      "totalVoters": 905
+    },
+    {
+      "booth": 252,
+      "village": "MEL KUNDAH",
+      "mandal": "MANJOOR",
+      "pollingStation": "CSI PRIMARY SCHOOL, THAISOLAI - 643230",
+      "totalVoters": 448
+    },
+    {
+      "booth": 253,
+      "village": "KINNAKORAI",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC. SCHOOL, (LEFT SIDE) KINNAKORAI - 643219",
+      "totalVoters": 483
+    },
+    {
+      "booth": 254,
+      "village": "KINNAKORAI",
+      "mandal": "MANJOOR",
+      "pollingStation": "GOVERNMENT HIGHER SEC. SCHOOL, (RIGHT SIDE) KINNAKORAI - 643219",
+      "totalVoters": 701
+    }
+  ],
+  "users": [
+    {
+      "phone": "6369084038",
+      "name": "SUNMUGAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        17
+      ]
+    },
+    {
+      "phone": "6369710198",
+      "name": "SAGADEVAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        72
+      ]
+    },
+    {
+      "phone": "6374470030",
+      "name": "BALAKRISHANAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        253
+      ]
+    },
+    {
+      "phone": "6379008073",
+      "name": "J Hasvitha",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        88
+      ]
+    },
+    {
+      "phone": "6379513042",
+      "name": "N.RAJ PRADEEP",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        8
+      ]
+    },
+    {
+      "phone": "6380245075",
+      "name": "RAJKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        63
+      ]
+    },
+    {
+      "phone": "6380721904",
+      "name": "BALRAJ",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        34
+      ]
+    },
+    {
+      "phone": "6380766693",
+      "name": "SIVA SUBRAMANI",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        243
+      ]
+    },
+    {
+      "phone": "6381096471",
+      "name": "K.KALPANA",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        61
+      ]
+    },
+    {
+      "phone": "6381125824",
+      "name": "VINOTHKUMAR",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        254
+      ]
+    },
+    {
+      "phone": "6381510529",
+      "name": "ARJUNAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        69
+      ]
+    },
+    {
+      "phone": "6381815254",
+      "name": "Uma kousalya",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        175
+      ]
+    },
+    {
+      "phone": "6382035636",
+      "name": "NAVEENA",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        60
+      ]
+    },
+    {
+      "phone": "6382489577",
+      "name": "MURUGESHAN.R",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        9
+      ]
+    },
+    {
+      "phone": "6382608063",
+      "name": "Kisan kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        193
+      ]
+    },
+    {
+      "phone": "6382997318",
+      "name": "Prasanth",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        137
+      ]
+    },
+    {
+      "phone": "6383196661",
+      "name": "SENTHILKUMAR",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        245
+      ]
+    },
+    {
+      "phone": "6383687029",
+      "name": "Kaviranganathan R",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        81
+      ]
+    },
+    {
+      "phone": "6383717089",
+      "name": "Dharmalingam",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        182
+      ]
+    },
+    {
+      "phone": "7004196439",
+      "name": "DINESH",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        53
+      ]
+    },
+    {
+      "phone": "7010806569",
+      "name": "Udhya kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        189
+      ]
+    },
+    {
+      "phone": "7075292548",
+      "name": "L.RAJU",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        52
+      ]
+    },
+    {
+      "phone": "7078545325",
+      "name": "K Aravindhan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        116
+      ]
+    },
+    {
+      "phone": "7339009623",
+      "name": "PRAKASH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        219
+      ]
+    },
+    {
+      "phone": "7418431731",
+      "name": "kavitha h",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        169
+      ]
+    },
+    {
+      "phone": "7598855015",
+      "name": "Amsavalli",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        95
+      ]
+    },
+    {
+      "phone": "7639587063",
+      "name": "R.Karthikeyan",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        183
+      ]
+    },
+    {
+      "phone": "7639985899",
+      "name": "KARTHIK",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        230
+      ]
+    },
+    {
+      "phone": "7708020289",
+      "name": "YOGESH KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        27
+      ]
+    },
+    {
+      "phone": "7708032690",
+      "name": "Mega",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        167
+      ]
+    },
+    {
+      "phone": "7708966028",
+      "name": "Kamatchi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        110
+      ]
+    },
+    {
+      "phone": "7812876363",
+      "name": "Vimal Kumar",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        109
+      ]
+    },
+    {
+      "phone": "7825071500",
+      "name": "DEEPAK IYYAPPAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        225
+      ]
+    },
+    {
+      "phone": "7868868809",
+      "name": "Abilash",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        158
+      ]
+    },
+    {
+      "phone": "7868903771",
+      "name": "ARJUNAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        37
+      ]
+    },
+    {
+      "phone": "7904201025",
+      "name": "Asha",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        177
+      ]
+    },
+    {
+      "phone": "7904207617",
+      "name": "SURESHKUMAR",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        244
+      ]
+    },
+    {
+      "phone": "7904606317",
+      "name": "Sathish",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        171
+      ]
+    },
+    {
+      "phone": "8072135089",
+      "name": "Mageshwara krishnaraj",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        146
+      ]
+    },
+    {
+      "phone": "8072450659",
+      "name": "N.RANJITH",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        40
+      ]
+    },
+    {
+      "phone": "8072950262",
+      "name": "RAHUL",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        226
+      ]
+    },
+    {
+      "phone": "8098058950",
+      "name": "Rajkumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        181
+      ]
+    },
+    {
+      "phone": "8098287455",
+      "name": "Suseela",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        152
+      ]
+    },
+    {
+      "phone": "8098800534",
+      "name": "GOKUL",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        217
+      ]
+    },
+    {
+      "phone": "8098820576",
+      "name": "VINOTH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        70
+      ]
+    },
+    {
+      "phone": "8098854067",
+      "name": "KARTHICK",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        206
+      ]
+    },
+    {
+      "phone": "8110853453",
+      "name": "SANDEEP",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        57
+      ]
+    },
+    {
+      "phone": "8148682125",
+      "name": "Gayathiri",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        141
+      ]
+    },
+    {
+      "phone": "8220791635",
+      "name": "RANJITH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        211
+      ]
+    },
+    {
+      "phone": "8248023992",
+      "name": "Dinesh",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        112
+      ]
+    },
+    {
+      "phone": "8248096860",
+      "name": "SIDDARAJ",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        4
+      ]
+    },
+    {
+      "phone": "8248714251",
+      "name": "Malathi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        94
+      ]
+    },
+    {
+      "phone": "8248963303",
+      "name": "Mohan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        149
+      ]
+    },
+    {
+      "phone": "8270842037",
+      "name": "Kanimozhi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        156
+      ]
+    },
+    {
+      "phone": "8489990270",
+      "name": "SATHISHKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        202
+      ]
+    },
+    {
+      "phone": "8585356556",
+      "name": "RANJITH KANNAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        47
+      ]
+    },
+    {
+      "phone": "8608099724",
+      "name": "SARITHA",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        41
+      ]
+    },
+    {
+      "phone": "8610911127",
+      "name": "SUNDARAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        68
+      ]
+    },
+    {
+      "phone": "8760113347",
+      "name": "BABU",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        3
+      ]
+    },
+    {
+      "phone": "8770275728",
+      "name": "Krishnaveni",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        92
+      ]
+    },
+    {
+      "phone": "8838208386",
+      "name": "Mahalakshmi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        173
+      ]
+    },
+    {
+      "phone": "8838493028",
+      "name": "DEGI KALYANI",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        62
+      ]
+    },
+    {
+      "phone": "8870075228",
+      "name": "ranjith kumar",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        134
+      ]
+    },
+    {
+      "phone": "8870819426",
+      "name": "ABILASH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        79
+      ]
+    },
+    {
+      "phone": "8903164310",
+      "name": "SUBRAMANIAM",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        59
+      ]
+    },
+    {
+      "phone": "8903836887",
+      "name": "RAVI",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        218
+      ]
+    },
+    {
+      "phone": "8940224409",
+      "name": "KRISHNAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        2
+      ]
+    },
+    {
+      "phone": "8940324787",
+      "name": "SUBRAMANI.B",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        7
+      ]
+    },
+    {
+      "phone": "8940453492",
+      "name": "T.RANGU",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        204
+      ]
+    },
+    {
+      "phone": "8940459906",
+      "name": "SANKAR D",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        32
+      ]
+    },
+    {
+      "phone": "8940649377",
+      "name": "G RAJESH",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        29
+      ]
+    },
+    {
+      "phone": "9025183155",
+      "name": "Vignesh",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        136
+      ]
+    },
+    {
+      "phone": "9025970502",
+      "name": "Mahalingam",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        154
+      ]
+    },
+    {
+      "phone": "9047244018",
+      "name": "RAMU",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        249
+      ]
+    },
+    {
+      "phone": "9047399554",
+      "name": "RAMACHANDRAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        231
+      ]
+    },
+    {
+      "phone": "9047453629",
+      "name": "ARJUNAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        11
+      ]
+    },
+    {
+      "phone": "9047634555",
+      "name": "SATHISH KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        31
+      ]
+    },
+    {
+      "phone": "9080201825",
+      "name": "B.NANDHA KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        5
+      ]
+    },
+    {
+      "phone": "9080784128",
+      "name": "Sivakumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        190
+      ]
+    },
+    {
+      "phone": "9095020076",
+      "name": "Gayathiri",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        147
+      ]
+    },
+    {
+      "phone": "9123566176",
+      "name": "HARI KANNABIRAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        26
+      ]
+    },
+    {
+      "phone": "9150556062",
+      "name": "R.SIVANAGU",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        51
+      ]
+    },
+    {
+      "phone": "9159223846",
+      "name": "Nagaraj",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        115
+      ]
+    },
+    {
+      "phone": "9159419245",
+      "name": "S.HALAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        58
+      ]
+    },
+    {
+      "phone": "9159545769",
+      "name": "k shanthi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        162
+      ]
+    },
+    {
+      "phone": "9159680015",
+      "name": "Kishore Kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        176
+      ]
+    },
+    {
+      "phone": "9159733345",
+      "name": "CHANDRASEKAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        222
+      ]
+    },
+    {
+      "phone": "9159766630",
+      "name": "Tirulokshna",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        160
+      ]
+    },
+    {
+      "phone": "9342122301",
+      "name": "Stellamary",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        166
+      ]
+    },
+    {
+      "phone": "9344158416",
+      "name": "B Ramya",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        114
+      ]
+    },
+    {
+      "phone": "9361273589",
+      "name": "Indumathi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        123
+      ]
+    },
+    {
+      "phone": "9363135108",
+      "name": "Vaidegi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        119
+      ]
+    },
+    {
+      "phone": "9363694759",
+      "name": "N. Ramachandran",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        85
+      ]
+    },
+    {
+      "phone": "9363913963",
+      "name": "Jayanthi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        174
+      ]
+    },
+    {
+      "phone": "9385821648",
+      "name": "BAVANKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        78
+      ]
+    },
+    {
+      "phone": "9385912781",
+      "name": "SREEDHARAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        236
+      ]
+    },
+    {
+      "phone": "9442058510",
+      "name": "SUNJAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        252
+      ]
+    },
+    {
+      "phone": "9442084609",
+      "name": "Jagadeshwaran",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        83
+      ]
+    },
+    {
+      "phone": "9442089156",
+      "name": "SUNDERAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        71
+      ]
+    },
+    {
+      "phone": "9442348016",
+      "name": "SOTHARAMAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        210
+      ]
+    },
+    {
+      "phone": "9442367575",
+      "name": "Raja",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        89
+      ]
+    },
+    {
+      "phone": "9442559950",
+      "name": "SUBRAMANI",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        229
+      ]
+    },
+    {
+      "phone": "9442720698",
+      "name": "E.ANNADORAI",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        44
+      ]
+    },
+    {
+      "phone": "9442973778",
+      "name": "SARAVANAKUMAR",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        241
+      ]
+    },
+    {
+      "phone": "9443029669",
+      "name": "P. Sumathi",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        84
+      ]
+    },
+    {
+      "phone": "9443045108",
+      "name": "BALASUBBIRAMANI",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        224
+      ]
+    },
+    {
+      "phone": "9443095694",
+      "name": "Sivakumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        187
+      ]
+    },
+    {
+      "phone": "9443356143",
+      "name": "KANNAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        221
+      ]
+    },
+    {
+      "phone": "9443523085",
+      "name": "Dhanaseelan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        153
+      ]
+    },
+    {
+      "phone": "9443553913",
+      "name": "Raghu",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        151
+      ]
+    },
+    {
+      "phone": "9443603451",
+      "name": "RAJENDRAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        250
+      ]
+    },
+    {
+      "phone": "9443734312",
+      "name": "KATTAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        240
+      ]
+    },
+    {
+      "phone": "9443999012",
+      "name": "PRABAKARAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        247
+      ]
+    },
+    {
+      "phone": "9486022073",
+      "name": "SENTHIL KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        55
+      ]
+    },
+    {
+      "phone": "9486530688",
+      "name": "L.SIVAKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        48
+      ]
+    },
+    {
+      "phone": "9486549798",
+      "name": "KUMAR",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        232
+      ]
+    },
+    {
+      "phone": "9486686960",
+      "name": "Sundharraj",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        120
+      ]
+    },
+    {
+      "phone": "9486712366",
+      "name": "Viswanathan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        121
+      ]
+    },
+    {
+      "phone": "9487055159",
+      "name": "SURESH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        66
+      ]
+    },
+    {
+      "phone": "9487087129",
+      "name": "Sindhya",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        145
+      ]
+    },
+    {
+      "phone": "9487129798",
+      "name": "Nagendran",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        148
+      ]
+    },
+    {
+      "phone": "9487341081",
+      "name": "Rangesh",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        150
+      ]
+    },
+    {
+      "phone": "9487491934",
+      "name": "K J Bindu",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        107
+      ]
+    },
+    {
+      "phone": "9488255011",
+      "name": "Chandrasekar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        199
+      ]
+    },
+    {
+      "phone": "9488813243",
+      "name": "Chitra",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        168
+      ]
+    },
+    {
+      "phone": "9489131493",
+      "name": "P.NAGARAJ",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        54
+      ]
+    },
+    {
+      "phone": "9489571142",
+      "name": "K SENTHIL KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        12
+      ]
+    },
+    {
+      "phone": "9489863293",
+      "name": "PRADEEP",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        215
+      ]
+    },
+    {
+      "phone": "9496530310",
+      "name": "Jayalakshmi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        132
+      ]
+    },
+    {
+      "phone": "9500208283",
+      "name": "V shruthika",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        142
+      ]
+    },
+    {
+      "phone": "9500454575",
+      "name": "Arjun Krishnan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        87
+      ]
+    },
+    {
+      "phone": "9585138002",
+      "name": "K. Saravana Kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        179
+      ]
+    },
+    {
+      "phone": "9585540105",
+      "name": "KRISHANAMOORTHI",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        248
+      ]
+    },
+    {
+      "phone": "9585819870",
+      "name": "NANJUNDAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        74
+      ]
+    },
+    {
+      "phone": "9585903766",
+      "name": "K. Krishnan",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        82
+      ]
+    },
+    {
+      "phone": "9626053194",
+      "name": "KARUNAKARAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        1
+      ]
+    },
+    {
+      "phone": "9626053806",
+      "name": "RANJITH",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        45
+      ]
+    },
+    {
+      "phone": "9626181677",
+      "name": "Krishnaveni",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        111
+      ]
+    },
+    {
+      "phone": "9626267088",
+      "name": "SARAVANAKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        64
+      ]
+    },
+    {
+      "phone": "9626515310",
+      "name": "VINOTH KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        43
+      ]
+    },
+    {
+      "phone": "9626556566",
+      "name": "VENKADESH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        227
+      ]
+    },
+    {
+      "phone": "9626687983",
+      "name": "vinoth kumar",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        133
+      ]
+    },
+    {
+      "phone": "9626967941",
+      "name": "SELVARAJ",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        213
+      ]
+    },
+    {
+      "phone": "9655028226",
+      "name": "K.Karthickeyan",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        185
+      ]
+    },
+    {
+      "phone": "9655075560",
+      "name": "GANAPATHI",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        49
+      ]
+    },
+    {
+      "phone": "9655322252",
+      "name": "Vasudevan",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        198
+      ]
+    },
+    {
+      "phone": "9655351025",
+      "name": "SUBBIRAMANI",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        76
+      ]
+    },
+    {
+      "phone": "9655841812",
+      "name": "R SURESH",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        14
+      ]
+    },
+    {
+      "phone": "9655888066",
+      "name": "KANAGARAJ",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        19
+      ]
+    },
+    {
+      "phone": "9655971429",
+      "name": "R ASHOK KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        36
+      ]
+    },
+    {
+      "phone": "9677534408",
+      "name": "ASHOK",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        65
+      ]
+    },
+    {
+      "phone": "9751128177",
+      "name": "Murugan",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        191
+      ]
+    },
+    {
+      "phone": "9751144213",
+      "name": "SATHISH KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        161
+      ]
+    },
+    {
+      "phone": "9751176906",
+      "name": "RAJKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        214
+      ]
+    },
+    {
+      "phone": "9751274242",
+      "name": "Raghupathi",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        196
+      ]
+    },
+    {
+      "phone": "9751428498",
+      "name": "N.Elango",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        184
+      ]
+    },
+    {
+      "phone": "9751458505",
+      "name": "GANESHMOORTHI",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        220
+      ]
+    },
+    {
+      "phone": "9751479898",
+      "name": "N MANI",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        21
+      ]
+    },
+    {
+      "phone": "9751511020",
+      "name": "D.Nandha kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        197
+      ]
+    },
+    {
+      "phone": "9751573385",
+      "name": "NANJUNDAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        203
+      ]
+    },
+    {
+      "phone": "9751596163",
+      "name": "R. RAGUPATHI",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        233
+      ]
+    },
+    {
+      "phone": "9751726006",
+      "name": "ARJUNAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        201
+      ]
+    },
+    {
+      "phone": "9786035996",
+      "name": "SUBBIRAMANI",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        209
+      ]
+    },
+    {
+      "phone": "9786334062",
+      "name": "ARUN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        239
+      ]
+    },
+    {
+      "phone": "9786384892",
+      "name": "PUNITHKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        56
+      ]
+    },
+    {
+      "phone": "9786400186",
+      "name": "K Ruthramoorthy",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        86
+      ]
+    },
+    {
+      "phone": "9786428307",
+      "name": "Devan",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        91
+      ]
+    },
+    {
+      "phone": "9786613168",
+      "name": "K. SELVAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        235
+      ]
+    },
+    {
+      "phone": "9786613515",
+      "name": "Bhuvaneshwari",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        159
+      ]
+    },
+    {
+      "phone": "9786705756",
+      "name": "PARAMESHWARAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        42
+      ]
+    },
+    {
+      "phone": "9786946437",
+      "name": "VINU",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        207
+      ]
+    },
+    {
+      "phone": "9787099203",
+      "name": "SIVAKUMAR.N",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        16
+      ]
+    },
+    {
+      "phone": "9787257230",
+      "name": "PANDIAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        6
+      ]
+    },
+    {
+      "phone": "9787474161",
+      "name": "RAVI",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        22
+      ]
+    },
+    {
+      "phone": "9787474457",
+      "name": "B.ARJUNAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        38
+      ]
+    },
+    {
+      "phone": "9787497806",
+      "name": "BHOJAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        30
+      ]
+    },
+    {
+      "phone": "9787552186",
+      "name": "CHANDIRAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        223
+      ]
+    },
+    {
+      "phone": "9787554821",
+      "name": "RAJESH",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        75
+      ]
+    },
+    {
+      "phone": "9787555858",
+      "name": "Suresh Babu",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        186
+      ]
+    },
+    {
+      "phone": "9787720071",
+      "name": "Shankar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        195
+      ]
+    },
+    {
+      "phone": "9787743478",
+      "name": "RAMESH",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        23
+      ]
+    },
+    {
+      "phone": "9787913613",
+      "name": "CHANDIRAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        228
+      ]
+    },
+    {
+      "phone": "9787914586",
+      "name": "SIVAKUMAR L",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        10
+      ]
+    },
+    {
+      "phone": "9787949099",
+      "name": "SASIKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        25
+      ]
+    },
+    {
+      "phone": "9789368153",
+      "name": "Surender",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        117
+      ]
+    },
+    {
+      "phone": "9789998474",
+      "name": "Rejeshkrishna",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        124
+      ]
+    },
+    {
+      "phone": "9842613706",
+      "name": "K. MAHALINGAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        234
+      ]
+    },
+    {
+      "phone": "9842669966",
+      "name": "MURALI",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        242
+      ]
+    },
+    {
+      "phone": "9843036109",
+      "name": "KRISHNAKUMAR T",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        15
+      ]
+    },
+    {
+      "phone": "9843669865",
+      "name": "CHANDRAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        13
+      ]
+    },
+    {
+      "phone": "9843791748",
+      "name": "M Moorthi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        164
+      ]
+    },
+    {
+      "phone": "9843840885",
+      "name": "PRAVEEN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        246
+      ]
+    },
+    {
+      "phone": "9843909764",
+      "name": "H.ANAND",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        46
+      ]
+    },
+    {
+      "phone": "9843944533",
+      "name": "Mahalakshni",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        118
+      ]
+    },
+    {
+      "phone": "9865136755",
+      "name": "ravi",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        135
+      ]
+    },
+    {
+      "phone": "9868851188",
+      "name": "SUDHARSAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        18
+      ]
+    },
+    {
+      "phone": "9884213605",
+      "name": "Kowsalya",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        93
+      ]
+    },
+    {
+      "phone": "9894015155",
+      "name": "ALLIMUTHU",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        251
+      ]
+    },
+    {
+      "phone": "9894698695",
+      "name": "Abishek",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        188
+      ]
+    },
+    {
+      "phone": "9942558672",
+      "name": "Anushya",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        157
+      ]
+    },
+    {
+      "phone": "9942574520",
+      "name": "Maruthachalamurthy",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        90
+      ]
+    },
+    {
+      "phone": "9943012279",
+      "name": "RATHA KRISHNAN",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        67
+      ]
+    },
+    {
+      "phone": "9943048349",
+      "name": "MANI",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        35
+      ]
+    },
+    {
+      "phone": "9943059696",
+      "name": "RANGARAJAN",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        237
+      ]
+    },
+    {
+      "phone": "9943171899",
+      "name": "R KRISHNAN",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        28
+      ]
+    },
+    {
+      "phone": "9943240305",
+      "name": "DEVARAJ",
+      "role": "BLA2",
+      "mandal": "MANJOOR",
+      "booths": [
+        238
+      ]
+    },
+    {
+      "phone": "9943442876",
+      "name": "RAMESH",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        50
+      ]
+    },
+    {
+      "phone": "9943551185",
+      "name": "B SIVAKUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        20
+      ]
+    },
+    {
+      "phone": "9943834573",
+      "name": "Deepika",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        144
+      ]
+    },
+    {
+      "phone": "9943849393",
+      "name": "K. Chandrasekar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        180
+      ]
+    },
+    {
+      "phone": "9943859866",
+      "name": "GOVINDRAJ",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        73
+      ]
+    },
+    {
+      "phone": "9943896429",
+      "name": "S.RAMAN",
+      "role": "BLA2",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        39
+      ]
+    },
+    {
+      "phone": "9943983767",
+      "name": "KUMAR",
+      "role": "BLA2",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        216
+      ]
+    },
+    {
+      "phone": "9944446301",
+      "name": "RAJAN.TM",
+      "role": "BLA2",
+      "mandal": "OOTY EAST",
+      "booths": [
+        24
+      ]
+    },
+    {
+      "phone": "9952610156",
+      "name": "Arun Kumar",
+      "role": "BLA2",
+      "mandal": "OOTY WEST",
+      "booths": [
+        178
+      ]
+    },
+    {
+      "phone": "9994957939",
+      "name": "P Ashok",
+      "role": "BLA2",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        155
+      ]
+    },
+    {
+      "phone": "6369084038",
+      "name": "SHANMUGAM",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        17
+      ]
+    },
+    {
+      "phone": "6369731749",
+      "name": "N RAMAKRISHNAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        43
+      ]
+    },
+    {
+      "phone": "6374193575",
+      "name": "M.MAGESHWARI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        131
+      ]
+    },
+    {
+      "phone": "6374220030",
+      "name": "M.GOVINDHARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        120
+      ]
+    },
+    {
+      "phone": "6374373340",
+      "name": "T.VINESH",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        211
+      ]
+    },
+    {
+      "phone": "6374658230",
+      "name": "M.MUTHAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        3
+      ]
+    },
+    {
+      "phone": "6380418145",
+      "name": "SIVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        70
+      ]
+    },
+    {
+      "phone": "6380454854",
+      "name": "RAMYA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        130
+      ]
+    },
+    {
+      "phone": "6380891544",
+      "name": "D. SIVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        88
+      ]
+    },
+    {
+      "phone": "6381328442",
+      "name": "SATHISH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        136
+      ]
+    },
+    {
+      "phone": "6381584694",
+      "name": "SIVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        92
+      ]
+    },
+    {
+      "phone": "6381909431",
+      "name": "R SRINATH",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        49
+      ]
+    },
+    {
+      "phone": "6382760201",
+      "name": "JEEVITHA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        113
+      ]
+    },
+    {
+      "phone": "6383140754",
+      "name": "M. SUBASH BELLAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        62
+      ]
+    },
+    {
+      "phone": "6383262578",
+      "name": "C.MAHENDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        82
+      ]
+    },
+    {
+      "phone": "6383522871",
+      "name": "GUNASEKERAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        123
+      ]
+    },
+    {
+      "phone": "6383717089",
+      "name": "DHARAMALINGAM",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        182
+      ]
+    },
+    {
+      "phone": "6385598465",
+      "name": "M. NITHYA KALYANI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        126
+      ]
+    },
+    {
+      "phone": "7010781124",
+      "name": "P.UTHAYAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        81
+      ]
+    },
+    {
+      "phone": "7092238224",
+      "name": "M. GURUSAMY",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        249
+      ]
+    },
+    {
+      "phone": "7092622421",
+      "name": "PRAKASH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        138
+      ]
+    },
+    {
+      "phone": "7092951260",
+      "name": "M. RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        8
+      ]
+    },
+    {
+      "phone": "7094041456",
+      "name": "RAJ PRAKASH",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        243
+      ]
+    },
+    {
+      "phone": "7094190205",
+      "name": "K SANTHOSH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        24
+      ]
+    },
+    {
+      "phone": "7094587784",
+      "name": "NAGESHWARI",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        14
+      ]
+    },
+    {
+      "phone": "7200891139",
+      "name": "S.NANDHAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        84
+      ]
+    },
+    {
+      "phone": "7373822932",
+      "name": "KRISHNAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        15
+      ]
+    },
+    {
+      "phone": "7448659849",
+      "name": "K.RAVIKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        5
+      ]
+    },
+    {
+      "phone": "7530042930",
+      "name": "BHARATH",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        186
+      ]
+    },
+    {
+      "phone": "7598833492",
+      "name": "SARATH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        56
+      ]
+    },
+    {
+      "phone": "7601904441",
+      "name": "R.JEKESH",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        239
+      ]
+    },
+    {
+      "phone": "7633960411",
+      "name": "VENKATESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        171
+      ]
+    },
+    {
+      "phone": "7639237787",
+      "name": "RAGU",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        215
+      ]
+    },
+    {
+      "phone": "7639797600",
+      "name": "CRISTI RAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        117
+      ]
+    },
+    {
+      "phone": "7667667342",
+      "name": "S.NISHANTH",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        191
+      ]
+    },
+    {
+      "phone": "7676642739",
+      "name": "K. RAJENDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        107
+      ]
+    },
+    {
+      "phone": "7708245494",
+      "name": "MANIKANDAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        245
+      ]
+    },
+    {
+      "phone": "7806940465",
+      "name": "LOGESH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        93
+      ]
+    },
+    {
+      "phone": "7806958887",
+      "name": "VINITH",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        41
+      ]
+    },
+    {
+      "phone": "7812876363",
+      "name": "VIMALKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        109
+      ]
+    },
+    {
+      "phone": "7823976108",
+      "name": "S.GANESHAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        200
+      ]
+    },
+    {
+      "phone": "7868022120",
+      "name": "N.MANOJ",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        7
+      ]
+    },
+    {
+      "phone": "7904669358",
+      "name": "AJITHKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        57
+      ]
+    },
+    {
+      "phone": "7904995462",
+      "name": "GIRIJA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        142
+      ]
+    },
+    {
+      "phone": "8072889458",
+      "name": "A.SIVAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        204
+      ]
+    },
+    {
+      "phone": "8098161676",
+      "name": "JARGE",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        222
+      ]
+    },
+    {
+      "phone": "8098383142",
+      "name": "FARNCHS DELIP",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        106
+      ]
+    },
+    {
+      "phone": "8098490969",
+      "name": "MAGANDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        48
+      ]
+    },
+    {
+      "phone": "8098519850",
+      "name": "SIVALINGAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        28
+      ]
+    },
+    {
+      "phone": "8098653301",
+      "name": "RAVI",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        179
+      ]
+    },
+    {
+      "phone": "8098999701",
+      "name": "E.B.SENTHILKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        36
+      ]
+    },
+    {
+      "phone": "8122563332",
+      "name": "T.MEGALA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        129
+      ]
+    },
+    {
+      "phone": "8124545407",
+      "name": "JEEVITHA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        165
+      ]
+    },
+    {
+      "phone": "8144320011",
+      "name": "GANESH",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        45
+      ]
+    },
+    {
+      "phone": "8248555327",
+      "name": "S.SUNDARRAJAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        158
+      ]
+    },
+    {
+      "phone": "8248714251",
+      "name": "MALATHI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        94
+      ]
+    },
+    {
+      "phone": "8270211223",
+      "name": "A MANIGANDAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        31
+      ]
+    },
+    {
+      "phone": "8270913089",
+      "name": "HARI BHASKAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        223
+      ]
+    },
+    {
+      "phone": "8270969345",
+      "name": "A K MARI",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        34
+      ]
+    },
+    {
+      "phone": "8300170738",
+      "name": "K.UDAYAKUMAR",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        235
+      ]
+    },
+    {
+      "phone": "8489239328",
+      "name": "SANDOSKUMSR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        22
+      ]
+    },
+    {
+      "phone": "8489508423",
+      "name": "SURESH",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        227
+      ]
+    },
+    {
+      "phone": "8489755731",
+      "name": "PRABHU",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        228
+      ]
+    },
+    {
+      "phone": "8489779141",
+      "name": "L.RAJENDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        178
+      ]
+    },
+    {
+      "phone": "8524044013",
+      "name": "P. KRISHNA MOORTHY",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        86
+      ]
+    },
+    {
+      "phone": "8525017797",
+      "name": "VINOTH BOJAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        225
+      ]
+    },
+    {
+      "phone": "8531884758",
+      "name": "KUMAR C",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        2
+      ]
+    },
+    {
+      "phone": "8610869184",
+      "name": "GURUSWAMY",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        103
+      ]
+    },
+    {
+      "phone": "8610911127",
+      "name": "SUNDHARAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        68
+      ]
+    },
+    {
+      "phone": "8637459701",
+      "name": "HARIHARAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        114
+      ]
+    },
+    {
+      "phone": "8667257506",
+      "name": "JAGATHISH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        118
+      ]
+    },
+    {
+      "phone": "8667839478",
+      "name": "D KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        25
+      ]
+    },
+    {
+      "phone": "8668167488",
+      "name": "YUVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        104
+      ]
+    },
+    {
+      "phone": "8678952053",
+      "name": "RAJASEKARAN C",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        234
+      ]
+    },
+    {
+      "phone": "8695471103",
+      "name": "MADHESHWARAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        192
+      ]
+    },
+    {
+      "phone": "8754012394",
+      "name": "K.K.RAMAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        248
+      ]
+    },
+    {
+      "phone": "8778298585",
+      "name": "H.SURESH",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        190
+      ]
+    },
+    {
+      "phone": "8807119881",
+      "name": "P.DEVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        175
+      ]
+    },
+    {
+      "phone": "8838090645",
+      "name": "SARADHA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        134
+      ]
+    },
+    {
+      "phone": "8838949651",
+      "name": "RAJI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        163
+      ]
+    },
+    {
+      "phone": "8883365441",
+      "name": "DEEPAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        220
+      ]
+    },
+    {
+      "phone": "8903122513",
+      "name": "N.DEVAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        198
+      ]
+    },
+    {
+      "phone": "8903271794",
+      "name": "M.SRIDHARAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        233
+      ]
+    },
+    {
+      "phone": "8903385184",
+      "name": "MARIMUTHU",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        77
+      ]
+    },
+    {
+      "phone": "8903552187",
+      "name": "UDHAYA KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        59
+      ]
+    },
+    {
+      "phone": "8903836887",
+      "name": "R RAVICHANDIRAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        218
+      ]
+    },
+    {
+      "phone": "8940459906",
+      "name": "D.SANKAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        33
+      ]
+    },
+    {
+      "phone": "8973009234",
+      "name": "N. JAYABALAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        89
+      ]
+    },
+    {
+      "phone": "9025358322",
+      "name": "MANJUNATH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        159
+      ]
+    },
+    {
+      "phone": "9025359874",
+      "name": "ARI",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        251
+      ]
+    },
+    {
+      "phone": "9043233771",
+      "name": "MURUGAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        16
+      ]
+    },
+    {
+      "phone": "9047242812",
+      "name": "MURUGAN B",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        13
+      ]
+    },
+    {
+      "phone": "9047475401",
+      "name": "A.RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        184
+      ]
+    },
+    {
+      "phone": "9047518880",
+      "name": "JAGADESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        124
+      ]
+    },
+    {
+      "phone": "9047530023",
+      "name": "SIVAVEL",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        216
+      ]
+    },
+    {
+      "phone": "9047539546",
+      "name": "RAMESH",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        72
+      ]
+    },
+    {
+      "phone": "9047637264",
+      "name": "RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        221
+      ]
+    },
+    {
+      "phone": "9047741409",
+      "name": "PRAKASH",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        201
+      ]
+    },
+    {
+      "phone": "9047779544",
+      "name": "SRIKANTH",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        46
+      ]
+    },
+    {
+      "phone": "9080143784",
+      "name": "T.GANESHAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        153
+      ]
+    },
+    {
+      "phone": "9080876524",
+      "name": "RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        111
+      ]
+    },
+    {
+      "phone": "9080973579",
+      "name": "NAGARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        60
+      ]
+    },
+    {
+      "phone": "9087021924",
+      "name": "KOMATHI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        141
+      ]
+    },
+    {
+      "phone": "9087370462",
+      "name": "H.RAMESH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        226
+      ]
+    },
+    {
+      "phone": "9087488888",
+      "name": "BYRESH GOWTHAM",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        156
+      ]
+    },
+    {
+      "phone": "9087754217",
+      "name": "RAMESH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        6
+      ]
+    },
+    {
+      "phone": "9159130745",
+      "name": "BASKARAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        73
+      ]
+    },
+    {
+      "phone": "9159595330",
+      "name": "PRADEEPKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        177
+      ]
+    },
+    {
+      "phone": "9159595454",
+      "name": "C. RAMRAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        155
+      ]
+    },
+    {
+      "phone": "9159691544",
+      "name": "SARATH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        40
+      ]
+    },
+    {
+      "phone": "9159718147",
+      "name": "SUDHESAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        254
+      ]
+    },
+    {
+      "phone": "9159914223",
+      "name": "MANIVANNAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        115
+      ]
+    },
+    {
+      "phone": "9176954693",
+      "name": "MAGESH",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        51
+      ]
+    },
+    {
+      "phone": "9342500950",
+      "name": "THIYAGU",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        162
+      ]
+    },
+    {
+      "phone": "9344878550",
+      "name": "SABARISH",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        74
+      ]
+    },
+    {
+      "phone": "9360301715",
+      "name": "K.RAMESH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        20
+      ]
+    },
+    {
+      "phone": "9360506218",
+      "name": "RAJESH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        4
+      ]
+    },
+    {
+      "phone": "9367183897",
+      "name": "GOPI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        110
+      ]
+    },
+    {
+      "phone": "9442326171",
+      "name": "UK CHANDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        39
+      ]
+    },
+    {
+      "phone": "9442369598",
+      "name": "VADIVALAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        150
+      ]
+    },
+    {
+      "phone": "9442370103",
+      "name": "M. MAHADEVAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        78
+      ]
+    },
+    {
+      "phone": "9442693072",
+      "name": "C.SURESH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        188
+      ]
+    },
+    {
+      "phone": "9442711228",
+      "name": "NATARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        187
+      ]
+    },
+    {
+      "phone": "9442791444",
+      "name": "J.SELVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        199
+      ]
+    },
+    {
+      "phone": "9442961194",
+      "name": "PARAMESWARAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        140
+      ]
+    },
+    {
+      "phone": "9443017527",
+      "name": "PRAKASH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        132
+      ]
+    },
+    {
+      "phone": "9443060537",
+      "name": "PASUVARAJ",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        229
+      ]
+    },
+    {
+      "phone": "9443063446",
+      "name": "SAJESH K A",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        87
+      ]
+    },
+    {
+      "phone": "9443091653",
+      "name": "JAYAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        67
+      ]
+    },
+    {
+      "phone": "9443121178",
+      "name": "RAVI",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        246
+      ]
+    },
+    {
+      "phone": "9443205311",
+      "name": "GOPALAKRISHAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        250
+      ]
+    },
+    {
+      "phone": "9443367952",
+      "name": "GNANASEKAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        83
+      ]
+    },
+    {
+      "phone": "9443420575",
+      "name": "RAMAKRISHNA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        101
+      ]
+    },
+    {
+      "phone": "9443522835",
+      "name": "RAGHAVENDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        169
+      ]
+    },
+    {
+      "phone": "9443553985",
+      "name": "VASU",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        208
+      ]
+    },
+    {
+      "phone": "9443604131",
+      "name": "DEVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        145
+      ]
+    },
+    {
+      "phone": "9443604449",
+      "name": "SEENIVASAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        160
+      ]
+    },
+    {
+      "phone": "9443897330",
+      "name": "M.SARAVANAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        238
+      ]
+    },
+    {
+      "phone": "9444397434",
+      "name": "HARIPRAKASH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        166
+      ]
+    },
+    {
+      "phone": "9486175978",
+      "name": "SELVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        116
+      ]
+    },
+    {
+      "phone": "9486338008",
+      "name": "SATHISH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        58
+      ]
+    },
+    {
+      "phone": "9486346029",
+      "name": "B.SEKAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        181
+      ]
+    },
+    {
+      "phone": "9486365043",
+      "name": "DINESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        172
+      ]
+    },
+    {
+      "phone": "9486687361",
+      "name": "SIVAKUMAR",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        252
+      ]
+    },
+    {
+      "phone": "9486712953",
+      "name": "T.RAVIKUMAR",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        247
+      ]
+    },
+    {
+      "phone": "9486928887",
+      "name": "ANUMANTHAPPAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        164
+      ]
+    },
+    {
+      "phone": "9486958970",
+      "name": "VADIVEL",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        212
+      ]
+    },
+    {
+      "phone": "9487129815",
+      "name": "S. SWATHI",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        9
+      ]
+    },
+    {
+      "phone": "9487327370",
+      "name": "PAVITHRA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        98
+      ]
+    },
+    {
+      "phone": "9487341081",
+      "name": "RANGESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        151
+      ]
+    },
+    {
+      "phone": "9487971833",
+      "name": "VIJAYAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        52
+      ]
+    },
+    {
+      "phone": "9488188688",
+      "name": "K.GOKULAKRISHNAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        241
+      ]
+    },
+    {
+      "phone": "9488514170",
+      "name": "JB MURUGAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        47
+      ]
+    },
+    {
+      "phone": "9488642219",
+      "name": "SINDHE KUTTAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        64
+      ]
+    },
+    {
+      "phone": "9488870850",
+      "name": "E Prakash",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        96
+      ]
+    },
+    {
+      "phone": "9488974584",
+      "name": "C.SEKAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        133
+      ]
+    },
+    {
+      "phone": "9489270808",
+      "name": "PRATHEEP K",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        232
+      ]
+    },
+    {
+      "phone": "9489614256",
+      "name": "A.NAGAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        240
+      ]
+    },
+    {
+      "phone": "9489720775",
+      "name": "MANOJ KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        65
+      ]
+    },
+    {
+      "phone": "9524822268",
+      "name": "R.GIRIJA",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        196
+      ]
+    },
+    {
+      "phone": "9566862554",
+      "name": "R.MANIGANDAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        121
+      ]
+    },
+    {
+      "phone": "9578855697",
+      "name": "S.RAMALINGAM",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        214
+      ]
+    },
+    {
+      "phone": "9585199860",
+      "name": "M.R.RAJU",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        180
+      ]
+    },
+    {
+      "phone": "9585326249",
+      "name": "KRISHNAMOORTHI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        119
+      ]
+    },
+    {
+      "phone": "9585372925",
+      "name": "BALAKRISHNAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        203
+      ]
+    },
+    {
+      "phone": "9585374809",
+      "name": "ANAND",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        95
+      ]
+    },
+    {
+      "phone": "9585495367",
+      "name": "G MUTHUSAMY",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        231
+      ]
+    },
+    {
+      "phone": "9585528171",
+      "name": "B.K.MAGESHKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        176
+      ]
+    },
+    {
+      "phone": "9585625967",
+      "name": "KRITHIKA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        147
+      ]
+    },
+    {
+      "phone": "9585840307",
+      "name": "D.VIGNESH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        10
+      ]
+    },
+    {
+      "phone": "9600577673",
+      "name": "M.DINESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        97
+      ]
+    },
+    {
+      "phone": "9626053197",
+      "name": "G.GANAPATHI",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        1
+      ]
+    },
+    {
+      "phone": "9626680800",
+      "name": "S.GANESHAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        63
+      ]
+    },
+    {
+      "phone": "9626702340",
+      "name": "THILAGAVATHI.S",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        173
+      ]
+    },
+    {
+      "phone": "9626978853",
+      "name": "GOPI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        137
+      ]
+    },
+    {
+      "phone": "9629648544",
+      "name": "PRIYANKA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        100
+      ]
+    },
+    {
+      "phone": "9655106544",
+      "name": "C.RAMESH",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        11
+      ]
+    },
+    {
+      "phone": "9655150767",
+      "name": "RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        50
+      ]
+    },
+    {
+      "phone": "9655189965",
+      "name": "A. MURUGASEN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        69
+      ]
+    },
+    {
+      "phone": "9655271898",
+      "name": "A RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        55
+      ]
+    },
+    {
+      "phone": "9655887894",
+      "name": "GOPAL",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        66
+      ]
+    },
+    {
+      "phone": "9655977186",
+      "name": "SHANTHI",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        253
+      ]
+    },
+    {
+      "phone": "9659622554",
+      "name": "MANIGANDAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        189
+      ]
+    },
+    {
+      "phone": "9677205421",
+      "name": "C.KAVITHA",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        76
+      ]
+    },
+    {
+      "phone": "9677873359",
+      "name": "RANGESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        143
+      ]
+    },
+    {
+      "phone": "9751015066",
+      "name": "B DEVARAJ",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        27
+      ]
+    },
+    {
+      "phone": "9751228121",
+      "name": "K. KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        23
+      ]
+    },
+    {
+      "phone": "9751260804",
+      "name": "B.SENTHIL",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        197
+      ]
+    },
+    {
+      "phone": "9751338021",
+      "name": "B.MANJULA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        170
+      ]
+    },
+    {
+      "phone": "9751428733",
+      "name": "MANIGANDAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        79
+      ]
+    },
+    {
+      "phone": "9751495158",
+      "name": "R SHANGEETH",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        185
+      ]
+    },
+    {
+      "phone": "9751510602",
+      "name": "P. SUBRAMANI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        148
+      ]
+    },
+    {
+      "phone": "9751536341",
+      "name": "BALAMURUGAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        154
+      ]
+    },
+    {
+      "phone": "9751573235",
+      "name": "R.ARUN PRASAD",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        217
+      ]
+    },
+    {
+      "phone": "9751575048",
+      "name": "RAJAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        230
+      ]
+    },
+    {
+      "phone": "9751645661",
+      "name": "RAVI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        112
+      ]
+    },
+    {
+      "phone": "9751757910",
+      "name": "R.DEELIPKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        206
+      ]
+    },
+    {
+      "phone": "9751822583",
+      "name": "R SIVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        35
+      ]
+    },
+    {
+      "phone": "9786020054",
+      "name": "H CHANDARAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        32
+      ]
+    },
+    {
+      "phone": "9786226943",
+      "name": "KRISHNAMOORTHI",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        61
+      ]
+    },
+    {
+      "phone": "9786394471",
+      "name": "M. VIJAYAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        183
+      ]
+    },
+    {
+      "phone": "9786428307",
+      "name": "T DEVA",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        91
+      ]
+    },
+    {
+      "phone": "9786450091",
+      "name": "SIVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        213
+      ]
+    },
+    {
+      "phone": "9786823210",
+      "name": "J.GOKULANANDHAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        205
+      ]
+    },
+    {
+      "phone": "9786924199",
+      "name": "ARJUNAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        44
+      ]
+    },
+    {
+      "phone": "9786946437",
+      "name": "N.VINU",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        207
+      ]
+    },
+    {
+      "phone": "9786965378",
+      "name": "P BABU",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        53
+      ]
+    },
+    {
+      "phone": "9787014254",
+      "name": "TAMILVANAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        174
+      ]
+    },
+    {
+      "phone": "9787047270",
+      "name": "SIVAKUMAR T",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        21
+      ]
+    },
+    {
+      "phone": "9787382234",
+      "name": "MADHESHWARAN",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        193
+      ]
+    },
+    {
+      "phone": "9787473742",
+      "name": "JAYAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        38
+      ]
+    },
+    {
+      "phone": "9787473751",
+      "name": "YOGANDRAN",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        19
+      ]
+    },
+    {
+      "phone": "9787474136",
+      "name": "SUDHAKAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        18
+      ]
+    },
+    {
+      "phone": "9787554592",
+      "name": "RAJAN BABU",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        99
+      ]
+    },
+    {
+      "phone": "9787629701",
+      "name": "D.NANDHAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        85
+      ]
+    },
+    {
+      "phone": "9787742745",
+      "name": "PRSHATH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        152
+      ]
+    },
+    {
+      "phone": "9787743254",
+      "name": "SELVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        30
+      ]
+    },
+    {
+      "phone": "9787786641",
+      "name": "B MANIGUNDAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        42
+      ]
+    },
+    {
+      "phone": "9787873407",
+      "name": "SEBASTIAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        102
+      ]
+    },
+    {
+      "phone": "9790249259",
+      "name": "DINESH KUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        219
+      ]
+    },
+    {
+      "phone": "9790611961",
+      "name": "SANTHOSH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        108
+      ]
+    },
+    {
+      "phone": "9840402422",
+      "name": "D.VANAJA",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        80
+      ]
+    },
+    {
+      "phone": "9843009094",
+      "name": "RAVIKUMAR. B",
+      "role": "Booth President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        195
+      ]
+    },
+    {
+      "phone": "9843247401",
+      "name": "PREMKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        146
+      ]
+    },
+    {
+      "phone": "9843494552",
+      "name": "SURESH",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        139
+      ]
+    },
+    {
+      "phone": "9843534102",
+      "name": "P.SELVAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        167
+      ]
+    },
+    {
+      "phone": "9843549196",
+      "name": "RAJKUMAR",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        242
+      ]
+    },
+    {
+      "phone": "9843557141",
+      "name": "SIVKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        26
+      ]
+    },
+    {
+      "phone": "9843611127",
+      "name": "MADHUSUDHANAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        122
+      ]
+    },
+    {
+      "phone": "9843674373",
+      "name": "MANIKANDAKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        54
+      ]
+    },
+    {
+      "phone": "9843922802",
+      "name": "KARTHICK",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        75
+      ]
+    },
+    {
+      "phone": "9843924946",
+      "name": "MURUGAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        149
+      ]
+    },
+    {
+      "phone": "9894412716",
+      "name": "LYYAPPAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        209
+      ]
+    },
+    {
+      "phone": "9940045663",
+      "name": "R.MANIGANDAN",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        236
+      ]
+    },
+    {
+      "phone": "9942574520",
+      "name": "MARUTHALAM MOORTHY",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        90
+      ]
+    },
+    {
+      "phone": "9943033578",
+      "name": "B.AANAND",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        168
+      ]
+    },
+    {
+      "phone": "9943379488",
+      "name": "MANIMARAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        105
+      ]
+    },
+    {
+      "phone": "9943463484",
+      "name": "N ARJUNAN",
+      "role": "Booth President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        37
+      ]
+    },
+    {
+      "phone": "9943686200",
+      "name": "K RAVIKUMAR",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        157
+      ]
+    },
+    {
+      "phone": "9943686676",
+      "name": "KANNAN",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        135
+      ]
+    },
+    {
+      "phone": "9943719797",
+      "name": "MANIKANDAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        202
+      ]
+    },
+    {
+      "phone": "9944274088",
+      "name": "BHEEM PRASANTH",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        244
+      ]
+    },
+    {
+      "phone": "9965369678",
+      "name": "MALARVILI",
+      "role": "Booth President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        127
+      ]
+    },
+    {
+      "phone": "9994260788",
+      "name": "M.IYYAPPAN",
+      "role": "Booth President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        210
+      ]
+    },
+    {
+      "phone": "9994534635",
+      "name": "NAGARAJ",
+      "role": "Booth President",
+      "mandal": "MANJOOR",
+      "booths": [
+        237
+      ]
+    },
+    {
+      "phone": "6383437973",
+      "name": "VARUN SEKAR",
+      "role": "Mandal President",
+      "mandal": "OOTY WEST",
+      "booths": [
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199
+      ]
+    },
+    {
+      "phone": "8098858717",
+      "name": "KALPANA SIVA",
+      "role": "Mandal President",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228
+      ]
+    },
+    {
+      "phone": "8838290435",
+      "name": "SATISH",
+      "role": "Mandal President",
+      "mandal": "OOTY EAST",
+      "booths": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33
+      ]
+    },
+    {
+      "phone": "9524241177",
+      "name": "MEENAKUMARI",
+      "role": "Mandal President",
+      "mandal": "MANJOOR",
+      "booths": [
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254
+      ]
+    },
+    {
+      "phone": "9942091339",
+      "name": "KARTHICK",
+      "role": "Mandal President",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175
+      ]
+    },
+    {
+      "phone": "9943174202",
+      "name": "GANESHAN.S",
+      "role": "Mandal President",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ]
+    },
+    {
+      "phone": "6369412913",
+      "name": "SAJEEVAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        163
+      ]
+    },
+    {
+      "phone": "6380325741",
+      "name": "RAVIRAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        1
+      ]
+    },
+    {
+      "phone": "6381412941",
+      "name": "SRI DEVI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        141
+      ]
+    },
+    {
+      "phone": "6382219361",
+      "name": "RAVICHANDRAN",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        232
+      ]
+    },
+    {
+      "phone": "7598409414",
+      "name": "JAYARAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        70
+      ]
+    },
+    {
+      "phone": "7598466501",
+      "name": "VINOTHAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        60
+      ]
+    },
+    {
+      "phone": "7639459728",
+      "name": "B DHARUMAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        4
+      ]
+    },
+    {
+      "phone": "7639587093",
+      "name": "R KARTHIKEYAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        182
+      ]
+    },
+    {
+      "phone": "8015541336",
+      "name": "VASU",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        136
+      ]
+    },
+    {
+      "phone": "8072852567",
+      "name": "SANJAY",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        57
+      ]
+    },
+    {
+      "phone": "8098058950",
+      "name": "RAJKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        191
+      ]
+    },
+    {
+      "phone": "8098869216",
+      "name": "NEHRU",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        236
+      ]
+    },
+    {
+      "phone": "8122835438",
+      "name": "GEETHA",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        74
+      ]
+    },
+    {
+      "phone": "8248947670",
+      "name": "GYANAPRAKASH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        10
+      ]
+    },
+    {
+      "phone": "8489514995",
+      "name": "VADIVEL",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        216
+      ]
+    },
+    {
+      "phone": "8525017797",
+      "name": "VINOTH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        225
+      ]
+    },
+    {
+      "phone": "9080016811",
+      "name": "NAVEEN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        86
+      ]
+    },
+    {
+      "phone": "9095020075",
+      "name": "GAYATHRI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        146
+      ]
+    },
+    {
+      "phone": "9159138183",
+      "name": "DHARMAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        203
+      ]
+    },
+    {
+      "phone": "9159138458",
+      "name": "VINOTH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        51
+      ]
+    },
+    {
+      "phone": "9176261503",
+      "name": "G BABU",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        45
+      ]
+    },
+    {
+      "phone": "9213149597",
+      "name": "SUBRATHO MANDOL",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        245
+      ]
+    },
+    {
+      "phone": "9361433909",
+      "name": "PRASATH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        114
+      ]
+    },
+    {
+      "phone": "9442087515",
+      "name": "KAMALAKANNAN",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        241
+      ]
+    },
+    {
+      "phone": "9442348157",
+      "name": "A CHANDRAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        28
+      ]
+    },
+    {
+      "phone": "9442420437",
+      "name": "HARI KRISHNAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        119
+      ]
+    },
+    {
+      "phone": "9442559950",
+      "name": "M SUBRAMANI",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        229
+      ]
+    },
+    {
+      "phone": "9442607649",
+      "name": "J RAMAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        19
+      ]
+    },
+    {
+      "phone": "9443050166",
+      "name": "MOHANRAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        96
+      ]
+    },
+    {
+      "phone": "9443083627",
+      "name": "UMA MAGESHWARI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        111
+      ]
+    },
+    {
+      "phone": "9443102363",
+      "name": "K NANDHAKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        185
+      ]
+    },
+    {
+      "phone": "9443553913",
+      "name": "RAGHU",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        149
+      ]
+    },
+    {
+      "phone": "9443553985",
+      "name": "VASU",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        77
+      ]
+    },
+    {
+      "phone": "9443604052",
+      "name": "SUDHAGAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        166
+      ]
+    },
+    {
+      "phone": "9443604246",
+      "name": "KANNAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        160
+      ]
+    },
+    {
+      "phone": "9443613822",
+      "name": "MANJUNATH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        103
+      ]
+    },
+    {
+      "phone": "9486436755",
+      "name": "MAYILSAMY",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        133
+      ]
+    },
+    {
+      "phone": "9486449922",
+      "name": "SENTHIL",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        89
+      ]
+    },
+    {
+      "phone": "9486451035",
+      "name": "MENAGA",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        27
+      ]
+    },
+    {
+      "phone": "9487316922",
+      "name": "RAJKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        122
+      ]
+    },
+    {
+      "phone": "9488361089",
+      "name": "PARAMASIVAM",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        92
+      ]
+    },
+    {
+      "phone": "9488550704",
+      "name": "ARUN KUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        109
+      ]
+    },
+    {
+      "phone": "9488767832",
+      "name": "RAMESH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        200
+      ]
+    },
+    {
+      "phone": "9488769468",
+      "name": "KRISHNAMOORTHY",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        233
+      ]
+    },
+    {
+      "phone": "9489425628",
+      "name": "KRISHNAMOORTHY",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        53
+      ]
+    },
+    {
+      "phone": "9585138002",
+      "name": "SARAVANA KUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        179
+      ]
+    },
+    {
+      "phone": "9585311660",
+      "name": "BALRAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        34
+      ]
+    },
+    {
+      "phone": "9585599122",
+      "name": "ANITHA KRISHNAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        125
+      ]
+    },
+    {
+      "phone": "9585903766",
+      "name": "K KRISHNAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        80
+      ]
+    },
+    {
+      "phone": "9600291113",
+      "name": "NAGARAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        129
+      ]
+    },
+    {
+      "phone": "9626224639",
+      "name": "SURYA DEVAN",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        246
+      ]
+    },
+    {
+      "phone": "9626690407",
+      "name": "LOGANATHAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        42
+      ]
+    },
+    {
+      "phone": "9626954676",
+      "name": "RATHI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        64
+      ]
+    },
+    {
+      "phone": "9626967941",
+      "name": "SELVARAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        213
+      ]
+    },
+    {
+      "phone": "9655056699",
+      "name": "RAMA MOORTHI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        83
+      ]
+    },
+    {
+      "phone": "9688722022",
+      "name": "C PRAVEEN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        173
+      ]
+    },
+    {
+      "phone": "9751016466",
+      "name": "SARAVANAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        48
+      ]
+    },
+    {
+      "phone": "9751273937",
+      "name": "GANESH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        79
+      ]
+    },
+    {
+      "phone": "9751378912",
+      "name": "ASHOK KUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        222
+      ]
+    },
+    {
+      "phone": "9751510426",
+      "name": "ABHIRAMI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        169
+      ]
+    },
+    {
+      "phone": "9751511020",
+      "name": "D NANDHAKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        197
+      ]
+    },
+    {
+      "phone": "9787388769",
+      "name": "B BABU",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        20
+      ]
+    },
+    {
+      "phone": "9787524334",
+      "name": "PREETHI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        99
+      ]
+    },
+    {
+      "phone": "9787558551",
+      "name": "GOPINATH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        67
+      ]
+    },
+    {
+      "phone": "9787743669",
+      "name": "NITHIN SEKAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        152
+      ]
+    },
+    {
+      "phone": "9787922648",
+      "name": "M JOTHI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        187
+      ]
+    },
+    {
+      "phone": "9842669865",
+      "name": "H CHANDRAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        13
+      ]
+    },
+    {
+      "phone": "9843036140",
+      "name": "RAJESH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        16
+      ]
+    },
+    {
+      "phone": "9843039432",
+      "name": "PARAMESWARAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        25
+      ]
+    },
+    {
+      "phone": "9843065127",
+      "name": "RAMKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        188
+      ]
+    },
+    {
+      "phone": "9843507199",
+      "name": "GEORGE CLAMENT",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        139
+      ]
+    },
+    {
+      "phone": "9865397375",
+      "name": "ABILASH",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY WEST",
+      "booths": [
+        176
+      ]
+    },
+    {
+      "phone": "9940996771",
+      "name": "REVATHI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY EAST",
+      "booths": [
+        7
+      ]
+    },
+    {
+      "phone": "9943019005",
+      "name": "MURALI",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        38
+      ]
+    },
+    {
+      "phone": "9943033471",
+      "name": "GANESHAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        219
+      ]
+    },
+    {
+      "phone": "9943059090",
+      "name": "NANDHAKUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        253
+      ]
+    },
+    {
+      "phone": "9943385325",
+      "name": "SREEDHARAN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        155
+      ]
+    },
+    {
+      "phone": "9943396488",
+      "name": "PRAVEEN KUMAR",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        145
+      ]
+    },
+    {
+      "phone": "9943928664",
+      "name": "PRIYA",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NORTH",
+      "booths": [
+        35
+      ]
+    },
+    {
+      "phone": "9944302294",
+      "name": "S PRAVEEN",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY NAGAR",
+      "booths": [
+        106
+      ]
+    },
+    {
+      "phone": "9952299052",
+      "name": "RADHA SHANMUGAM",
+      "role": "Sakthi Kendra",
+      "mandal": "MANJOOR",
+      "booths": [
+        240
+      ]
+    },
+    {
+      "phone": "9952326093",
+      "name": "NAGARAJ",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        210
+      ]
+    },
+    {
+      "phone": "9952893072",
+      "name": "NIRMAL",
+      "role": "Sakthi Kendra",
+      "mandal": "OOTY SOUTH",
+      "booths": [
+        72
+      ]
+    }
+  ]
+}
