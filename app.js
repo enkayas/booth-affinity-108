@@ -1,4 +1,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzjoXHcSGmvVQjBi6OCjzsqlo1Rs7O2yyaSO7HNmjbZLizc5wA2FjsUu0Oushgrk-9C/exec';
+const DRAFT_STORAGE_KEY = 'booth_affinity_drafts_v1';
+const DRAFT_PERSIST_DELAY_MS = 120;
+const RETRY_SYNC_DELAY_MS = 5000;
 
 const state = {
   staticData: null,
@@ -12,8 +15,12 @@ const state = {
   pageCache: {},
   pendingBoothLoads: {},
   prefetchStarted: false,
+  localDrafts: {},
   editingRows: new Set(),
-  pendingSaveTimer: null
+  pendingSaveTimer: null,
+  pendingDraftPersistTimer: null,
+  retrySyncTimer: null,
+  syncInProgress: false
 };
 
 const els = {};
@@ -32,10 +39,62 @@ function setLoginError(msg) {
   if (els.loginError) els.loginError.textContent = msg || '';
 }
 
-function setAffinitySaveStatus(msg, isError = false) {
+function setAffinitySaveStatus(msg, tone = 'muted') {
   if (!els.affinitySaveStatus) return;
   els.affinitySaveStatus.textContent = msg || '';
-  els.affinitySaveStatus.style.color = isError ? '#c62828' : '#6b7280';
+  const colors = {
+    muted: '#6b7280',
+    success: '#15803d',
+    warning: '#b45309',
+    error: '#c62828'
+  };
+  els.affinitySaveStatus.style.color = colors[tone] || colors.muted;
+}
+
+function getDraftStorageId() {
+  return String(state.user?.phone || 'anonymous');
+}
+
+function readLocalDrafts() {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    const drafts = parsed[getDraftStorageId()];
+    return drafts && typeof drafts === 'object' ? drafts : {};
+  } catch (err) {
+    console.error('Unable to read local drafts:', err.message || err);
+    return {};
+  }
+}
+
+function writeLocalDrafts() {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const store = parsed && typeof parsed === 'object' ? parsed : {};
+    const storageId = getDraftStorageId();
+    const keys = Object.keys(state.localDrafts || {});
+    if (keys.length) {
+      store[storageId] = state.localDrafts;
+    } else {
+      delete store[storageId];
+    }
+
+    if (!Object.keys(store).length) {
+      window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(store));
+  } catch (err) {
+    console.error('Unable to write local drafts:', err.message || err);
+  }
+}
+
+function getCurrentBoothNumber() {
+  return Number(state.selectedBooth?.booth) || 0;
 }
 
 async function loadStaticData() {
@@ -85,11 +144,12 @@ function callApi(payload) {
   });
 }
 
-async function postApi(payload) {
+async function postApi(payload, options = {}) {
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    keepalive: !!options.keepalive
   });
   return res.json();
 }
@@ -117,20 +177,67 @@ function renderBoothDropdown() {
   });
 }
 
+function formatPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '').slice(-10);
+  if (digits.length !== 10) return String(phone || '');
+  return `${digits.slice(0, 5)} ${digits.slice(5)}`;
+}
+
+function renderBoothMetaSummary() {
+  const b = state.selectedBooth;
+  if (!els.boothMetaSummary) return;
+
+  if (!b) {
+    els.boothMetaSummary.innerHTML = '<div class="muted">Booth, mandal, and voter count will appear here</div>';
+    return;
+  }
+
+  els.boothMetaSummary.innerHTML = `
+    <div class="mini-detail-grid">
+      <div><strong>Booth #</strong><span>${b.booth}</span></div>
+      <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
+      <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
+    </div>
+  `;
+}
+
+function getBoothContacts(booth) {
+  if (!state.staticData?.users || !booth) return [];
+
+  const boothNo = Number(booth);
+  const roleOrder = ['Mandal President', 'Sakthi Kendra', 'BLA2', 'Booth President'];
+
+  return state.staticData.users
+    .filter(u => Array.isArray(u.booths) && u.booths.includes(boothNo) && roleOrder.includes(u.role))
+    .sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
+}
+
 function renderBoothDetails() {
   const b = state.selectedBooth;
   if (!b) {
+    renderBoothMetaSummary();
     els.boothDetails.innerHTML = '<div class="muted">Select a booth to see details</div>';
     return;
   }
 
+  renderBoothMetaSummary();
+
+  const contacts = getBoothContacts(b.booth);
   els.boothDetails.innerHTML = `
-    <div class="detail-grid">
-      <div><strong>Booth</strong><span>${b.booth}</span></div>
-      <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
-      <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
-      <div><strong>Polling Station</strong><span>${b.pollingStation || ''}</span></div>
-      <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
+    <div class="booth-details-layout">
+      <div class="detail-grid detail-grid-location">
+        <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
+        <div><strong>Polling Station</strong><span>${b.pollingStation || ''}</span></div>
+      </div>
+      <div class="contact-grid">
+        ${contacts.length ? contacts.map(contact => `
+          <div class="contact-card">
+            <strong>${contact.role}</strong>
+            <span>${contact.name || ''}</span>
+            <span>${formatPhone(contact.phone)}</span>
+          </div>
+        `).join('') : '<div class="muted">No role contacts found for this booth</div>'}
+      </div>
     </div>
   `;
 }
@@ -175,6 +282,61 @@ function cloneBoothData(boothData) {
     },
     completionPct: boothData.completionPct || 0
   };
+}
+
+function buildDraftFromBoothData(boothData) {
+  if (!boothData?.voters?.length) return null;
+
+  const voters = boothData.voters
+    .filter(v => v.affinity)
+    .map(v => ({ slNo: v.slNo, affinity: v.affinity }));
+
+  return {
+    voters,
+    updatedAt: Date.now()
+  };
+}
+
+function setDraftForBooth(boothNo, boothData) {
+  if (!boothNo || !boothData) return;
+  const draft = buildDraftFromBoothData(boothData);
+  if (!draft) return;
+  state.localDrafts[String(boothNo)] = draft;
+}
+
+function clearDraftForBooth(boothNo) {
+  if (!boothNo) return;
+  delete state.localDrafts[String(boothNo)];
+}
+
+function getDraftForBooth(boothNo) {
+  return state.localDrafts[String(boothNo)] || null;
+}
+
+function applyDraftToBoothData(boothData, boothNo, totalVoters = state.selectedBooth?.totalVoters || 0) {
+  const draft = getDraftForBooth(boothNo);
+  if (!draft?.voters?.length) return false;
+  applySavedAffinity(draft.voters, boothData, totalVoters);
+  return true;
+}
+
+function persistDraftsNow() {
+  if (state.pendingDraftPersistTimer) {
+    clearTimeout(state.pendingDraftPersistTimer);
+    state.pendingDraftPersistTimer = null;
+  }
+  writeLocalDrafts();
+}
+
+function queueDraftPersist() {
+  if (state.pendingDraftPersistTimer) {
+    clearTimeout(state.pendingDraftPersistTimer);
+  }
+
+  state.pendingDraftPersistTimer = setTimeout(() => {
+    writeLocalDrafts();
+    state.pendingDraftPersistTimer = null;
+  }, DRAFT_PERSIST_DELAY_MS);
 }
 
 function cacheCurrentBoothData() {
@@ -251,8 +413,8 @@ function renderVoters() {
   const pageRows = voters.slice(start, end);
 
   els.votersContainer.innerHTML = `
-    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <div class="voters-toolbar">
+      <div class="voters-toolbar-group">
         <button id="prevPageBtn" type="button" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>
         <button id="nextPageBtn" type="button" ${state.currentPage === totalPages ? 'disabled' : ''}>Next</button>
         <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
@@ -325,10 +487,13 @@ function updateLocalSelection(slNo, affinity) {
   const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
   state.boothData.summary = calc.summary;
   state.boothData.completionPct = calc.completionPct;
+  setDraftForBooth(getCurrentBoothNumber(), state.boothData);
+  queueDraftPersist();
   cacheCurrentBoothData();
 
   renderSummary();
   renderVoters();
+  setAffinitySaveStatus('Saving changes...', 'warning');
   queueBackgroundSave();
 }
 
@@ -343,7 +508,7 @@ function onAffinityClick(e) {
 
 async function onSaveBooth() {
   if (!state.selectedBooth || !state.boothData?.voters?.length) {
-    setAffinitySaveStatus('Select a booth before submitting affinity.', true);
+    setAffinitySaveStatus('Select a booth before submitting affinity.', 'error');
     return false;
   }
 
@@ -354,40 +519,100 @@ async function onSaveBooth() {
 
   try {
     showLoading(true);
-    setAffinitySaveStatus('');
-    const ok = await saveCurrentBoothSilently();
-    setAffinitySaveStatus(
-      ok ? 'Affinity submitted successfully.' : 'Unable to submit affinity. Please try again.',
-      !ok
-    );
-    return ok;
+    return await saveCurrentBoothSilently();
   } finally {
     showLoading(false);
   }
 }
 
-async function saveCurrentBoothSilently() {
-  if (!state.selectedBooth || !state.boothData) return true;
+function buildSavePayload(boothNo, boothData) {
+  return {
+    action: 'saveBoothAffinities',
+    booth: boothNo,
+    voters: boothData.voters
+  };
+}
+
+function getBoothDataForSave(boothNo, boothDataOverride = null) {
+  const selected = getBoothConfig(boothNo);
+  if (!selected) return null;
+
+  let boothData = boothDataOverride
+    ? cloneBoothData(boothDataOverride)
+    : boothNo === getCurrentBoothNumber() && state.boothData
+      ? cloneBoothData(state.boothData)
+      : state.pageCache[boothNo]
+        ? cloneBoothData(state.pageCache[boothNo])
+        : createBoothData(selected.totalVoters);
+
+  applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
+  return boothData;
+}
+
+function finalizeSaveSuccess(boothNo, boothData, result) {
+  boothData.summary = result.summary || boothData.summary;
+  boothData.completionPct = result.completionPct || boothData.completionPct;
+  state.pageCache[boothNo] = cloneBoothData(boothData);
+  clearDraftForBooth(boothNo);
+  queueDraftPersist();
+
+  if (boothNo === getCurrentBoothNumber() && state.boothData) {
+    state.boothData.summary = boothData.summary;
+    state.boothData.completionPct = boothData.completionPct;
+    cacheCurrentBoothData();
+    renderSummary();
+  }
+}
+
+function scheduleRetrySync() {
+  if (state.retrySyncTimer) {
+    clearTimeout(state.retrySyncTimer);
+  }
+
+  if (!Object.keys(state.localDrafts || {}).length) return;
+
+  state.retrySyncTimer = setTimeout(() => {
+    state.retrySyncTimer = null;
+    syncPendingDrafts();
+  }, RETRY_SYNC_DELAY_MS);
+}
+
+async function saveCurrentBoothSilently(options = {}) {
+  const boothNo = Number(options.boothNo || getCurrentBoothNumber());
+  if (!boothNo) return true;
+
+  const boothData = getBoothDataForSave(boothNo, options.boothData || null);
+  if (!boothData) return true;
 
   try {
-    const result = await postApi({
-      action: 'saveBoothAffinities',
-      booth: state.selectedBooth.booth,
-      voters: state.boothData.voters
+    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+      setAffinitySaveStatus('Saving changes...', 'warning');
+    }
+
+    const result = await postApi(buildSavePayload(boothNo, boothData), {
+      keepalive: !!options.keepalive
     });
 
     if (!result.ok) {
       console.error(result.message || 'Background save failed');
+      if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+        setAffinitySaveStatus('Save failed. Changes kept on device and will retry.', 'error');
+      }
+      scheduleRetrySync();
       return false;
     }
 
-    state.boothData.summary = result.summary || state.boothData.summary;
-    state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
-    cacheCurrentBoothData();
-    renderSummary();
+    finalizeSaveSuccess(boothNo, boothData, result);
+    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+      setAffinitySaveStatus('All changes saved.', 'success');
+    }
     return true;
   } catch (err) {
     console.error(err.message || 'Background save failed');
+    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+      setAffinitySaveStatus('Save failed. Changes kept on device and will retry.', 'error');
+    }
+    scheduleRetrySync();
     return false;
   }
 }
@@ -401,6 +626,59 @@ function queueBackgroundSave() {
     saveCurrentBoothSilently();
     state.pendingSaveTimer = null;
   }, 400);
+}
+
+async function syncPendingDrafts() {
+  if (state.syncInProgress || !state.user) return;
+
+  const draftBooths = Object.keys(state.localDrafts || {})
+    .map(Number)
+    .filter(boothNo => !!getBoothConfig(boothNo));
+
+  if (!draftBooths.length) return;
+
+  state.syncInProgress = true;
+
+  try {
+    for (const boothNo of draftBooths) {
+      await saveCurrentBoothSilently({
+        boothNo,
+        silentStatus: boothNo !== getCurrentBoothNumber()
+      });
+    }
+  } finally {
+    state.syncInProgress = false;
+  }
+}
+
+function flushPendingBoothData() {
+  const boothNo = getCurrentBoothNumber();
+  if (!boothNo || !getDraftForBooth(boothNo)) return;
+
+  persistDraftsNow();
+
+  const boothData = getBoothDataForSave(boothNo);
+  if (!boothData) return;
+
+  const payload = buildSavePayload(boothNo, boothData);
+  const body = JSON.stringify(payload);
+
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([body], { type: 'text/plain;charset=utf-8' });
+      navigator.sendBeacon(API_URL, blob);
+      return;
+    }
+  } catch (err) {
+    console.error('sendBeacon failed:', err.message || err);
+  }
+
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body,
+    keepalive: true
+  }).catch(() => {});
 }
 
 async function changePage(direction) {
@@ -436,17 +714,24 @@ function fetchBoothData(booth) {
   }
 
   if (state.pageCache[boothNo]) {
-    return Promise.resolve(cloneBoothData(state.pageCache[boothNo]));
+    const cached = cloneBoothData(state.pageCache[boothNo]);
+    applyDraftToBoothData(cached, boothNo, selected.totalVoters || 0);
+    return Promise.resolve(cached);
   }
 
   if (state.pendingBoothLoads[boothNo]) {
-    return state.pendingBoothLoads[boothNo].then(cloneBoothData);
+    return state.pendingBoothLoads[boothNo].then(boothData => {
+      const cloned = cloneBoothData(boothData);
+      applyDraftToBoothData(cloned, boothNo, selected.totalVoters || 0);
+      return cloned;
+    });
   }
 
   const request = (async () => {
     const boothData = createBoothData(selected.totalVoters);
     const savedRows = await loadSavedAffinity(boothNo);
     applySavedAffinity(savedRows, boothData, selected.totalVoters || 0);
+    applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
     state.pageCache[boothNo] = cloneBoothData(boothData);
     return boothData;
   })();
@@ -508,6 +793,12 @@ async function loadBoothData(booth) {
   renderSummary();
   renderVoters();
   updateSubmitButton();
+  setAffinitySaveStatus(
+    getDraftForBooth(Number(booth))
+      ? 'Recovered unsaved local changes. Sync pending.'
+      : '',
+    getDraftForBooth(Number(booth)) ? 'warning' : 'muted'
+  );
 }
 
 async function onBoothChange() {
@@ -595,6 +886,7 @@ function onLoginSubmit(e) {
     mandal: user.mandal
   };
 
+  state.localDrafts = readLocalDrafts();
   state.booths = getBoothsForUser(user);
   state.boothMap = new Map(state.booths.map(b => [Number(b.booth), b]));
   state.pageCache = {};
@@ -610,9 +902,23 @@ function onLoginSubmit(e) {
   renderSummary();
   renderVoters();
   warmBoothCache();
+  syncPendingDrafts();
 }
 
 function logout() {
+  persistDraftsNow();
+  if (state.pendingSaveTimer) {
+    clearTimeout(state.pendingSaveTimer);
+    state.pendingSaveTimer = null;
+  }
+  if (state.retrySyncTimer) {
+    clearTimeout(state.retrySyncTimer);
+    state.retrySyncTimer = null;
+  }
+  if (state.pendingDraftPersistTimer) {
+    clearTimeout(state.pendingDraftPersistTimer);
+    state.pendingDraftPersistTimer = null;
+  }
   state.user = null;
   state.booths = [];
   state.boothMap = new Map();
@@ -621,6 +927,8 @@ function logout() {
   state.pageCache = {};
   state.pendingBoothLoads = {};
   state.prefetchStarted = false;
+  state.localDrafts = {};
+  state.syncInProgress = false;
 
   els.phone.value = '';
   els.password.value = '';
@@ -642,6 +950,7 @@ async function init() {
   els.userName = byId('userName');
   els.userMeta = byId('userMeta');
   els.boothSelect = byId('boothSelect');
+  els.boothMetaSummary = byId('boothMetaSummary');
   els.boothDetails = byId('boothDetails');
   els.votersContainer = byId('votersContainer');
   els.submitAffinityBtn = byId('submitAffinityBtn');
@@ -661,6 +970,13 @@ async function init() {
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
   if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
+  window.addEventListener('online', syncPendingDrafts);
+  window.addEventListener('pagehide', flushPendingBoothData);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushPendingBoothData();
+    }
+  });
 
   renderBoothDetails();
   renderSummary();
