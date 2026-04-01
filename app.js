@@ -9,9 +9,8 @@ const state = {
   currentPage: 1,
   pageSize: 20,
   pageCache: {},
-  dirtyPages: new Set(),
   editingRows: new Set(),
-  pendingAutoSave: null
+  pendingSaveTimer: null
 };
 
 const els = {};
@@ -178,10 +177,6 @@ function isRowLocked(slNo) {
   return !!voter.affinity && !state.editingRows.has(slNo);
 }
 
-function isRowEditing(slNo) {
-  return state.editingRows.has(slNo);
-}
-
 function renderVoters() {
   const voters = state.boothData?.voters || [];
   if (!voters.length) {
@@ -200,16 +195,14 @@ function renderVoters() {
         <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
         <span class="muted">Showing SL# ${start + 1} to ${Math.min(end, voters.length)}</span>
       </div>
-      <button id="saveBoothBtn" type="button">Save Booth</button>
     </div>
 
     ${pageRows.map(v => {
       const locked = isRowLocked(v.slNo);
-      const editing = isRowEditing(v.slNo);
       const rowClass = locked ? ' voter-row-locked' : '';
       return `
-        <div class="voter-row${rowClass}" style="${locked ? 'border:3px solid #f97316;' : ''}">
-          <div class="sl-box">SL# ${v.slNo}</div>
+        <div class="voter-row${rowClass}">
+          <div class="sl-box" style="${locked ? 'background:#d1d5db;' : 'background:#e5e7eb;'}">SL# ${v.slNo}</div>
           <div class="affinity-group">
             ${affinityButton('A', v.affinity, v.slNo)}
             ${affinityButton('B', v.affinity, v.slNo)}
@@ -217,10 +210,6 @@ function renderVoters() {
             ${affinityButton('D', v.affinity, v.slNo)}
             ${affinityButton('E', v.affinity, v.slNo)}
           </div>
-          <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;">
-            <input class="edit-row-checkbox" type="checkbox" data-sl="${v.slNo}" ${editing ? 'checked' : ''}>
-            Edit
-          </label>
         </div>
       `;
     }).join('')}
@@ -230,15 +219,9 @@ function renderVoters() {
     btn.addEventListener('click', onAffinityClick);
   });
 
-  els.votersContainer.querySelectorAll('.edit-row-checkbox').forEach(box => {
-    box.addEventListener('change', onEditRowToggle);
-  });
-
-  const saveBtn = byId('saveBoothBtn');
   const prevBtn = byId('prevPageBtn');
   const nextBtn = byId('nextPageBtn');
 
-  if (saveBtn) saveBtn.addEventListener('click', onSaveBooth);
   if (prevBtn) prevBtn.addEventListener('click', () => changePage(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => changePage(1));
 }
@@ -277,8 +260,6 @@ function updateLocalSelection(slNo, affinity) {
 
   voter.affinity = affinity;
   state.editingRows.delete(slNo);
-  const { start } = getCurrentPageBounds();
-  state.dirtyPages.add(Math.floor(start / state.pageSize) + 1);
 
   const calc = calculateSummary(state.boothData.voters);
   state.boothData.summary = calc.summary;
@@ -286,6 +267,7 @@ function updateLocalSelection(slNo, affinity) {
 
   renderSummary();
   renderVoters();
+  queueBackgroundSave();
 }
 
 function onAffinityClick(e) {
@@ -297,50 +279,12 @@ function onAffinityClick(e) {
   updateLocalSelection(slNo, affinity);
 }
 
-function onEditRowToggle(e) {
-  const slNo = Number(e.currentTarget.dataset.sl);
-  if (!slNo) return;
-
-  if (e.currentTarget.checked) {
-    state.editingRows.add(slNo);
-  } else {
-    state.editingRows.delete(slNo);
-  }
-
-  renderVoters();
-}
-
 async function onSaveBooth() {
-  try {
-    showLoading(true);
-
-    const result = await postApi({
-      action: 'saveBoothAffinities',
-      booth: state.selectedBooth.booth,
-      voters: state.boothData.voters
-    });
-
-    if (!result.ok) {
-      alert(result.message || 'Save failed');
-      return;
-    }
-
-    state.boothData.summary = result.summary || state.boothData.summary;
-    state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
-    state.dirtyPages.clear();
-    renderSummary();
-
-    alert('Booth saved');
-  } catch (err) {
-    alert(err.message || 'Save failed');
-  } finally {
-    showLoading(false);
-  }
+  return saveCurrentBoothSilently();
 }
 
 async function saveCurrentBoothSilently() {
   if (!state.selectedBooth || !state.boothData) return true;
-  if (state.dirtyPages.size === 0) return true;
 
   try {
     const result = await postApi({
@@ -350,19 +294,29 @@ async function saveCurrentBoothSilently() {
     });
 
     if (!result.ok) {
-      alert(result.message || 'Auto-save failed');
+      console.error(result.message || 'Background save failed');
       return false;
     }
 
     state.boothData.summary = result.summary || state.boothData.summary;
     state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
-    state.dirtyPages.clear();
     renderSummary();
     return true;
   } catch (err) {
-    alert(err.message || 'Auto-save failed');
+    console.error(err.message || 'Background save failed');
     return false;
   }
+}
+
+function queueBackgroundSave() {
+  if (state.pendingSaveTimer) {
+    clearTimeout(state.pendingSaveTimer);
+  }
+
+  state.pendingSaveTimer = setTimeout(() => {
+    saveCurrentBoothSilently();
+    state.pendingSaveTimer = null;
+  }, 400);
 }
 
 async function changePage(direction) {
@@ -375,20 +329,6 @@ async function changePage(direction) {
 
   state.currentPage = newPage;
   renderVoters();
-
-  if (state.pendingAutoSave) {
-    clearTimeout(state.pendingAutoSave);
-  }
-
-  state.pendingAutoSave = setTimeout(async () => {
-    showLoading(true);
-    try {
-      await saveCurrentBoothSilently();
-    } finally {
-      showLoading(false);
-      state.pendingAutoSave = null;
-    }
-  }, 300);
 }
 
 async function loadSavedAffinity(booth) {
@@ -410,11 +350,10 @@ async function loadBoothData(booth) {
 
   state.selectedBooth = selected;
   state.currentPage = 1;
-  state.dirtyPages.clear();
   state.editingRows.clear();
-  if (state.pendingAutoSave) {
-    clearTimeout(state.pendingAutoSave);
-    state.pendingAutoSave = null;
+  if (state.pendingSaveTimer) {
+    clearTimeout(state.pendingSaveTimer);
+    state.pendingSaveTimer = null;
   }
 
   state.boothData = {
