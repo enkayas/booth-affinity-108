@@ -6952,6 +6952,34 @@
       "booths": [
         155
       ]
+    },
+    {
+      "phone": "9962541214",
+      "name": "Saravanan NK",
+      "role": "ADMIN",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9740067042",
+      "name": "Sivasankar",
+      "role": "ADMIN",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9443522730",
+      "name": "DHARUMAN",
+      "role": "MANAGER",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9443031246",
+      "name": "BHORARAJ",
+      "role": "MANAGER",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
     }
   ]
 }
