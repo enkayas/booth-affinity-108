@@ -7,7 +7,11 @@ const state = {
   selectedBooth: null,
   boothData: null,
   currentPage: 1,
-  pageSize: 20
+  pageSize: 20,
+  pageCache: {},
+  dirtyPages: new Set(),
+  editingRows: new Set(),
+  pendingAutoSave: null
 };
 
 const els = {};
@@ -150,11 +154,32 @@ function renderSummary() {
 
 function affinityButton(code, current, slNo) {
   const active = current === code ? 'active' : '';
+  const locked = isRowLocked(slNo) ? 'disabled' : '';
   return `
-    <button class="affinity-btn affinity-${code} ${active}" data-sl="${slNo}" data-affinity="${code}" type="button">
+    <button class="affinity-btn affinity-${code} ${active}" data-sl="${slNo}" data-affinity="${code}" type="button" ${locked}>
       ${code}
     </button>
   `;
+}
+
+function getCurrentPageBounds() {
+  const voters = state.boothData?.voters || [];
+  const totalPages = Math.max(1, Math.ceil(voters.length / state.pageSize));
+  if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+  const start = (state.currentPage - 1) * state.pageSize;
+  const end = start + state.pageSize;
+  return { start, end, totalPages };
+}
+
+function isRowLocked(slNo) {
+  const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
+  if (!voter) return false;
+  return !!voter.affinity && !state.editingRows.has(slNo);
+}
+
+function isRowEditing(slNo) {
+  return state.editingRows.has(slNo);
 }
 
 function renderVoters() {
@@ -164,11 +189,7 @@ function renderVoters() {
     return;
   }
 
-  const totalPages = Math.max(1, Math.ceil(voters.length / state.pageSize));
-  if (state.currentPage > totalPages) state.currentPage = totalPages;
-
-  const start = (state.currentPage - 1) * state.pageSize;
-  const end = start + state.pageSize;
+  const { start, end, totalPages } = getCurrentPageBounds();
   const pageRows = voters.slice(start, end);
 
   els.votersContainer.innerHTML = `
@@ -182,22 +203,35 @@ function renderVoters() {
       <button id="saveBoothBtn" type="button">Save Booth</button>
     </div>
 
-    ${pageRows.map(v => `
-      <div class="voter-row">
-        <div class="sl-box">SL# ${v.slNo}</div>
-        <div class="affinity-group">
-          ${affinityButton('A', v.affinity, v.slNo)}
-          ${affinityButton('B', v.affinity, v.slNo)}
-          ${affinityButton('C', v.affinity, v.slNo)}
-          ${affinityButton('D', v.affinity, v.slNo)}
-          ${affinityButton('E', v.affinity, v.slNo)}
+    ${pageRows.map(v => {
+      const locked = isRowLocked(v.slNo);
+      const editing = isRowEditing(v.slNo);
+      const rowClass = locked ? ' voter-row-locked' : '';
+      return `
+        <div class="voter-row${rowClass}" style="${locked ? 'border:3px solid #f97316;' : ''}">
+          <div class="sl-box">SL# ${v.slNo}</div>
+          <div class="affinity-group">
+            ${affinityButton('A', v.affinity, v.slNo)}
+            ${affinityButton('B', v.affinity, v.slNo)}
+            ${affinityButton('C', v.affinity, v.slNo)}
+            ${affinityButton('D', v.affinity, v.slNo)}
+            ${affinityButton('E', v.affinity, v.slNo)}
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap;">
+            <input class="edit-row-checkbox" type="checkbox" data-sl="${v.slNo}" ${editing ? 'checked' : ''}>
+            Edit
+          </label>
         </div>
-      </div>
-    `).join('')}
+      `;
+    }).join('')}
   `;
 
   els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
     btn.addEventListener('click', onAffinityClick);
+  });
+
+  els.votersContainer.querySelectorAll('.edit-row-checkbox').forEach(box => {
+    box.addEventListener('change', onEditRowToggle);
   });
 
   const saveBtn = byId('saveBoothBtn');
@@ -242,6 +276,9 @@ function updateLocalSelection(slNo, affinity) {
   if (!voter) return;
 
   voter.affinity = affinity;
+  state.editingRows.delete(slNo);
+  const { start } = getCurrentPageBounds();
+  state.dirtyPages.add(Math.floor(start / state.pageSize) + 1);
 
   const calc = calculateSummary(state.boothData.voters);
   state.boothData.summary = calc.summary;
@@ -258,6 +295,19 @@ function onAffinityClick(e) {
 
   if (!slNo || !affinity) return;
   updateLocalSelection(slNo, affinity);
+}
+
+function onEditRowToggle(e) {
+  const slNo = Number(e.currentTarget.dataset.sl);
+  if (!slNo) return;
+
+  if (e.currentTarget.checked) {
+    state.editingRows.add(slNo);
+  } else {
+    state.editingRows.delete(slNo);
+  }
+
+  renderVoters();
 }
 
 async function onSaveBooth() {
@@ -277,6 +327,7 @@ async function onSaveBooth() {
 
     state.boothData.summary = result.summary || state.boothData.summary;
     state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
+    state.dirtyPages.clear();
     renderSummary();
 
     alert('Booth saved');
@@ -289,6 +340,7 @@ async function onSaveBooth() {
 
 async function saveCurrentBoothSilently() {
   if (!state.selectedBooth || !state.boothData) return true;
+  if (state.dirtyPages.size === 0) return true;
 
   try {
     const result = await postApi({
@@ -304,6 +356,7 @@ async function saveCurrentBoothSilently() {
 
     state.boothData.summary = result.summary || state.boothData.summary;
     state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
+    state.dirtyPages.clear();
     renderSummary();
     return true;
   } catch (err) {
@@ -320,16 +373,22 @@ async function changePage(direction) {
 
   if (newPage < 1 || newPage > totalPages) return;
 
-  try {
-    showLoading(true);
-    const ok = await saveCurrentBoothSilently();
-    if (!ok) return;
+  state.currentPage = newPage;
+  renderVoters();
 
-    state.currentPage = newPage;
-    renderVoters();
-  } finally {
-    showLoading(false);
+  if (state.pendingAutoSave) {
+    clearTimeout(state.pendingAutoSave);
   }
+
+  state.pendingAutoSave = setTimeout(async () => {
+    showLoading(true);
+    try {
+      await saveCurrentBoothSilently();
+    } finally {
+      showLoading(false);
+      state.pendingAutoSave = null;
+    }
+  }, 300);
 }
 
 async function loadSavedAffinity(booth) {
@@ -351,6 +410,12 @@ async function loadBoothData(booth) {
 
   state.selectedBooth = selected;
   state.currentPage = 1;
+  state.dirtyPages.clear();
+  state.editingRows.clear();
+  if (state.pendingAutoSave) {
+    clearTimeout(state.pendingAutoSave);
+    state.pendingAutoSave = null;
+  }
 
   state.boothData = {
     voters: buildBoothVoters(Number(selected.totalVoters) || 0),
