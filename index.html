@@ -59,6 +59,7 @@
       <div id="appTabs" class="app-tabs" style="display:none;">
         <button id="entryTabBtn" class="app-tab active" type="button">Booth Entry</button>
         <button id="dashboardTabBtn" class="app-tab" type="button">Dashboard</button>
+        <button id="dataRefreshTabBtn" class="app-tab" type="button">Data Refresh</button>
       </div>
 
       <section id="entrySection">
@@ -120,6 +121,18 @@
         </div>
         <div id="dashboardSummary" class="dashboard-summary"></div>
         <div id="dashboardBoothList" class="dashboard-booth-list"></div>
+      </section>
+
+      <section id="dataRefreshSection" class="card data-refresh-card" style="display:none;">
+        <div class="data-refresh-header">
+          <div>
+            <h3>Data Refresh</h3>
+            <p class="data-refresh-note">Reload the latest static source JSON and review what changed in this session.</p>
+          </div>
+          <button id="runDataRefreshBtn" type="button">Run Refresh</button>
+        </div>
+        <div id="dataRefreshStatus" class="muted"></div>
+        <div id="dataRefreshLog" class="data-refresh-log"></div>
       </section>
     </section>
   </main>

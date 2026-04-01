@@ -27,7 +27,9 @@ const state = {
   pendingDashboardRenderTimer: null,
   activeBoothLoadId: 0,
   staticRefreshTimer: null,
-  activeView: 'entry'
+  activeView: 'entry',
+  dataRefreshLogs: [],
+  dataRefreshInProgress: false
 };
 
 const els = {};
@@ -64,6 +66,10 @@ function normalizeRole(role) {
 
 function canViewDashboard() {
   return DASHBOARD_VISIBLE_ROLES.has(normalizeRole(state.user?.role));
+}
+
+function canUseDataRefresh() {
+  return normalizeRole(state.user?.role) === 'admin';
 }
 
 function getDraftStorageId() {
@@ -110,6 +116,21 @@ function writeLocalDrafts() {
 
 function getCurrentBoothNumber() {
   return Number(state.selectedBooth?.booth) || 0;
+}
+
+function formatTimestamp(value = Date.now()) {
+  try {
+    return new Date(value).toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  } catch (_) {
+    return String(value);
+  }
 }
 
 async function loadStaticData(options = {}) {
@@ -220,6 +241,9 @@ function renderBoothMetaSummary() {
       <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
       <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
     </div>
+    <div class="mini-detail-grid booth-meta-location">
+      <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
+    </div>
   `;
 }
 
@@ -245,6 +269,8 @@ function renderBoothDetails() {
   renderBoothMetaSummary();
 
   const contacts = getBoothContacts(b.booth);
+  const roleOrder = ['Mandal President', 'Sakthi Kendra', 'BLA2', 'Booth President'];
+  const contactMap = new Map(contacts.map(contact => [contact.role, contact]));
   els.boothDetails.innerHTML = `
     <div class="booth-details-layout">
       <div class="detail-grid detail-grid-location">
@@ -252,13 +278,16 @@ function renderBoothDetails() {
         <div><strong>Polling Station</strong><span>${b.pollingStation || ''}</span></div>
       </div>
       <div class="contact-grid">
-        ${contacts.length ? contacts.map(contact => `
-          <div class="contact-card">
-            <strong>${contact.role}</strong>
-            <span>${contact.name || ''}</span>
-            <span>${formatPhone(contact.phone)}</span>
-          </div>
-        `).join('') : '<div class="muted">No role contacts found for this booth</div>'}
+        ${roleOrder.map(role => {
+          const contact = contactMap.get(role);
+          return `
+            <div class="contact-card${contact ? '' : ' contact-card-missing'}">
+              <strong>${role}</strong>
+              <span>${contact?.name || 'Not assigned'}</span>
+              <span>${contact?.phone ? formatPhone(contact.phone) : '-'}</span>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -382,28 +411,159 @@ function getDashboardScopeLabel() {
 
 function setActiveView(view) {
   const canUseDashboard = canViewDashboard();
-  state.activeView = view === 'dashboard' && canUseDashboard ? 'dashboard' : 'entry';
+  const canRefreshData = canUseDataRefresh();
+  if (view === 'dashboard' && canUseDashboard) {
+    state.activeView = 'dashboard';
+  } else if (view === 'data-refresh' && canRefreshData) {
+    state.activeView = 'data-refresh';
+  } else {
+    state.activeView = 'entry';
+  }
   renderAppTabs();
 }
 
 function renderAppTabs() {
-  if (!els.appTabs || !els.entrySection || !els.dashboardSection || !els.entryTabBtn || !els.dashboardTabBtn) {
+  if (!els.appTabs || !els.entrySection || !els.dashboardSection || !els.entryTabBtn || !els.dashboardTabBtn || !els.dataRefreshSection || !els.dataRefreshTabBtn) {
     return;
   }
 
   const canUseDashboard = canViewDashboard();
+  const canRefreshData = canUseDataRefresh();
   els.appTabs.style.display = canUseDashboard ? 'flex' : 'none';
   els.dashboardTabBtn.style.display = canUseDashboard ? 'inline-flex' : 'none';
+  els.dataRefreshTabBtn.style.display = canRefreshData ? 'inline-flex' : 'none';
 
-  if (!canUseDashboard) {
+  if (!canUseDashboard && !canRefreshData) {
+    state.activeView = 'entry';
+  } else if (state.activeView === 'dashboard' && !canUseDashboard) {
+    state.activeView = 'entry';
+  } else if (state.activeView === 'data-refresh' && !canRefreshData) {
     state.activeView = 'entry';
   }
 
-  const entryActive = state.activeView !== 'dashboard';
+  const entryActive = state.activeView === 'entry';
+  const dashboardActive = state.activeView === 'dashboard' && canUseDashboard;
+  const dataRefreshActive = state.activeView === 'data-refresh' && canRefreshData;
   els.entrySection.style.display = entryActive ? 'block' : 'none';
-  els.dashboardSection.style.display = canUseDashboard && !entryActive ? 'block' : 'none';
+  els.dashboardSection.style.display = dashboardActive ? 'block' : 'none';
+  els.dataRefreshSection.style.display = dataRefreshActive ? 'block' : 'none';
   els.entryTabBtn.classList.toggle('active', entryActive);
-  els.dashboardTabBtn.classList.toggle('active', !entryActive && canUseDashboard);
+  els.dashboardTabBtn.classList.toggle('active', dashboardActive);
+  els.dataRefreshTabBtn.classList.toggle('active', dataRefreshActive);
+}
+
+function serializeBoothList(value) {
+  if (value === 'all') return 'all';
+  if (!Array.isArray(value)) return '';
+  return value.map(Number).sort((a, b) => a - b).join(',');
+}
+
+function summarizeUserDiff(oldUser, newUser) {
+  const changes = [];
+  if ((oldUser?.name || '') !== (newUser?.name || '')) changes.push(`name: ${oldUser?.name || '-'} -> ${newUser?.name || '-'}`);
+  if ((oldUser?.role || '') !== (newUser?.role || '')) changes.push(`role: ${oldUser?.role || '-'} -> ${newUser?.role || '-'}`);
+  if ((oldUser?.mandal || '') !== (newUser?.mandal || '')) changes.push(`mandal: ${oldUser?.mandal || '-'} -> ${newUser?.mandal || '-'}`);
+  if (serializeBoothList(oldUser?.booths) !== serializeBoothList(newUser?.booths)) changes.push('booths updated');
+  return changes;
+}
+
+function summarizeBoothDiff(oldBooth, newBooth) {
+  const changes = [];
+  if ((oldBooth?.village || '') !== (newBooth?.village || '')) changes.push(`village: ${oldBooth?.village || '-'} -> ${newBooth?.village || '-'}`);
+  if ((oldBooth?.mandal || '') !== (newBooth?.mandal || '')) changes.push(`mandal: ${oldBooth?.mandal || '-'} -> ${newBooth?.mandal || '-'}`);
+  if ((oldBooth?.pollingStation || '') !== (newBooth?.pollingStation || '')) changes.push('polling station updated');
+  if (Number(oldBooth?.totalVoters || 0) !== Number(newBooth?.totalVoters || 0)) changes.push(`total voters: ${oldBooth?.totalVoters || 0} -> ${newBooth?.totalVoters || 0}`);
+  return changes;
+}
+
+function diffStaticData(oldData, newData) {
+  const lines = [];
+  const oldUsers = new Map((oldData?.users || []).map(user => [String(user.phone || ''), user]));
+  const newUsers = new Map((newData?.users || []).map(user => [String(user.phone || ''), user]));
+  const oldBooths = new Map((oldData?.booths || []).map(booth => [Number(booth.booth), booth]));
+  const newBooths = new Map((newData?.booths || []).map(booth => [Number(booth.booth), booth]));
+
+  let addedUsers = 0;
+  let removedUsers = 0;
+  let updatedUsers = 0;
+  let addedBooths = 0;
+  let removedBooths = 0;
+  let updatedBooths = 0;
+
+  newUsers.forEach((user, phone) => {
+    if (!oldUsers.has(phone)) {
+      addedUsers++;
+      lines.push(`User added: ${phone} | ${user.name || '-'} | ${user.role || '-'}`);
+      return;
+    }
+    const changes = summarizeUserDiff(oldUsers.get(phone), user);
+    if (changes.length) {
+      updatedUsers++;
+      lines.push(`User updated: ${phone} | ${changes.join('; ')}`);
+    }
+  });
+
+  oldUsers.forEach((user, phone) => {
+    if (!newUsers.has(phone)) {
+      removedUsers++;
+      lines.push(`User removed: ${phone} | ${user.name || '-'} | ${user.role || '-'}`);
+    }
+  });
+
+  newBooths.forEach((booth, boothNo) => {
+    if (!oldBooths.has(boothNo)) {
+      addedBooths++;
+      lines.push(`Booth added: ${boothNo} | ${booth.village || '-'} | ${booth.mandal || '-'}`);
+      return;
+    }
+    const changes = summarizeBoothDiff(oldBooths.get(boothNo), booth);
+    if (changes.length) {
+      updatedBooths++;
+      lines.push(`Booth updated: ${boothNo} | ${changes.join('; ')}`);
+    }
+  });
+
+  oldBooths.forEach((booth, boothNo) => {
+    if (!newBooths.has(boothNo)) {
+      removedBooths++;
+      lines.push(`Booth removed: ${boothNo} | ${booth.village || '-'} | ${booth.mandal || '-'}`);
+    }
+  });
+
+  const summary = `Users +${addedUsers} / -${removedUsers} / ~${updatedUsers}; Booths +${addedBooths} / -${removedBooths} / ~${updatedBooths}`;
+  if (!lines.length) {
+    lines.push('No changes detected between the current and refreshed static data.');
+  }
+  return { summary, lines };
+}
+
+function renderDataRefreshLog() {
+  if (!els.dataRefreshLog || !els.dataRefreshStatus || !els.runDataRefreshBtn) return;
+
+  els.runDataRefreshBtn.disabled = state.dataRefreshInProgress;
+  els.dataRefreshStatus.textContent = state.dataRefreshInProgress
+    ? 'Refreshing static source data...'
+    : canUseDataRefresh()
+      ? 'Admin-only manual refresh of the latest served static JSON.'
+      : '';
+
+  if (!state.dataRefreshLogs.length) {
+    els.dataRefreshLog.innerHTML = '<div class="muted">No refreshes run in this session.</div>';
+    return;
+  }
+
+  els.dataRefreshLog.innerHTML = state.dataRefreshLogs.map(entry => `
+    <article class="refresh-log-entry">
+      <div class="refresh-log-header">
+        <strong>${entry.title}</strong>
+        <span>${entry.timestamp}</span>
+      </div>
+      <div class="refresh-log-summary">${entry.summary}</div>
+      <div class="refresh-log-lines">
+        ${entry.lines.map(line => `<div class="refresh-log-line">${line}</div>`).join('')}
+      </div>
+    </article>
+  `).join('');
 }
 
 function getAccessibleBoothStatusList() {
@@ -1157,24 +1317,75 @@ function refreshAccessibleDataForUser(user) {
   }
 
   renderDashboard();
+  renderDataRefreshLog();
   renderAppTabs();
   warmBoothCache();
 }
 
-async function refreshStaticDataInBackground() {
+async function refreshStaticDataInBackground(options = {}) {
+  const previousData = state.staticData
+    ? JSON.parse(JSON.stringify(state.staticData))
+    : null;
+  const logChanges = !!options.logChanges;
+
   try {
-    await loadStaticData({ forceRefresh: true });
+    const refreshedData = await loadStaticData({ forceRefresh: true });
     if (!state.user) return;
 
     const refreshedUser = getUserByPhone(state.user.phone);
     if (!refreshedUser) {
       console.warn(`Static refresh: user ${state.user.phone} no longer exists in static data.`);
+      if (logChanges && canUseDataRefresh()) {
+        state.dataRefreshLogs.unshift({
+          title: 'Manual Refresh',
+          timestamp: formatTimestamp(),
+          summary: 'Refresh completed, but the current admin user was not found in the refreshed source.',
+          lines: ['Current user no longer exists in the refreshed static data.']
+        });
+        state.dataRefreshLogs = state.dataRefreshLogs.slice(0, 12);
+        renderDataRefreshLog();
+      }
       return;
     }
 
     refreshAccessibleDataForUser(refreshedUser);
+    if (logChanges && canUseDataRefresh() && previousData) {
+      const diff = diffStaticData(previousData, refreshedData);
+      state.dataRefreshLogs.unshift({
+        title: 'Manual Refresh',
+        timestamp: formatTimestamp(),
+        summary: diff.summary,
+        lines: diff.lines
+      });
+      state.dataRefreshLogs = state.dataRefreshLogs.slice(0, 12);
+      renderDataRefreshLog();
+    }
   } catch (err) {
     console.error('Static data refresh failed:', err.message || err);
+    if (logChanges && canUseDataRefresh()) {
+      state.dataRefreshLogs.unshift({
+        title: 'Manual Refresh Failed',
+        timestamp: formatTimestamp(),
+        summary: err.message || 'Static data refresh failed.',
+        lines: ['No changes were applied to the current session.']
+      });
+      state.dataRefreshLogs = state.dataRefreshLogs.slice(0, 12);
+      renderDataRefreshLog();
+    }
+  }
+}
+
+async function onManualDataRefresh() {
+  if (!canUseDataRefresh() || state.dataRefreshInProgress) return;
+  state.dataRefreshInProgress = true;
+  renderDataRefreshLog();
+
+  try {
+    await refreshStaticDataInBackground({ logChanges: true });
+  } finally {
+    state.dataRefreshInProgress = false;
+    renderDataRefreshLog();
+    renderAppTabs();
   }
 }
 
@@ -1240,6 +1451,7 @@ function logout() {
   state.localDrafts = {};
   state.syncInProgress = false;
   state.activeView = 'entry';
+  state.dataRefreshInProgress = false;
 
   els.phone.value = '';
   els.password.value = '';
@@ -1249,6 +1461,7 @@ function logout() {
   els.loginSection.style.display = 'block';
   els.appSection.style.display = 'none';
   if (els.dashboardSection) els.dashboardSection.style.display = 'none';
+  if (els.dataRefreshSection) els.dataRefreshSection.style.display = 'none';
   updateSubmitButton();
 }
 
@@ -1262,10 +1475,15 @@ async function init() {
   els.userName = byId('userName');
   els.userMeta = byId('userMeta');
   els.dashboardSection = byId('dashboardSection');
+  els.dataRefreshSection = byId('dataRefreshSection');
   els.entrySection = byId('entrySection');
   els.appTabs = byId('appTabs');
   els.entryTabBtn = byId('entryTabBtn');
   els.dashboardTabBtn = byId('dashboardTabBtn');
+  els.dataRefreshTabBtn = byId('dataRefreshTabBtn');
+  els.runDataRefreshBtn = byId('runDataRefreshBtn');
+  els.dataRefreshStatus = byId('dataRefreshStatus');
+  els.dataRefreshLog = byId('dataRefreshLog');
   els.dashboardScope = byId('dashboardScope');
   els.dashboardRefreshState = byId('dashboardRefreshState');
   els.dashboardSummary = byId('dashboardSummary');
@@ -1294,6 +1512,8 @@ async function init() {
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
   if (els.entryTabBtn) els.entryTabBtn.addEventListener('click', () => setActiveView('entry'));
   if (els.dashboardTabBtn) els.dashboardTabBtn.addEventListener('click', () => setActiveView('dashboard'));
+  if (els.dataRefreshTabBtn) els.dataRefreshTabBtn.addEventListener('click', () => setActiveView('data-refresh'));
+  if (els.runDataRefreshBtn) els.runDataRefreshBtn.addEventListener('click', onManualDataRefresh);
   window.addEventListener('online', syncPendingDrafts);
   window.addEventListener('pagehide', flushPendingBoothData);
   document.addEventListener('visibilitychange', () => {
@@ -1306,6 +1526,7 @@ async function init() {
   renderSummary();
   renderVoters();
   renderDashboard();
+  renderDataRefreshLog();
   renderAppTabs();
   updateSubmitButton();
 }

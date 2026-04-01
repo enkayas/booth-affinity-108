@@ -274,6 +274,84 @@ button:disabled {
   margin-bottom: 12px;
 }
 
+.data-refresh-card {
+  margin-bottom: 12px;
+}
+
+.data-refresh-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.data-refresh-header h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.data-refresh-note {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+#dataRefreshStatus {
+  min-height: 18px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.data-refresh-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.refresh-log-entry {
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--surface-muted);
+}
+
+.refresh-log-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.refresh-log-header strong {
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.refresh-log-header span,
+.refresh-log-summary,
+.refresh-log-line {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.refresh-log-summary {
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.refresh-log-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.refresh-log-line {
+  color: var(--text-muted);
+}
+
 .dashboard-header {
   display: flex;
   flex-direction: column;
@@ -555,6 +633,10 @@ button:disabled {
   font-weight: 700;
 }
 
+.booth-meta-location {
+  margin-top: 8px;
+}
+
 .mini-detail-row {
   grid-template-columns: minmax(62px, 0.8fr) minmax(82px, 1fr) minmax(92px, 1.08fr);
   gap: 8px;
@@ -598,6 +680,15 @@ button:disabled {
 .contact-card span {
   font-size: 11px;
   line-height: 1.2;
+}
+
+.contact-card-missing {
+  background: #f8fafc;
+  border-style: dashed;
+}
+
+.contact-card-missing span:last-child {
+  color: var(--text-muted);
 }
 
 .summary-grid {
@@ -848,6 +939,12 @@ button:disabled {
   }
 
   .dashboard-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .data-refresh-header {
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
