@@ -26,7 +26,8 @@ const state = {
   syncInProgress: false,
   pendingDashboardRenderTimer: null,
   activeBoothLoadId: 0,
-  staticRefreshTimer: null
+  staticRefreshTimer: null,
+  activeView: 'entry'
 };
 
 const els = {};
@@ -178,7 +179,7 @@ async function postApi(payload, options = {}) {
 function renderUser() {
   if (!state.user) return;
   const mandal = state.user.mandal || '';
-  els.userName.textContent = mandal ? `Booth Affinity | ${mandal}` : 'Booth Affinity';
+  els.userName.textContent = mandal ? `Booth Insights | ${mandal}` : 'Booth Insights';
   els.userMeta.textContent = `${state.user.name || ''} | ${state.user.role || ''}`;
 }
 
@@ -379,6 +380,32 @@ function getDashboardScopeLabel() {
   return 'No dashboard access';
 }
 
+function setActiveView(view) {
+  const canUseDashboard = canViewDashboard();
+  state.activeView = view === 'dashboard' && canUseDashboard ? 'dashboard' : 'entry';
+  renderAppTabs();
+}
+
+function renderAppTabs() {
+  if (!els.appTabs || !els.entrySection || !els.dashboardSection || !els.entryTabBtn || !els.dashboardTabBtn) {
+    return;
+  }
+
+  const canUseDashboard = canViewDashboard();
+  els.appTabs.style.display = canUseDashboard ? 'flex' : 'none';
+  els.dashboardTabBtn.style.display = canUseDashboard ? 'inline-flex' : 'none';
+
+  if (!canUseDashboard) {
+    state.activeView = 'entry';
+  }
+
+  const entryActive = state.activeView !== 'dashboard';
+  els.entrySection.style.display = entryActive ? 'block' : 'none';
+  els.dashboardSection.style.display = canUseDashboard && !entryActive ? 'block' : 'none';
+  els.entryTabBtn.classList.toggle('active', entryActive);
+  els.dashboardTabBtn.classList.toggle('active', !entryActive && canUseDashboard);
+}
+
 function getAccessibleBoothStatusList() {
   return state.booths.map(booth => {
     const boothNo = Number(booth.booth);
@@ -403,13 +430,49 @@ function getAccessibleBoothStatusList() {
   });
 }
 
+function getDashboardBoothStatusClass(item) {
+  if (!item.loaded) return 'dashboard-booth-syncing';
+  if (item.completed >= item.total && item.total > 0) return 'dashboard-booth-complete';
+  if (item.completionPct >= 75) return 'dashboard-booth-high';
+  if (item.completionPct >= 50) return 'dashboard-booth-medium';
+  if (item.completionPct >= 25) return 'dashboard-booth-low';
+  return 'dashboard-booth-critical';
+}
+
+function groupBoothStatusesByVillage(boothStatuses) {
+  const groups = new Map();
+
+  boothStatuses.forEach(item => {
+    const key = (item.village || 'Unassigned Village').trim() || 'Unassigned Village';
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(item);
+  });
+
+  return Array.from(groups.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([village, items]) => {
+      const totalVoters = items.reduce((sum, item) => sum + item.total, 0);
+      const completedVoters = items.reduce((sum, item) => sum + item.completed, 0);
+      const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
+      return {
+        village,
+        totalVoters,
+        completedVoters,
+        completionPct,
+        items: items.sort((a, b) => a.boothNo - b.boothNo)
+      };
+    });
+}
+
 function renderDashboard() {
   if (!els.dashboardSection || !els.dashboardSummary || !els.dashboardBoothList || !els.dashboardScope || !els.dashboardRefreshState) {
     return;
   }
 
   if (!canViewDashboard()) {
-    els.dashboardSection.style.display = 'none';
+    renderAppTabs();
     return;
   }
 
@@ -417,11 +480,11 @@ function renderDashboard() {
   const loadedCount = boothStatuses.filter(item => item.loaded).length;
   const totalBooths = boothStatuses.length;
   const totalVoters = boothStatuses.reduce((sum, item) => sum + item.total, 0);
-  const completedEntries = boothStatuses.reduce((sum, item) => sum + item.completed, 0);
-  const pendingEntries = Math.max(totalVoters - completedEntries, 0);
-  const completionPct = totalVoters ? Math.round((completedEntries / totalVoters) * 100) : 0;
+  const completedVoters = boothStatuses.reduce((sum, item) => sum + item.completed, 0);
+  const completedBooths = boothStatuses.reduce((sum, item) => sum + (item.completed >= item.total && item.total > 0 ? 1 : 0), 0);
+  const pendingVoters = Math.max(totalVoters - completedVoters, 0);
+  const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
 
-  els.dashboardSection.style.display = 'block';
   els.dashboardScope.textContent = `${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`;
   els.dashboardRefreshState.textContent = loadedCount < totalBooths
     ? `Updating ${loadedCount}/${totalBooths} booths`
@@ -429,40 +492,59 @@ function renderDashboard() {
 
   els.dashboardSummary.innerHTML = `
     <div class="dashboard-metric">
-      <strong>${totalBooths}</strong>
-      <span>Accessible Booths</span>
-    </div>
-    <div class="dashboard-metric">
       <strong>${totalVoters}</strong>
       <span>Total Voters</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${completedEntries}</strong>
-      <span>Completed Entries</span>
+      <strong>${totalBooths}</strong>
+      <span>Total Booths</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${pendingEntries}</strong>
-      <span>Pending Entries</span>
+      <strong>${completedBooths}</strong>
+      <span>Total Booths Completed</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${completedVoters}</strong>
+      <span>Total Voters Completed</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${pendingVoters}</strong>
+      <span>Pending Voters</span>
     </div>
     <div class="dashboard-metric">
       <strong>${completionPct}%</strong>
-      <span>Completion</span>
+      <span>Overall Completion %</span>
     </div>
   `;
 
-  els.dashboardBoothList.innerHTML = boothStatuses.map(item => `
-    <div class="dashboard-row">
-      <div class="dashboard-row-main">
-        <strong>Booth ${item.boothNo}</strong>
-        <span>${item.village || item.mandal}</span>
+  const villageGroups = groupBoothStatusesByVillage(boothStatuses);
+  els.dashboardBoothList.innerHTML = villageGroups.map(group => `
+    <section class="dashboard-village-group">
+      <div class="dashboard-village-header">
+        <div class="dashboard-village-title">
+          <strong>${group.village}</strong>
+          <span>${group.completedVoters}/${group.totalVoters} voters completed</span>
+        </div>
+        <div class="dashboard-village-completion">${group.completionPct}%</div>
       </div>
-      <div class="dashboard-row-stats">
-        <span>${item.completed}/${item.total}</span>
-        <span>${item.completionPct}%</span>
-        <span>${item.loaded ? 'Ready' : 'Loading'}</span>
+      <div class="dashboard-village-tiles">
+        ${group.items.map(item => `
+          <div class="dashboard-row ${getDashboardBoothStatusClass(item)}">
+            <div class="dashboard-row-main">
+              <strong>Booth ${item.boothNo}</strong>
+              <span>${item.village || item.mandal}</span>
+            </div>
+            <div class="dashboard-row-stats">
+              <span>${item.completed}/${item.total} voters</span>
+              <span>${item.completionPct}%</span>
+              <span>${item.loaded ? (item.completed >= item.total && item.total > 0 ? 'Completed' : 'In Progress') : 'Syncing'}</span>
+            </div>
+          </div>
+        `).join('')}
       </div>
-    </div>
+    </section>
   `).join('');
+  renderAppTabs();
 }
 
 function queueDashboardRender() {
@@ -1075,6 +1157,7 @@ function refreshAccessibleDataForUser(user) {
   }
 
   renderDashboard();
+  renderAppTabs();
   warmBoothCache();
 }
 
@@ -1156,6 +1239,7 @@ function logout() {
   state.prefetchStarted = false;
   state.localDrafts = {};
   state.syncInProgress = false;
+  state.activeView = 'entry';
 
   els.phone.value = '';
   els.password.value = '';
@@ -1178,6 +1262,10 @@ async function init() {
   els.userName = byId('userName');
   els.userMeta = byId('userMeta');
   els.dashboardSection = byId('dashboardSection');
+  els.entrySection = byId('entrySection');
+  els.appTabs = byId('appTabs');
+  els.entryTabBtn = byId('entryTabBtn');
+  els.dashboardTabBtn = byId('dashboardTabBtn');
   els.dashboardScope = byId('dashboardScope');
   els.dashboardRefreshState = byId('dashboardRefreshState');
   els.dashboardSummary = byId('dashboardSummary');
@@ -1204,6 +1292,8 @@ async function init() {
   els.loginForm.addEventListener('submit', onLoginSubmit);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
+  if (els.entryTabBtn) els.entryTabBtn.addEventListener('click', () => setActiveView('entry'));
+  if (els.dashboardTabBtn) els.dashboardTabBtn.addEventListener('click', () => setActiveView('dashboard'));
   window.addEventListener('online', syncPendingDrafts);
   window.addEventListener('pagehide', flushPendingBoothData);
   document.addEventListener('visibilitychange', () => {
@@ -1216,6 +1306,7 @@ async function init() {
   renderSummary();
   renderVoters();
   renderDashboard();
+  renderAppTabs();
   updateSubmitButton();
 }
 

@@ -46,8 +46,9 @@
 
     <section id="appSection" class="app-shell" style="display:none;">
       <div class="topbar">
-        <div>
+        <div class="topbar-main">
           <h2 id="userName"></h2>
+          <p class="app-slogan">நல்லாட்சி தேவை, பாஜகவே சேவை -வெற்றி நமதே</p>
         </div>
         <div class="topbar-actions">
           <button id="logoutBtn" type="button">Logout</button>
@@ -55,7 +56,59 @@
         </div>
       </div>
 
-      <p class="app-slogan">நல்லாட்சி தேவை, பாஜகவே சேவை -வெற்றி நமதே</p>
+      <div id="appTabs" class="app-tabs" style="display:none;">
+        <button id="entryTabBtn" class="app-tab active" type="button">Affinity Entry</button>
+        <button id="dashboardTabBtn" class="app-tab" type="button">Dashboard</button>
+      </div>
+
+      <section id="entrySection">
+        <div class="booth-toolbar">
+          <div class="card booth-select-card">
+            <label for="boothSelect"><strong>Select Booth</strong></label>
+            <select id="boothSelect">
+              <option value="">Select Booth</option>
+            </select>
+            <div id="boothMetaSummary" class="booth-meta-summary"></div>
+          </div>
+
+          <div class="card booth-details-card">
+            <h3>Booth Details</h3>
+            <div id="boothDetails"></div>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card summary-A">
+            <span class="summary-label">பாஜக உறுதி</span>
+            A: <span id="summaryA">0</span>
+          </div>
+          <div class="summary-card summary-B">
+            <span class="summary-label">NDA வாக்கு</span>
+            B: <span id="summaryB">0</span>
+          </div>
+          <div class="summary-card summary-C">
+            <span class="summary-label">பாஜக ஆதரவாளர்</span>
+            C: <span id="summaryC">0</span>
+          </div>
+          <div class="summary-card summary-D">
+            <span class="summary-label">முடிவு செய்யவில்லை</span>
+            D: <span id="summaryD">0</span>
+          </div>
+          <div class="summary-card summary-E">
+            <span class="summary-label">எதிர்க்கட்சி</span>
+            E: <span id="summaryE">0</span>
+          </div>
+          <div class="summary-card">Completed: <span id="completionPct">0%</span></div>
+        </div>
+
+        <div class="card affinity-card">
+          <h3>Booth Insights - வாக்குச் சாவடி நுண்ணறிவுகள்</h3>
+          <div id="votersContainer"></div>
+          <div class="affinity-actions">
+            <div id="affinitySaveStatus" class="muted"></div>
+          </div>
+        </div>
+      </section>
 
       <section id="dashboardSection" class="card dashboard-card" style="display:none;">
         <div class="dashboard-header">
@@ -68,53 +121,6 @@
         <div id="dashboardSummary" class="dashboard-summary"></div>
         <div id="dashboardBoothList" class="dashboard-booth-list"></div>
       </section>
-
-      <div class="booth-toolbar">
-        <div class="card booth-select-card">
-          <label for="boothSelect"><strong>Select Booth</strong></label>
-          <select id="boothSelect">
-            <option value="">Select Booth</option>
-          </select>
-          <div id="boothMetaSummary" class="booth-meta-summary"></div>
-        </div>
-
-        <div class="card booth-details-card">
-          <h3>Booth Details</h3>
-          <div id="boothDetails"></div>
-        </div>
-      </div>
-
-      <div class="summary-grid">
-        <div class="summary-card summary-A">
-          <span class="summary-label">பாஜக உறுதி</span>
-          A: <span id="summaryA">0</span>
-        </div>
-        <div class="summary-card summary-B">
-          <span class="summary-label">NDA வாக்கு</span>
-          B: <span id="summaryB">0</span>
-        </div>
-        <div class="summary-card summary-C">
-          <span class="summary-label">பாஜக ஆதரவாளர்</span>
-          C: <span id="summaryC">0</span>
-        </div>
-        <div class="summary-card summary-D">
-          <span class="summary-label">முடிவு செய்யவில்லை</span>
-          D: <span id="summaryD">0</span>
-        </div>
-        <div class="summary-card summary-E">
-          <span class="summary-label">எதிர்க்கட்சி</span>
-          E: <span id="summaryE">0</span>
-        </div>
-        <div class="summary-card">Completed: <span id="completionPct">0%</span></div>
-      </div>
-
-      <div class="card affinity-card">
-        <h3>Booth Insights - வாக்குச் சாவடி நுண்ணறிவுகள்</h3>
-        <div id="votersContainer"></div>
-        <div class="affinity-actions">
-          <div id="affinitySaveStatus" class="muted"></div>
-        </div>
-      </div>
     </section>
   </main>
 
