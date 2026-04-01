@@ -13,11 +13,22 @@
 
   <main class="page-wrap">
     <section id="loginSection" class="card auth-card">
-      <h1>Booth Affinity</h1>
-      <p>Powered by BJP Nilgiris - IT &amp; Data Management</p>
-      <p>Properitory Data of BJP. Do not share</p>
-      <p>For assistance Call 99625 41214 /97400 67042</p>
-      <p>Login with phone number.</p>
+      <div class="auth-banner">
+        <div class="auth-title">
+          <svg class="auth-lotus" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M32 10c4 5 6 11 6 18-4-2-7-6-8-11-1 5-4 9-8 11 0-7 2-13 6-18h4Z" fill="currentColor"/>
+            <path d="M18 22c6 2 10 6 12 12-6 0-12-2-16-7 0-2 2-4 4-5Z" fill="currentColor"/>
+            <path d="M46 22c2 1 4 3 4 5-4 5-10 7-16 7 2-6 6-10 12-12Z" fill="currentColor"/>
+            <path d="M24 34c3 2 5 5 6 9-6 0-11-2-15-6 2-2 5-3 9-3Z" fill="currentColor"/>
+            <path d="M40 34c4 0 7 1 9 3-4 4-9 6-15 6 1-4 3-7 6-9Z" fill="currentColor"/>
+            <path d="M30 30h4c3 10 8 17 14 21H16c6-4 11-11 14-21Z" fill="currentColor"/>
+          </svg>
+          <h1>Booth Affinity</h1>
+        </div>
+      </div>
+      <p class="auth-subtext">Powered by BJP Nilgiris - IT &amp; Data Management</p>
+      <p class="auth-subtext">For assistance Call 99625 41214 /97400 67042</p>
+      <p class="auth-subtext">Login with phone number.</p>
 
       <form id="loginForm">
         <label for="phone">Phone Number</label>
@@ -29,6 +40,7 @@
         <div id="loginError" style="color:#c62828;margin:10px 0;"></div>
 
         <button type="submit">Login</button>
+        <p class="auth-disclaimer">Properitory Data of BJP. Do not share</p>
       </form>
     </section>
 
