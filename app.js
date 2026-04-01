@@ -5,8 +5,7 @@ const state = {
   user: null,
   booths: [],
   selectedBooth: null,
-  boothData: null,
-  localAffinityMap: {}
+  boothData: null
 };
 
 const els = {};
@@ -189,9 +188,38 @@ function renderVoters() {
   if (saveBtn) saveBtn.addEventListener('click', onSaveBooth);
 }
 
+function buildBoothVoters(totalVoters) {
+  const voters = [];
+  for (let i = 1; i <= totalVoters; i++) {
+    voters.push({ slNo: i, affinity: '' });
+  }
+  return voters;
+}
+
+function applySavedAffinity(savedRows) {
+  if (!state.boothData || !Array.isArray(state.boothData.voters)) return;
+
+  const map = {};
+  savedRows.forEach(r => {
+    map[Number(r.slNo)] = String(r.affinity || '');
+  });
+
+  state.boothData.voters.forEach(v => {
+    v.affinity = map[v.slNo] || '';
+  });
+
+  const calc = calculateSummary(state.boothData.voters);
+  state.boothData.summary = calc.summary;
+  state.boothData.completionPct = calc.completionPct;
+
+  renderSummary();
+  renderVoters();
+}
+
 function updateLocalSelection(slNo, affinity) {
   const voter = state.boothData.voters.find(v => v.slNo === slNo);
   if (!voter) return;
+
   voter.affinity = affinity;
 
   const calc = calculateSummary(state.boothData.voters);
@@ -226,6 +254,10 @@ async function onSaveBooth() {
       return;
     }
 
+    state.boothData.summary = result.summary || state.boothData.summary;
+    state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
+    renderSummary();
+
     alert('Booth saved');
   } catch (err) {
     alert(err.message || 'Save failed');
@@ -234,26 +266,36 @@ async function onSaveBooth() {
   }
 }
 
+async function loadSavedAffinity(booth) {
+  const result = await callApi({
+    action: 'getSavedAffinity',
+    booth
+  });
+
+  if (!result.ok) {
+    throw new Error(result.message || 'Failed to load saved affinity');
+  }
+
+  applySavedAffinity(result.saved || []);
+}
+
 async function loadBoothData(booth) {
   const selected = state.booths.find(b => Number(b.booth) === Number(booth));
   if (!selected) throw new Error('Booth not found');
 
   state.selectedBooth = selected;
 
-  const result = await callApi({
-    action: 'getBoothData',
-    booth
-  });
-
-  if (!result.ok) {
-    throw new Error(result.message || 'Failed to load booth');
-  }
-
-  state.boothData = result.data;
+  state.boothData = {
+    voters: buildBoothVoters(Number(selected.totalVoters) || 0),
+    summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
+    completionPct: 0
+  };
 
   renderBoothDetails();
   renderSummary();
   renderVoters();
+
+  await loadSavedAffinity(booth);
 }
 
 async function onBoothChange() {
@@ -302,7 +344,7 @@ function getBoothsForUser(user) {
     .sort((a, b) => a.booth - b.booth);
 }
 
-async function onLoginSubmit(e) {
+function onLoginSubmit(e) {
   e.preventDefault();
   setLoginError('');
 
