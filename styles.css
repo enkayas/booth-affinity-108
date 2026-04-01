@@ -219,6 +219,39 @@ button:disabled {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.summary-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.summary-A {
+  background: #16a34a;
+  color: #fff;
+}
+
+.summary-B {
+  background: #22c55e;
+  color: #fff;
+}
+
+.summary-C {
+  background: #2563eb;
+  color: #fff;
+}
+
+.summary-D {
+  background: #9ca3af;
+  color: #fff;
+}
+
+.summary-E {
+  background: #dc2626;
+  color: #fff;
+}
+
 #votersContainer {
   display: flex;
   flex-direction: column;
