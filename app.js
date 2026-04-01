@@ -2,6 +2,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzjoXHcSGmvVQjBi6OCjzsq
 const DRAFT_STORAGE_KEY = 'booth_affinity_drafts_v1';
 const DRAFT_PERSIST_DELAY_MS = 120;
 const RETRY_SYNC_DELAY_MS = 5000;
+const DASHBOARD_RENDER_DELAY_MS = 120;
+const STATIC_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
+const DASHBOARD_VISIBLE_ROLES = new Set(['sakthi kendra', 'mandal president', 'manager', 'admin']);
 
 const state = {
   staticData: null,
@@ -20,7 +23,10 @@ const state = {
   pendingSaveTimer: null,
   pendingDraftPersistTimer: null,
   retrySyncTimer: null,
-  syncInProgress: false
+  syncInProgress: false,
+  pendingDashboardRenderTimer: null,
+  activeBoothLoadId: 0,
+  staticRefreshTimer: null
 };
 
 const els = {};
@@ -49,6 +55,14 @@ function setAffinitySaveStatus(msg, tone = 'muted') {
     error: '#c62828'
   };
   els.affinitySaveStatus.style.color = colors[tone] || colors.muted;
+}
+
+function normalizeRole(role) {
+  return String(role || '').trim().toLowerCase();
+}
+
+function canViewDashboard() {
+  return DASHBOARD_VISIBLE_ROLES.has(normalizeRole(state.user?.role));
 }
 
 function getDraftStorageId() {
@@ -97,10 +111,17 @@ function getCurrentBoothNumber() {
   return Number(state.selectedBooth?.booth) || 0;
 }
 
-async function loadStaticData() {
-  const res = await fetch('booth_affinity_static_data.json');
+async function loadStaticData(options = {}) {
+  const url = options.forceRefresh
+    ? `booth_affinity_static_data.json?ts=${Date.now()}`
+    : 'booth_affinity_static_data.json';
+  const res = await fetch(url, {
+    cache: options.forceRefresh ? 'no-store' : 'default'
+  });
   if (!res.ok) throw new Error('Unable to load static data');
-  state.staticData = await res.json();
+  const data = await res.json();
+  state.staticData = data;
+  return data;
 }
 
 function callApi(payload) {
@@ -343,10 +364,116 @@ function cacheCurrentBoothData() {
   const boothNo = Number(state.selectedBooth?.booth);
   if (!boothNo || !state.boothData) return;
   state.pageCache[boothNo] = cloneBoothData(state.boothData);
+  queueDashboardRender();
 }
 
 function getBoothConfig(booth) {
   return state.boothMap.get(Number(booth)) || null;
+}
+
+function getDashboardScopeLabel() {
+  const role = normalizeRole(state.user?.role);
+  if (role === 'admin' || role === 'manager') return 'All mandals';
+  if (role === 'mandal president') return `${state.user?.mandal || 'Assigned'} mandal`;
+  if (role === 'sakthi kendra') return 'Assigned booths';
+  return 'No dashboard access';
+}
+
+function getAccessibleBoothStatusList() {
+  return state.booths.map(booth => {
+    const boothNo = Number(booth.booth);
+    const cached = state.pageCache[boothNo];
+    const total = Number(booth.totalVoters) || 0;
+    const summary = cached?.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    const completed = cached?.voters
+      ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
+      : 0;
+
+    return {
+      boothNo,
+      village: booth.village || '',
+      mandal: booth.mandal || '',
+      total,
+      completed,
+      pending: Math.max(total - completed, 0),
+      completionPct: total ? Math.round((completed / total) * 100) : 0,
+      loaded: !!cached,
+      summary
+    };
+  });
+}
+
+function renderDashboard() {
+  if (!els.dashboardSection || !els.dashboardSummary || !els.dashboardBoothList || !els.dashboardScope || !els.dashboardRefreshState) {
+    return;
+  }
+
+  if (!canViewDashboard()) {
+    els.dashboardSection.style.display = 'none';
+    return;
+  }
+
+  const boothStatuses = getAccessibleBoothStatusList();
+  const loadedCount = boothStatuses.filter(item => item.loaded).length;
+  const totalBooths = boothStatuses.length;
+  const totalVoters = boothStatuses.reduce((sum, item) => sum + item.total, 0);
+  const completedEntries = boothStatuses.reduce((sum, item) => sum + item.completed, 0);
+  const pendingEntries = Math.max(totalVoters - completedEntries, 0);
+  const completionPct = totalVoters ? Math.round((completedEntries / totalVoters) * 100) : 0;
+
+  els.dashboardSection.style.display = 'block';
+  els.dashboardScope.textContent = `${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`;
+  els.dashboardRefreshState.textContent = loadedCount < totalBooths
+    ? `Updating ${loadedCount}/${totalBooths} booths`
+    : 'Up to date';
+
+  els.dashboardSummary.innerHTML = `
+    <div class="dashboard-metric">
+      <strong>${totalBooths}</strong>
+      <span>Accessible Booths</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${totalVoters}</strong>
+      <span>Total Voters</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${completedEntries}</strong>
+      <span>Completed Entries</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${pendingEntries}</strong>
+      <span>Pending Entries</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${completionPct}%</strong>
+      <span>Completion</span>
+    </div>
+  `;
+
+  els.dashboardBoothList.innerHTML = boothStatuses.map(item => `
+    <div class="dashboard-row">
+      <div class="dashboard-row-main">
+        <strong>Booth ${item.boothNo}</strong>
+        <span>${item.village || item.mandal}</span>
+      </div>
+      <div class="dashboard-row-stats">
+        <span>${item.completed}/${item.total}</span>
+        <span>${item.completionPct}%</span>
+        <span>${item.loaded ? 'Ready' : 'Loading'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function queueDashboardRender() {
+  if (state.pendingDashboardRenderTimer) {
+    clearTimeout(state.pendingDashboardRenderTimer);
+  }
+
+  state.pendingDashboardRenderTimer = setTimeout(() => {
+    state.pendingDashboardRenderTimer = null;
+    renderDashboard();
+  }, DASHBOARD_RENDER_DELAY_MS);
 }
 
 function renderSummary() {
@@ -572,6 +699,7 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
   state.pageCache[boothNo] = cloneBoothData(boothData);
   clearDraftForBooth(boothNo);
   queueDraftPersist();
+  queueDashboardRender();
 
   if (boothNo === getCurrentBoothNumber() && state.boothData) {
     state.boothData.summary = boothData.summary;
@@ -750,6 +878,7 @@ function fetchBoothData(booth) {
     applySavedAffinity(savedRows, boothData, selected.totalVoters || 0);
     applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
     state.pageCache[boothNo] = cloneBoothData(boothData);
+    queueDashboardRender();
     return boothData;
   })();
 
@@ -767,7 +896,12 @@ function warmBoothCache() {
   state.prefetchStarted = true;
 
   const boothNumbers = state.booths.map(b => Number(b.booth));
-  const concurrency = Math.min(6, boothNumbers.length);
+  const totalBooths = boothNumbers.length;
+  const concurrency = totalBooths > 60
+    ? 2
+    : totalBooths > 24
+      ? 3
+      : Math.min(4, totalBooths);
   let nextIndex = 0;
 
   const worker = async () => {
@@ -782,14 +916,23 @@ function warmBoothCache() {
     }
   };
 
-  for (let i = 0; i < concurrency; i++) {
-    worker();
+  const startWorkers = () => {
+    for (let i = 0; i < concurrency; i++) {
+      worker();
+    }
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(startWorkers, { timeout: 1200 });
+  } else {
+    window.setTimeout(startWorkers, 250);
   }
 }
 
 async function loadBoothData(booth) {
   const selected = getBoothConfig(booth);
   if (!selected) throw new Error('Booth not found');
+  const loadId = ++state.activeBoothLoadId;
 
   state.selectedBooth = selected;
   state.currentPage = 1;
@@ -806,7 +949,12 @@ async function loadBoothData(booth) {
   els.votersContainer.innerHTML = '<div class="muted">Loading booth data...</div>';
   updateSubmitButton();
 
-  state.boothData = await fetchBoothData(booth);
+  const boothData = await fetchBoothData(booth);
+  if (loadId !== state.activeBoothLoadId || Number(state.selectedBooth?.booth) !== Number(booth)) {
+    return;
+  }
+
+  state.boothData = boothData;
   renderSummary();
   renderVoters();
   updateSubmitButton();
@@ -816,12 +964,14 @@ async function loadBoothData(booth) {
       : '',
     getDraftForBooth(Number(booth)) ? 'warning' : 'muted'
   );
+  queueDashboardRender();
 }
 
 async function onBoothChange() {
   const booth = Number(els.boothSelect.value);
 
   if (!booth) {
+    state.activeBoothLoadId++;
     state.selectedBooth = null;
     state.boothData = null;
     renderBoothDetails();
@@ -861,6 +1011,15 @@ function getUserFromStatic(phone, password) {
   }) || null;
 }
 
+function getUserByPhone(phone) {
+  if (!state.staticData?.users) return null;
+  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
+  return state.staticData.users.find(u => {
+    const userPhone = String(u.phone || '').replace(/\D/g, '').slice(-10);
+    return userPhone === cleanPhone;
+  }) || null;
+}
+
 function getBoothsForUser(user) {
   if (!state.staticData || !state.staticData.booths) return [];
 
@@ -875,6 +1034,65 @@ function getBoothsForUser(user) {
   return state.staticData.booths
     .filter(b => allowed.includes(Number(b.booth)))
     .sort((a, b) => a.booth - b.booth);
+}
+
+function refreshAccessibleDataForUser(user) {
+  const currentBoothNo = Number(state.selectedBooth?.booth) || 0;
+  state.user = {
+    phone: user.phone,
+    name: user.name,
+    role: user.role,
+    mandal: user.mandal
+  };
+  state.booths = getBoothsForUser(user);
+  state.boothMap = new Map(state.booths.map(b => [Number(b.booth), b]));
+  state.pageCache = Object.fromEntries(
+    Object.entries(state.pageCache).filter(([boothNo]) => state.boothMap.has(Number(boothNo)))
+  );
+  state.pendingBoothLoads = {};
+  state.prefetchStarted = false;
+
+  renderUser();
+  renderBoothDropdown();
+
+  if (currentBoothNo && state.boothMap.has(currentBoothNo)) {
+    state.selectedBooth = state.boothMap.get(currentBoothNo);
+    if (els.boothSelect) els.boothSelect.value = String(currentBoothNo);
+    renderBoothDetails();
+    renderSummary();
+    renderVoters();
+    updateSubmitButton();
+  } else {
+    state.activeBoothLoadId++;
+    state.selectedBooth = null;
+    state.boothData = null;
+    if (els.boothSelect) els.boothSelect.value = '';
+    renderBoothDetails();
+    renderSummary();
+    renderVoters();
+    updateSubmitButton();
+    setAffinitySaveStatus('');
+  }
+
+  renderDashboard();
+  warmBoothCache();
+}
+
+async function refreshStaticDataInBackground() {
+  try {
+    await loadStaticData({ forceRefresh: true });
+    if (!state.user) return;
+
+    const refreshedUser = getUserByPhone(state.user.phone);
+    if (!refreshedUser) {
+      console.warn(`Static refresh: user ${state.user.phone} no longer exists in static data.`);
+      return;
+    }
+
+    refreshAccessibleDataForUser(refreshedUser);
+  } catch (err) {
+    console.error('Static data refresh failed:', err.message || err);
+  }
 }
 
 function onLoginSubmit(e) {
@@ -902,10 +1120,7 @@ function onLoginSubmit(e) {
     role: user.role,
     mandal: user.mandal
   };
-
   state.localDrafts = readLocalDrafts();
-  state.booths = getBoothsForUser(user);
-  state.boothMap = new Map(state.booths.map(b => [Number(b.booth), b]));
   state.pageCache = {};
   state.pendingBoothLoads = {};
   state.prefetchStarted = false;
@@ -913,12 +1128,7 @@ function onLoginSubmit(e) {
   els.loginSection.style.display = 'none';
   els.appSection.style.display = 'block';
 
-  renderUser();
-  renderBoothDropdown();
-  renderBoothDetails();
-  renderSummary();
-  renderVoters();
-  warmBoothCache();
+  refreshAccessibleDataForUser(user);
   syncPendingDrafts();
 }
 
@@ -954,6 +1164,7 @@ function logout() {
 
   els.loginSection.style.display = 'block';
   els.appSection.style.display = 'none';
+  if (els.dashboardSection) els.dashboardSection.style.display = 'none';
   updateSubmitButton();
 }
 
@@ -966,6 +1177,11 @@ async function init() {
   els.loginError = byId('loginError');
   els.userName = byId('userName');
   els.userMeta = byId('userMeta');
+  els.dashboardSection = byId('dashboardSection');
+  els.dashboardScope = byId('dashboardScope');
+  els.dashboardRefreshState = byId('dashboardRefreshState');
+  els.dashboardSummary = byId('dashboardSummary');
+  els.dashboardBoothList = byId('dashboardBoothList');
   els.boothSelect = byId('boothSelect');
   els.boothMetaSummary = byId('boothMetaSummary');
   els.boothDetails = byId('boothDetails');
@@ -981,6 +1197,9 @@ async function init() {
   els.loading = byId('loading');
 
   await loadStaticData();
+  if (!state.staticRefreshTimer) {
+    state.staticRefreshTimer = window.setInterval(refreshStaticDataInBackground, STATIC_REFRESH_INTERVAL_MS);
+  }
 
   els.loginForm.addEventListener('submit', onLoginSubmit);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
@@ -996,6 +1215,7 @@ async function init() {
   renderBoothDetails();
   renderSummary();
   renderVoters();
+  renderDashboard();
   updateSubmitButton();
 }
 
