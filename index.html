@@ -7,48 +7,65 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <section id="loginScreen" class="screen active">
-      <div class="card narrow">
-        <h1>Booth Affinity</h1>
-        <p class="muted">Login with phone number. Password is the last 4 digits of the same phone.</p>
-        <label>Phone Number</label>
-        <input id="phoneInput" type="tel" maxlength="10" placeholder="Enter 10-digit phone" />
-        <label>Password</label>
-        <input id="passwordInput" type="password" maxlength="4" placeholder="Last 4 digits" />
-        <button id="loginBtn">Login</button>
-        <p id="loginMsg" class="message"></p>
-      </div>
+  <div id="loading" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.15);z-index:9999;align-items:center;justify-content:center;font-size:20px;">
+    Loading...
+  </div>
+
+  <main class="page-wrap">
+    <section id="loginSection" class="card auth-card">
+      <h1>Booth Affinity</h1>
+      <p>Login with phone number. Password is the last 4 digits of the same phone.</p>
+
+      <form id="loginForm">
+        <label for="phone">Phone Number</label>
+        <input id="phone" type="text" placeholder="Enter 10-digit phone" />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Last 4 digits" />
+
+        <div id="loginError" style="color:#c62828;margin:10px 0;"></div>
+
+        <button type="submit">Login</button>
+      </form>
     </section>
 
-    <section id="dashboardScreen" class="screen">
-      <header class="topbar">
+    <section id="appSection" class="app-shell" style="display:none;">
+      <div class="topbar">
         <div>
-          <h2 id="welcomeText">Welcome</h2>
-          <div id="roleText" class="muted"></div>
+          <h2 id="userName"></h2>
+          <div id="userMeta"></div>
         </div>
-        <button id="logoutBtn" class="secondary">Logout</button>
-      </header>
-
-      <div class="grid2">
-        <div class="card">
-          <label for="boothSelect">Select Booth</label>
-          <select id="boothSelect"></select>
-        </div>
-        <div class="card booth-meta" id="boothMeta"></div>
+        <button id="logoutBtn" type="button">Logout</button>
       </div>
-
-      <div class="card summary-row" id="summaryCard"></div>
 
       <div class="card">
-        <div class="list-header">
-          <h3>Voter Serial Numbers</h3>
-          <input id="serialSearch" type="number" placeholder="Jump to serial no." />
-        </div>
-        <div id="serialList"></div>
+        <label for="boothSelect"><strong>Select Booth</strong></label>
+        <select id="boothSelect">
+          <option value="">Select Booth</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <h3>Booth Details</h3>
+        <div id="boothDetails"></div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">A: <span id="summaryA">0</span></div>
+        <div class="summary-card">B: <span id="summaryB">0</span></div>
+        <div class="summary-card">C: <span id="summaryC">0</span></div>
+        <div class="summary-card">D: <span id="summaryD">0</span></div>
+        <div class="summary-card">E: <span id="summaryE">0</span></div>
+        <div class="summary-card">Completed: <span id="completionPct">0%</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Affinity Entry</h3>
+        <div id="votersContainer"></div>
       </div>
     </section>
-  </div>
+  </main>
+
   <script src="app.js"></script>
 </body>
 </html>
