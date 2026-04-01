@@ -1,10 +1,12 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzjoXHcSGmvVQjBi6OCjzsqlo1Rs7O2yyaSO7HNmjbZLizc5wA2FjsUu0Oushgrk-9C/exec';
 
 const state = {
+  staticData: null,
   user: null,
   booths: [],
   selectedBooth: null,
-  boothData: null
+  boothData: null,
+  localAffinityMap: {}
 };
 
 const els = {};
@@ -21,6 +23,12 @@ function showLoading(show) {
 
 function setLoginError(msg) {
   if (els.loginError) els.loginError.textContent = msg || '';
+}
+
+async function loadStaticData() {
+  const res = await fetch('booth_affinity_static_data.json');
+  if (!res.ok) throw new Error('Unable to load static data');
+  state.staticData = await res.json();
 }
 
 function callApi(payload) {
@@ -64,6 +72,15 @@ function callApi(payload) {
   });
 }
 
+async function postApi(payload) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
 function renderUser() {
   if (!state.user) return;
   els.userName.textContent = state.user.name || '';
@@ -84,11 +101,6 @@ function renderBoothDropdown() {
     opt.textContent = `Booth ${b.booth} - ${b.village || ''}`;
     els.boothSelect.appendChild(opt);
   });
-
-  if (state.booths.length === 1) {
-    els.boothSelect.value = String(state.booths[0].booth);
-    onBoothChange();
-  }
 }
 
 function renderBoothDetails() {
@@ -107,6 +119,22 @@ function renderBoothDetails() {
       <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
     </div>
   `;
+}
+
+function calculateSummary(voters) {
+  const summary = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  let filled = 0;
+
+  voters.forEach(v => {
+    if (summary.hasOwnProperty(v.affinity)) summary[v.affinity]++;
+    if (v.affinity) filled++;
+  });
+
+  const completionPct = state.selectedBooth?.totalVoters
+    ? Math.round((filled / state.selectedBooth.totalVoters) * 100)
+    : 0;
+
+  return { summary, completionPct };
 }
 
 function renderSummary() {
@@ -135,39 +163,62 @@ function renderVoters() {
     return;
   }
 
-  els.votersContainer.innerHTML = voters.map(v => `
-    <div class="voter-row">
-      <div class="sl-box">SL# ${v.slNo}</div>
-      <div class="affinity-group">
-        ${affinityButton('A', v.affinity, v.slNo)}
-        ${affinityButton('B', v.affinity, v.slNo)}
-        ${affinityButton('C', v.affinity, v.slNo)}
-        ${affinityButton('D', v.affinity, v.slNo)}
-        ${affinityButton('E', v.affinity, v.slNo)}
-      </div>
+  els.votersContainer.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <button id="saveBoothBtn" type="button">Save Booth</button>
     </div>
-  `).join('');
+    ${voters.map(v => `
+      <div class="voter-row">
+        <div class="sl-box">SL# ${v.slNo}</div>
+        <div class="affinity-group">
+          ${affinityButton('A', v.affinity, v.slNo)}
+          ${affinityButton('B', v.affinity, v.slNo)}
+          ${affinityButton('C', v.affinity, v.slNo)}
+          ${affinityButton('D', v.affinity, v.slNo)}
+          ${affinityButton('E', v.affinity, v.slNo)}
+        </div>
+      </div>
+    `).join('')}
+  `;
 
   els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
     btn.addEventListener('click', onAffinityClick);
   });
+
+  const saveBtn = byId('saveBoothBtn');
+  if (saveBtn) saveBtn.addEventListener('click', onSaveBooth);
 }
 
-async function onAffinityClick(e) {
+function updateLocalSelection(slNo, affinity) {
+  const voter = state.boothData.voters.find(v => v.slNo === slNo);
+  if (!voter) return;
+  voter.affinity = affinity;
+
+  const calc = calculateSummary(state.boothData.voters);
+  state.boothData.summary = calc.summary;
+  state.boothData.completionPct = calc.completionPct;
+
+  renderSummary();
+  renderVoters();
+}
+
+function onAffinityClick(e) {
   const btn = e.currentTarget;
   const slNo = Number(btn.dataset.sl);
   const affinity = btn.dataset.affinity;
-  const booth = state.selectedBooth?.booth;
 
-  if (!booth || !slNo || !affinity) return;
+  if (!slNo || !affinity) return;
+  updateLocalSelection(slNo, affinity);
+}
 
+async function onSaveBooth() {
   try {
     showLoading(true);
-    const result = await callApi({
-      action: 'saveAffinity',
-      booth,
-      slNo,
-      affinity
+
+    const result = await postApi({
+      action: 'saveBoothAffinities',
+      booth: state.selectedBooth.booth,
+      voters: state.boothData.voters
     });
 
     if (!result.ok) {
@@ -175,7 +226,7 @@ async function onAffinityClick(e) {
       return;
     }
 
-    await loadBoothData(booth);
+    alert('Booth saved');
   } catch (err) {
     alert(err.message || 'Save failed');
   } finally {
@@ -184,6 +235,11 @@ async function onAffinityClick(e) {
 }
 
 async function loadBoothData(booth) {
+  const selected = state.booths.find(b => Number(b.booth) === Number(booth));
+  if (!selected) throw new Error('Booth not found');
+
+  state.selectedBooth = selected;
+
   const result = await callApi({
     action: 'getBoothData',
     booth
@@ -193,7 +249,6 @@ async function loadBoothData(booth) {
     throw new Error(result.message || 'Failed to load booth');
   }
 
-  state.selectedBooth = result.booth;
   state.boothData = result.data;
 
   renderBoothDetails();
@@ -223,6 +278,30 @@ async function onBoothChange() {
   }
 }
 
+function getUserFromStatic(phone, password) {
+  if (!state.staticData || !state.staticData.users) return null;
+
+  const cleanPhone = String(phone || '').replace(/\D/g, '').slice(-10);
+  const cleanPassword = String(password || '').trim();
+
+  return state.staticData.users.find(u => {
+    const userPhone = String(u.phone || '').replace(/\D/g, '').slice(-10);
+    return userPhone === cleanPhone && userPhone.slice(-4) === cleanPassword;
+  }) || null;
+}
+
+function getBoothsForUser(user) {
+  if (!state.staticData || !state.staticData.booths) return [];
+  const allowed = String(user.boothsCsv || '')
+    .split(',')
+    .filter(Boolean)
+    .map(x => Number(x));
+
+  return state.staticData.booths
+    .filter(b => allowed.includes(Number(b.booth)))
+    .sort((a, b) => a.booth - b.booth);
+}
+
 async function onLoginSubmit(e) {
   e.preventDefault();
   setLoginError('');
@@ -235,36 +314,30 @@ async function onLoginSubmit(e) {
     return;
   }
 
-  try {
-    showLoading(true);
+  const user = getUserFromStatic(phone, password);
 
-    const result = await callApi({
-      action: 'login',
-      phone,
-      password
-    });
-
-    if (!result.ok) {
-      setLoginError(result.message || 'Login failed');
-      return;
-    }
-
-    state.user = result.user;
-    state.booths = result.booths || [];
-
-    els.loginSection.style.display = 'none';
-    els.appSection.style.display = 'block';
-
-    renderUser();
-    renderBoothDropdown();
-    renderBoothDetails();
-    renderSummary();
-    renderVoters();
-  } catch (err) {
-    setLoginError(err.message || 'Login failed');
-  } finally {
-    showLoading(false);
+  if (!user) {
+    setLoginError('Invalid phone or password');
+    return;
   }
+
+  state.user = {
+    phone: user.phone,
+    name: user.name,
+    role: user.role,
+    mandal: user.mandal
+  };
+
+  state.booths = getBoothsForUser(user);
+
+  els.loginSection.style.display = 'none';
+  els.appSection.style.display = 'block';
+
+  renderUser();
+  renderBoothDropdown();
+  renderBoothDetails();
+  renderSummary();
+  renderVoters();
 }
 
 function logout() {
@@ -281,7 +354,7 @@ function logout() {
   els.appSection.style.display = 'none';
 }
 
-function init() {
+async function init() {
   els.loginSection = byId('loginSection');
   els.appSection = byId('appSection');
   els.loginForm = byId('loginForm');
@@ -302,10 +375,7 @@ function init() {
   els.logoutBtn = byId('logoutBtn');
   els.loading = byId('loading');
 
-  if (!els.loginForm) {
-    alert('loginForm not found in HTML');
-    return;
-  }
+  await loadStaticData();
 
   els.loginForm.addEventListener('submit', onLoginSubmit);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
@@ -316,4 +386,8 @@ function init() {
   renderVoters();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  init().catch(err => {
+    alert(err.message || 'App failed to load');
+  });
+});
