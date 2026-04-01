@@ -5,7 +5,9 @@ const state = {
   user: null,
   booths: [],
   selectedBooth: null,
-  boothData: null
+  boothData: null,
+  currentPage: 1,
+  pageSize: 20
 };
 
 const els = {};
@@ -162,11 +164,25 @@ function renderVoters() {
     return;
   }
 
+  const totalPages = Math.max(1, Math.ceil(voters.length / state.pageSize));
+  if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+  const start = (state.currentPage - 1) * state.pageSize;
+  const end = start + state.pageSize;
+  const pageRows = voters.slice(start, end);
+
   els.votersContainer.innerHTML = `
-    <div style="margin-bottom:12px;">
+    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button id="prevPageBtn" type="button" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>
+        <button id="nextPageBtn" type="button" ${state.currentPage === totalPages ? 'disabled' : ''}>Next</button>
+        <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
+        <span class="muted">Showing SL# ${start + 1} to ${Math.min(end, voters.length)}</span>
+      </div>
       <button id="saveBoothBtn" type="button">Save Booth</button>
     </div>
-    ${voters.map(v => `
+
+    ${pageRows.map(v => `
       <div class="voter-row">
         <div class="sl-box">SL# ${v.slNo}</div>
         <div class="affinity-group">
@@ -185,7 +201,12 @@ function renderVoters() {
   });
 
   const saveBtn = byId('saveBoothBtn');
+  const prevBtn = byId('prevPageBtn');
+  const nextBtn = byId('nextPageBtn');
+
   if (saveBtn) saveBtn.addEventListener('click', onSaveBooth);
+  if (prevBtn) prevBtn.addEventListener('click', () => changePage(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => changePage(1));
 }
 
 function buildBoothVoters(totalVoters) {
@@ -266,6 +287,51 @@ async function onSaveBooth() {
   }
 }
 
+async function saveCurrentBoothSilently() {
+  if (!state.selectedBooth || !state.boothData) return true;
+
+  try {
+    const result = await postApi({
+      action: 'saveBoothAffinities',
+      booth: state.selectedBooth.booth,
+      voters: state.boothData.voters
+    });
+
+    if (!result.ok) {
+      alert(result.message || 'Auto-save failed');
+      return false;
+    }
+
+    state.boothData.summary = result.summary || state.boothData.summary;
+    state.boothData.completionPct = result.completionPct || state.boothData.completionPct;
+    renderSummary();
+    return true;
+  } catch (err) {
+    alert(err.message || 'Auto-save failed');
+    return false;
+  }
+}
+
+async function changePage(direction) {
+  if (!state.boothData?.voters?.length) return;
+
+  const totalPages = Math.max(1, Math.ceil(state.boothData.voters.length / state.pageSize));
+  const newPage = state.currentPage + direction;
+
+  if (newPage < 1 || newPage > totalPages) return;
+
+  try {
+    showLoading(true);
+    const ok = await saveCurrentBoothSilently();
+    if (!ok) return;
+
+    state.currentPage = newPage;
+    renderVoters();
+  } finally {
+    showLoading(false);
+  }
+}
+
 async function loadSavedAffinity(booth) {
   const result = await callApi({
     action: 'getSavedAffinity',
@@ -284,6 +350,7 @@ async function loadBoothData(booth) {
   if (!selected) throw new Error('Booth not found');
 
   state.selectedBooth = selected;
+  state.currentPage = 1;
 
   state.boothData = {
     voters: buildBoothVoters(Number(selected.totalVoters) || 0),
