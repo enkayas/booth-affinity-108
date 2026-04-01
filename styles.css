@@ -26,13 +26,13 @@ body {
 .auth-card {
   max-width: 420px;
   margin: 40px auto 0;
+  overflow: hidden;
 }
 
 .auth-banner {
   background: #f97316;
-  border-radius: 16px;
+  margin: -20px -20px 14px;
   padding: 16px 18px;
-  margin-bottom: 14px;
 }
 
 .auth-title {
@@ -56,14 +56,28 @@ body {
   color: #fff;
 }
 
+.auth-powered {
+  margin: 0 0 12px;
+  color: #f97316;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 .auth-subtext {
   margin: 0 0 12px;
   color: #6b7280;
   font-size: 16px;
 }
 
-.auth-disclaimer {
+.auth-help {
   margin: 14px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+}
+
+.auth-disclaimer {
+  margin: 10px 0 0;
   color: #6b7280;
   font-size: 14px;
   text-align: center;
