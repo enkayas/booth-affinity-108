@@ -292,10 +292,10 @@ function getUserFromStatic(phone, password) {
 
 function getBoothsForUser(user) {
   if (!state.staticData || !state.staticData.booths) return [];
-  const allowed = String(user.boothsCsv || '')
-    .split(',')
-    .filter(Boolean)
-    .map(x => Number(x));
+
+  const allowed = Array.isArray(user.booths)
+    ? user.booths.map(x => Number(x))
+    : [];
 
   return state.staticData.booths
     .filter(b => allowed.includes(Number(b.booth)))
