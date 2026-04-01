@@ -1782,6 +1782,27 @@
   ],
   "users": [
     {
+      "phone": "9443522730",
+      "name": "MANAGER",
+      "role": "Manager",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9787388769",
+      "name": "MANAGER",
+      "role": "Manager",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
+      "phone": "9443031246",
+      "name": "MANAGER",
+      "role": "Manager",
+      "mandal": "ALL MANDALS",
+      "booths": "all"
+    },
+    {
       "phone": "9962541214",
       "name": "ADMIN",
       "role": "Admin",

@@ -158,7 +158,7 @@ function renderUser() {
   if (!state.user) return;
   const mandal = state.user.mandal || '';
   els.userName.textContent = mandal ? `Booth Affinity | ${mandal}` : 'Booth Affinity';
-  els.userMeta.textContent = '';
+  els.userMeta.textContent = `${state.user.name || ''} | ${state.user.role || ''}`;
 }
 
 function renderBoothDropdown() {
@@ -193,7 +193,7 @@ function renderBoothMetaSummary() {
   }
 
   els.boothMetaSummary.innerHTML = `
-    <div class="mini-detail-grid">
+    <div class="mini-detail-row">
       <div><strong>Booth #</strong><span>${b.booth}</span></div>
       <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
       <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
@@ -360,10 +360,11 @@ function renderSummary() {
 }
 
 function updateSubmitButton() {
+  els.submitAffinityBtn = byId('submitAffinityBtn') || els.submitAffinityBtn;
   if (!els.submitAffinityBtn) return;
   const hasBooth = !!state.selectedBooth;
   const hasVoters = !!state.boothData?.voters?.length;
-  els.submitAffinityBtn.disabled = !(hasBooth && hasVoters);
+  els.submitAffinityBtn.disabled = !(hasBooth && hasVoters && canEditAnyRows());
 }
 
 function affinityButton(code, current, slNo) {
@@ -391,6 +392,11 @@ function canEditSavedRows() {
   return role === 'sakthi kendra' || role === 'mandal president' || role === 'admin';
 }
 
+function canEditAnyRows() {
+  const role = String(state.user?.role || '').trim().toLowerCase();
+  return role !== 'manager';
+}
+
 function isRowSaved(slNo) {
   const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   return !!voter?.affinity;
@@ -399,6 +405,7 @@ function isRowSaved(slNo) {
 function isRowLocked(slNo) {
   const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   if (!voter) return false;
+  if (!canEditAnyRows()) return true;
   return !!voter.affinity && !canEditSavedRows() && !state.editingRows.has(slNo);
 }
 
@@ -420,6 +427,7 @@ function renderVoters() {
         <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
         <span class="muted">Showing SL# ${start + 1} to ${Math.min(end, voters.length)}</span>
       </div>
+      <button id="submitAffinityBtn" type="button">Submit</button>
     </div>
 
     ${pageRows.map(v => {
@@ -447,9 +455,12 @@ function renderVoters() {
 
   const prevBtn = byId('prevPageBtn');
   const nextBtn = byId('nextPageBtn');
+  els.submitAffinityBtn = byId('submitAffinityBtn');
 
   if (prevBtn) prevBtn.addEventListener('click', () => changePage(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => changePage(1));
+  if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
+  updateSubmitButton();
 }
 
 function buildBoothVoters(totalVoters) {
@@ -498,6 +509,7 @@ function updateLocalSelection(slNo, affinity) {
 }
 
 function onAffinityClick(e) {
+  if (!canEditAnyRows()) return;
   const btn = e.currentTarget;
   const slNo = Number(btn.dataset.sl);
   const affinity = btn.dataset.affinity;
@@ -507,6 +519,11 @@ function onAffinityClick(e) {
 }
 
 async function onSaveBooth() {
+  if (!canEditAnyRows()) {
+    setAffinitySaveStatus('View-only access. Saving is disabled for this role.', 'warning');
+    return false;
+  }
+
   if (!state.selectedBooth || !state.boothData?.voters?.length) {
     setAffinitySaveStatus('Select a booth before submitting affinity.', 'error');
     return false;
@@ -953,7 +970,6 @@ async function init() {
   els.boothMetaSummary = byId('boothMetaSummary');
   els.boothDetails = byId('boothDetails');
   els.votersContainer = byId('votersContainer');
-  els.submitAffinityBtn = byId('submitAffinityBtn');
   els.affinitySaveStatus = byId('affinitySaveStatus');
   els.summaryA = byId('summaryA');
   els.summaryB = byId('summaryB');
@@ -969,7 +985,6 @@ async function init() {
   els.loginForm.addEventListener('submit', onLoginSubmit);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
-  if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
   window.addEventListener('online', syncPendingDrafts);
   window.addEventListener('pagehide', flushPendingBoothData);
   document.addEventListener('visibilitychange', () => {

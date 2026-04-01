@@ -195,8 +195,8 @@ button:disabled {
 .topbar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 #userName {
@@ -209,9 +209,17 @@ button:disabled {
 }
 
 #userMeta {
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
+  text-align: right;
+}
+
+.topbar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
 }
 
 .topbar button {
@@ -219,7 +227,7 @@ button:disabled {
 }
 
 .app-slogan {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--text);
   font-size: 14px;
   font-weight: 700;
@@ -266,13 +274,19 @@ button:disabled {
 }
 
 .mini-detail-grid,
+.mini-detail-row,
 .detail-grid,
 .contact-grid {
   display: grid;
   gap: 8px;
 }
 
+.contact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .mini-detail-grid div,
+.mini-detail-row div,
 .detail-grid div,
 .contact-card {
   display: flex;
@@ -281,6 +295,7 @@ button:disabled {
 }
 
 .mini-detail-grid strong,
+.mini-detail-row strong,
 .detail-grid strong,
 .contact-card strong {
   color: var(--text-muted);
@@ -292,6 +307,7 @@ button:disabled {
 }
 
 .mini-detail-grid span,
+.mini-detail-row span,
 .detail-grid span,
 .contact-card span {
   color: var(--text);
@@ -302,6 +318,11 @@ button:disabled {
 
 .mini-detail-grid span {
   font-weight: 700;
+}
+
+.mini-detail-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .booth-details-card h3,
@@ -318,6 +339,7 @@ button:disabled {
 }
 
 .detail-grid-location {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
 }
 
@@ -493,7 +515,8 @@ button:disabled {
 }
 
 #submitAffinityBtn {
-  width: 100%;
+  width: auto;
+  min-width: 120px;
 }
 
 #affinitySaveStatus {
@@ -551,6 +574,10 @@ button:disabled {
     justify-content: space-between;
   }
 
+  .topbar-actions {
+    align-items: flex-end;
+  }
+
   .topbar button {
     width: auto;
     min-width: 132px;
@@ -570,6 +597,10 @@ button:disabled {
     gap: 16px;
   }
 
+  .contact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .summary-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -586,13 +617,6 @@ button:disabled {
   }
 
   .affinity-actions {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  #submitAffinityBtn {
-    width: auto;
-    min-width: 150px;
+    align-items: flex-start;
   }
 }
