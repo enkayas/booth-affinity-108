@@ -29,6 +29,12 @@ function setLoginError(msg) {
   if (els.loginError) els.loginError.textContent = msg || '';
 }
 
+function setAffinitySaveStatus(msg, isError = false) {
+  if (!els.affinitySaveStatus) return;
+  els.affinitySaveStatus.textContent = msg || '';
+  els.affinitySaveStatus.style.color = isError ? '#c62828' : '#6b7280';
+}
+
 async function loadStaticData() {
   const res = await fetch('booth_affinity_static_data.json');
   if (!res.ok) throw new Error('Unable to load static data');
@@ -149,6 +155,13 @@ function renderSummary() {
   els.summaryD.textContent = s.D || 0;
   els.summaryE.textContent = s.E || 0;
   els.completionPct.textContent = `${state.boothData?.completionPct || 0}%`;
+}
+
+function updateSubmitButton() {
+  if (!els.submitAffinityBtn) return;
+  const hasBooth = !!state.selectedBooth;
+  const hasVoters = !!state.boothData?.voters?.length;
+  els.submitAffinityBtn.disabled = !(hasBooth && hasVoters);
 }
 
 function affinityButton(code, current, slNo) {
@@ -280,7 +293,28 @@ function onAffinityClick(e) {
 }
 
 async function onSaveBooth() {
-  return saveCurrentBoothSilently();
+  if (!state.selectedBooth || !state.boothData?.voters?.length) {
+    setAffinitySaveStatus('Select a booth before submitting affinity.', true);
+    return false;
+  }
+
+  if (state.pendingSaveTimer) {
+    clearTimeout(state.pendingSaveTimer);
+    state.pendingSaveTimer = null;
+  }
+
+  try {
+    showLoading(true);
+    setAffinitySaveStatus('');
+    const ok = await saveCurrentBoothSilently();
+    setAffinitySaveStatus(
+      ok ? 'Affinity submitted successfully.' : 'Unable to submit affinity. Please try again.',
+      !ok
+    );
+    return ok;
+  } finally {
+    showLoading(false);
+  }
 }
 
 async function saveCurrentBoothSilently() {
@@ -365,6 +399,8 @@ async function loadBoothData(booth) {
   renderBoothDetails();
   renderSummary();
   renderVoters();
+  updateSubmitButton();
+  setAffinitySaveStatus('');
 
   await loadSavedAffinity(booth);
 }
@@ -378,6 +414,8 @@ async function onBoothChange() {
     renderBoothDetails();
     renderSummary();
     renderVoters();
+    updateSubmitButton();
+    setAffinitySaveStatus('');
     return;
   }
 
@@ -462,9 +500,11 @@ function logout() {
   els.phone.value = '';
   els.password.value = '';
   setLoginError('');
+  setAffinitySaveStatus('');
 
   els.loginSection.style.display = 'block';
   els.appSection.style.display = 'none';
+  updateSubmitButton();
 }
 
 async function init() {
@@ -479,6 +519,8 @@ async function init() {
   els.boothSelect = byId('boothSelect');
   els.boothDetails = byId('boothDetails');
   els.votersContainer = byId('votersContainer');
+  els.submitAffinityBtn = byId('submitAffinityBtn');
+  els.affinitySaveStatus = byId('affinitySaveStatus');
   els.summaryA = byId('summaryA');
   els.summaryB = byId('summaryB');
   els.summaryC = byId('summaryC');
@@ -493,10 +535,12 @@ async function init() {
   els.loginForm.addEventListener('submit', onLoginSubmit);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
+  if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
 
   renderBoothDetails();
   renderSummary();
   renderVoters();
+  updateSubmitButton();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

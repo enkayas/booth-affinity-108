@@ -72,6 +72,11 @@ button:hover {
   opacity: 0.95;
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 #loginForm button {
   width: 100%;
   margin-top: 18px;
@@ -144,6 +149,19 @@ button:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.affinity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+#submitAffinityBtn {
+  min-width: 160px;
 }
 
 .voter-row {
@@ -243,5 +261,14 @@ button:hover {
   .affinity-btn {
     flex: 1 1 calc(20% - 8px);
     text-align: center;
+  }
+
+  .affinity-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #submitAffinityBtn {
+    width: 100%;
   }
 }
