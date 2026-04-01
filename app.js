@@ -93,8 +93,9 @@ async function postApi(payload) {
 
 function renderUser() {
   if (!state.user) return;
-  els.userName.textContent = state.user.name || '';
-  els.userMeta.textContent = `${state.user.role || ''} • ${state.user.mandal || ''}`;
+  const mandal = state.user.mandal || '';
+  els.userName.textContent = mandal ? `Booth Affinity | ${mandal}` : 'Booth Affinity';
+  els.userMeta.textContent = '';
 }
 
 function renderBoothDropdown() {
