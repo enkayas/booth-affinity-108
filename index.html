@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booth Affinity</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="loginScreen" class="screen active">
+      <div class="card narrow">
+        <h1>Booth Affinity</h1>
+        <p class="muted">Login with phone number. Password is the last 4 digits of the same phone.</p>
+        <label>Phone Number</label>
+        <input id="phoneInput" type="tel" maxlength="10" placeholder="Enter 10-digit phone" />
+        <label>Password</label>
+        <input id="passwordInput" type="password" maxlength="4" placeholder="Last 4 digits" />
+        <button id="loginBtn">Login</button>
+        <p id="loginMsg" class="message"></p>
+      </div>
+    </section>
+
+    <section id="dashboardScreen" class="screen">
+      <header class="topbar">
+        <div>
+          <h2 id="welcomeText">Welcome</h2>
+          <div id="roleText" class="muted"></div>
+        </div>
+        <button id="logoutBtn" class="secondary">Logout</button>
+      </header>
+
+      <div class="grid2">
+        <div class="card">
+          <label for="boothSelect">Select Booth</label>
+          <select id="boothSelect"></select>
+        </div>
+        <div class="card booth-meta" id="boothMeta"></div>
+      </div>
+
+      <div class="card summary-row" id="summaryCard"></div>
+
+      <div class="card">
+        <div class="list-header">
+          <h3>Voter Serial Numbers</h3>
+          <input id="serialSearch" type="number" placeholder="Jump to serial no." />
+        </div>
+        <div id="serialList"></div>
+      </div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
