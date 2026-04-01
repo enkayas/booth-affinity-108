@@ -1,4 +1,4 @@
-const API_URL = 'PASTE_YOUR_LATEST_APPS_SCRIPT_WEB_APP_URL_HERE';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzjoXHcSGmvVQjBi6OCjzsqlo1Rs7O2yyaSO7HNmjbZLizc5wA2FjsUu0Oushgrk-9C/exec';
 
 const state = {
   user: null,
