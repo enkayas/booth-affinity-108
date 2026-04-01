@@ -575,7 +575,7 @@ button:disabled {
 }
 
 .detail-grid-location {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   align-content: start;
 }
 
@@ -866,12 +866,12 @@ button:disabled {
   }
 
   .booth-details-layout {
-    grid-template-columns: minmax(0, 1.08fr) minmax(250px, 0.92fr);
-    gap: 16px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .contact-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .summary-grid {
