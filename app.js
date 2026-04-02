@@ -218,7 +218,7 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select Booth';
+  defaultOpt.textContent = 'Select A Booth';
   els.boothSelect.appendChild(defaultOpt);
 
   if (canUseAllOptions && state.booths.length) {
@@ -258,6 +258,8 @@ function getDashboardAvailableMandals() {
 }
 
 function getDashboardVillageOptions() {
+  if (!state.dashboardSelectedMandal) return [];
+
   const scopedByMandal = state.dashboardSelectedMandal
     ? (state.allBooths || []).filter(booth => String(booth.mandal || '').trim() === state.dashboardSelectedMandal)
     : (state.allBooths || []);
@@ -282,6 +284,8 @@ function syncDashboardFilterState() {
 }
 
 function getDashboardScopedBooths() {
+  if (!state.dashboardSelectedMandal) return [];
+
   let scopedBooths = [...(state.allBooths || [])];
 
   if (state.dashboardSelectedMandal) {
@@ -314,7 +318,7 @@ function renderDashboardFilters() {
   els.dashboardMandalSelect.innerHTML = '';
   const defaultMandalOpt = document.createElement('option');
   defaultMandalOpt.value = '';
-  defaultMandalOpt.textContent = 'All';
+  defaultMandalOpt.textContent = 'Select A Mandal';
   els.dashboardMandalSelect.appendChild(defaultMandalOpt);
 
   mandals.forEach(mandal => {
@@ -329,7 +333,7 @@ function renderDashboardFilters() {
   els.dashboardVillageSelect.innerHTML = '';
   const defaultVillageOpt = document.createElement('option');
   defaultVillageOpt.value = '';
-  defaultVillageOpt.textContent = 'All';
+  defaultVillageOpt.textContent = 'Select A Village / Town';
   els.dashboardVillageSelect.appendChild(defaultVillageOpt);
 
   villages.forEach(village => {
@@ -348,7 +352,7 @@ function renderMandalDropdown() {
   els.mandalFilterGroup.style.display = showFilter ? 'block' : 'none';
 
   if (!showFilter) {
-    els.mandalSelect.innerHTML = '<option value="">Select Mandal</option>';
+    els.mandalSelect.innerHTML = '<option value="">Select A Mandal</option>';
     return;
   }
 
@@ -357,7 +361,7 @@ function renderMandalDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select Mandal';
+  defaultOpt.textContent = 'Select A Mandal';
   els.mandalSelect.appendChild(defaultOpt);
 
   const allOpt = document.createElement('option');
@@ -842,12 +846,8 @@ function getAccessibleBoothStatusList(booths = state.booths) {
 }
 
 function getDashboardBoothStatusClass(item) {
-  if (!item.loaded) return 'dashboard-booth-syncing';
   if (item.completed >= item.total && item.total > 0) return 'dashboard-booth-complete';
-  if (item.completionPct >= 75) return 'dashboard-booth-high';
-  if (item.completionPct >= 50) return 'dashboard-booth-medium';
-  if (item.completionPct >= 25) return 'dashboard-booth-low';
-  return 'dashboard-booth-critical';
+  return 'dashboard-booth-incomplete';
 }
 
 function groupBoothStatusesByVillage(boothStatuses) {
@@ -881,11 +881,47 @@ function getDashboardSelectedBoothConfig() {
   return state.allBoothMap.get(Number(state.dashboardSelectedBooth)) || null;
 }
 
+function renderDashboardSummaryMetrics(metrics) {
+  if (!els.dashboardSummary) return;
+
+  els.dashboardSummary.innerHTML = `
+    <div class="dashboard-metric">
+      <strong>${metrics.totalVoters}</strong>
+      <span>Total Voters</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${metrics.totalBooths}</strong>
+      <span>Total Booths</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${metrics.completedBooths}</strong>
+      <span>Total Booths Completed</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${metrics.completedVoters}</strong>
+      <span>Total Voters Completed</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${metrics.pendingVoters}</strong>
+      <span>Pending Voters</span>
+    </div>
+    <div class="dashboard-metric">
+      <strong>${metrics.completionPct}%</strong>
+      <span>Overall Completion %</span>
+    </div>
+  `;
+}
+
 function renderDashboardBoothDetails() {
   if (!els.dashboardBoothDetails) return;
 
   if (!canViewDashboard()) {
     els.dashboardBoothDetails.innerHTML = '';
+    return;
+  }
+
+  if (!state.dashboardSelectedMandal) {
+    els.dashboardBoothDetails.innerHTML = '<div class="muted">Select a mandal to view grouped booth details.</div>';
     return;
   }
 
@@ -973,6 +1009,25 @@ function renderDashboard() {
   renderDashboardFilters();
 
   const dashboardBooths = getDashboardScopedBooths();
+  if (!state.dashboardSelectedMandal) {
+    els.dashboardScope.textContent = `${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`;
+    els.dashboardRefreshState.textContent = 'Select a mandal';
+    renderDashboardSummaryMetrics({
+      totalVoters: 0,
+      totalBooths: 0,
+      completedBooths: 0,
+      completedVoters: 0,
+      pendingVoters: 0,
+      completionPct: 0
+    });
+    els.dashboardBoothList.innerHTML = '<div class="muted">Select a mandal to view booths grouped by Village / Town.</div>';
+    state.dashboardSelectedBooth = null;
+    state.dashboardDetailLoading = false;
+    renderDashboardBoothDetails();
+    renderAppTabs();
+    return;
+  }
+
   if (state.dashboardSelectedBooth && !dashboardBooths.some(booth => Number(booth.booth) === Number(state.dashboardSelectedBooth))) {
     state.dashboardSelectedBooth = null;
     state.dashboardDetailLoading = false;
@@ -994,32 +1049,14 @@ function renderDashboard() {
     ? `Updating ${loadedCount}/${totalBooths} booths`
     : 'Up to date';
 
-  els.dashboardSummary.innerHTML = `
-    <div class="dashboard-metric">
-      <strong>${totalVoters}</strong>
-      <span>Total Voters</span>
-    </div>
-    <div class="dashboard-metric">
-      <strong>${totalBooths}</strong>
-      <span>Total Booths</span>
-    </div>
-    <div class="dashboard-metric">
-      <strong>${completedBooths}</strong>
-      <span>Total Booths Completed</span>
-    </div>
-    <div class="dashboard-metric">
-      <strong>${completedVoters}</strong>
-      <span>Total Voters Completed</span>
-    </div>
-    <div class="dashboard-metric">
-      <strong>${pendingVoters}</strong>
-      <span>Pending Voters</span>
-    </div>
-    <div class="dashboard-metric">
-      <strong>${completionPct}%</strong>
-      <span>Overall Completion %</span>
-    </div>
-  `;
+  renderDashboardSummaryMetrics({
+    totalVoters,
+    totalBooths,
+    completedBooths,
+    completedVoters,
+    pendingVoters,
+    completionPct
+  });
 
   const villageGroups = groupBoothStatusesByVillage(boothStatuses);
   if (!villageGroups.length) {
@@ -1140,7 +1177,9 @@ function renderVoters() {
   if (!voters.length) {
     els.votersContainer.innerHTML = state.selectedBoothAll
       ? '<div class="muted">Showing aggregate summary for all visible booths. Select a specific booth to enter affinity.</div>'
-      : '<div class="muted">No voters found for this booth</div>';
+      : state.selectedBooth
+        ? '<div class="muted">No voters found for this booth</div>'
+        : '';
     return;
   }
 
@@ -1753,7 +1792,6 @@ async function onMandalChange() {
   state.selectedMandal = els.mandalSelect.value || '';
   state.prefetchStarted = false;
   applyVisibleBoothScope();
-  await ensureInitialBoothSelection();
 }
 
 function onDashboardMandalChange() {
@@ -1870,7 +1908,6 @@ async function onLoginSubmit(e) {
   els.appSection.style.display = 'block';
 
   refreshAccessibleDataForUser(user);
-  await ensureInitialBoothSelection();
   syncPendingDrafts();
 }
 
