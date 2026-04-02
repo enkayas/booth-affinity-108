@@ -395,6 +395,11 @@ function formatPhone(phone) {
   return `${digits.slice(0, 5)} ${digits.slice(5)}`;
 }
 
+function formatNumberIndian(value) {
+  const num = Number(value) || 0;
+  return num.toLocaleString('en-IN');
+}
+
 function hasScopedEntryAggregateView() {
   return requiresMandalSelection() && !!state.selectedMandal && !state.selectedBooth && !state.selectedBoothAll;
 }
@@ -924,23 +929,23 @@ function renderDashboardSummaryMetrics(metrics) {
 
   els.dashboardSummary.innerHTML = `
     <div class="dashboard-metric">
-      <strong>${metrics.totalVoters}</strong>
+      <strong>${formatNumberIndian(metrics.totalVoters)}</strong>
       <span>Total Voters</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${metrics.totalBooths}</strong>
+      <strong>${formatNumberIndian(metrics.totalBooths)}</strong>
       <span>Total Booths</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${metrics.completedBooths}</strong>
+      <strong>${formatNumberIndian(metrics.completedBooths)}</strong>
       <span>Total Booths Completed</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${metrics.completedVoters}</strong>
+      <strong>${formatNumberIndian(metrics.completedVoters)}</strong>
       <span>Total Voters Completed</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${metrics.pendingVoters}</strong>
+      <strong>${formatNumberIndian(metrics.pendingVoters)}</strong>
       <span>Pending Voters</span>
     </div>
     <div class="dashboard-metric">
@@ -999,14 +1004,14 @@ function renderDashboardBoothDetails() {
     </div>
     <div class="detail-grid detail-grid-location">
       <div><strong>Polling Station</strong><span>${booth.pollingStation || '-'}</span></div>
-      <div><strong>Status</strong><span>${completed}/${total} completed | ${pending} pending</span></div>
+      <div><strong>Status</strong><span>${formatNumberIndian(completed)}/${formatNumberIndian(total)} completed | ${formatNumberIndian(pending)} pending</span></div>
     </div>
     <div class="dashboard-detail-summary">
-      <div class="dashboard-detail-metric"><strong>${summary.A || 0}</strong><span>A</span></div>
-      <div class="dashboard-detail-metric"><strong>${summary.B || 0}</strong><span>B</span></div>
-      <div class="dashboard-detail-metric"><strong>${summary.C || 0}</strong><span>C</span></div>
-      <div class="dashboard-detail-metric"><strong>${summary.D || 0}</strong><span>D</span></div>
-      <div class="dashboard-detail-metric"><strong>${summary.E || 0}</strong><span>E</span></div>
+      <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.A || 0)}</strong><span>A</span></div>
+      <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.B || 0)}</strong><span>B</span></div>
+      <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.C || 0)}</strong><span>C</span></div>
+      <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.D || 0)}</strong><span>D</span></div>
+      <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.E || 0)}</strong><span>E</span></div>
     </div>
     <div class="contact-grid">
       ${renderSelectionContactCards(contactMap, 'Not assigned')}
@@ -1111,7 +1116,7 @@ function renderDashboard() {
       <div class="dashboard-village-header">
         <div class="dashboard-village-title">
           <strong>${group.village}</strong>
-          <span>${group.completedVoters}/${group.totalVoters} voters completed</span>
+          <span>${formatNumberIndian(group.completedVoters)}/${formatNumberIndian(group.totalVoters)} voters completed</span>
         </div>
         <div class="dashboard-village-completion">${group.completionPct}%</div>
       </div>
@@ -1120,10 +1125,9 @@ function renderDashboard() {
           <button class="dashboard-row ${getDashboardBoothStatusClass(item)}${Number(state.dashboardSelectedBooth) === Number(item.boothNo) ? ' is-selected' : ''}" type="button" data-dashboard-booth="${item.boothNo}">
             <div class="dashboard-row-main">
               <strong>Booth ${item.boothNo}</strong>
-              <span>${item.village || item.mandal}</span>
             </div>
             <div class="dashboard-row-stats">
-              <span>${item.completed}/${item.total} voters</span>
+              <span>${formatNumberIndian(item.completed)}/${formatNumberIndian(item.total)} voters</span>
               <span>${item.completionPct}%</span>
               <span>${item.loaded ? (item.completed >= item.total && item.total > 0 ? 'Completed' : 'In Progress') : 'Syncing'}</span>
             </div>
