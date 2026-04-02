@@ -212,15 +212,16 @@ function renderUser() {
 
 function renderBoothDropdown() {
   els.boothSelect.innerHTML = '';
+  const canUseAllOptions = requiresMandalSelection();
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = requiresMandalSelection() && !state.selectedMandal
+  defaultOpt.textContent = canUseAllOptions && !state.selectedMandal
     ? 'Select Mandal First'
     : 'Select a Booth';
   els.boothSelect.appendChild(defaultOpt);
 
-  if (state.booths.length) {
+  if (canUseAllOptions && state.booths.length) {
     const allOpt = document.createElement('option');
     allOpt.value = '__all__';
     allOpt.textContent = 'All';
@@ -1627,6 +1628,7 @@ function refreshAccessibleDataForUser(user) {
   const availableMandals = getAvailableMandals();
   if (!requiresMandalSelection()) {
     state.selectedMandal = '';
+    state.selectedBoothAll = false;
   } else if (state.selectedMandal && state.selectedMandal !== '__all__' && !availableMandals.includes(state.selectedMandal)) {
     state.selectedMandal = '';
   }
