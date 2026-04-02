@@ -14,6 +14,7 @@ const state = {
   booths: [],
   boothMap: new Map(),
   selectedMandal: '',
+  selectedBoothAll: false,
   dashboardSelectedMandal: '',
   dashboardSelectedVillage: '',
   selectedBooth: null,
@@ -214,10 +215,15 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = requiresMandalSelection() && !state.selectedMandal
-    ? 'Select Mandal First'
-    : 'Select Booth';
+  defaultOpt.textContent = 'Select Booth';
   els.boothSelect.appendChild(defaultOpt);
+
+  if (state.booths.length) {
+    const allOpt = document.createElement('option');
+    allOpt.value = '__all__';
+    allOpt.textContent = 'All Booths';
+    els.boothSelect.appendChild(allOpt);
+  }
 
   state.booths.forEach(b => {
     const opt = document.createElement('option');
@@ -348,7 +354,7 @@ function renderMandalDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select Mandal';
+  defaultOpt.textContent = 'All Mandals';
   els.mandalSelect.appendChild(defaultOpt);
 
   mandals.forEach(mandal => {
@@ -371,6 +377,19 @@ function renderBoothMetaSummary() {
   const b = state.selectedBooth;
   if (!els.boothMetaSummary) return;
 
+  if (state.selectedBoothAll) {
+    const totalVoters = state.booths.reduce((sum, booth) => sum + (Number(booth.totalVoters) || 0), 0);
+    const mandalLabel = state.selectedMandal || 'All Mandals';
+    els.boothMetaSummary.innerHTML = `
+      <div class="mini-detail-row">
+        <div><strong>Booth #</strong><span>All Booths</span></div>
+        <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
+        <div><strong>Total Voters</strong><span>${totalVoters}</span></div>
+      </div>
+    `;
+    return;
+  }
+
   if (!b) {
     els.boothMetaSummary.innerHTML = '<div class="muted">Booth, mandal, and voter count will appear here</div>';
     return;
@@ -381,9 +400,6 @@ function renderBoothMetaSummary() {
       <div><strong>Booth #</strong><span>${b.booth}</span></div>
       <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
       <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
-    </div>
-    <div class="mini-detail-grid booth-meta-location">
-      <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
     </div>
   `;
 }
@@ -401,6 +417,13 @@ function getBoothContacts(booth) {
 
 function renderBoothDetails() {
   const b = state.selectedBooth;
+  if (state.selectedBoothAll) {
+    renderBoothMetaSummary();
+    const boothCount = state.booths.length;
+    els.boothDetails.innerHTML = `<div class="muted">Showing aggregate data for ${boothCount} booth${boothCount === 1 ? '' : 's'}. Select a specific booth to see booth details.</div>`;
+    return;
+  }
+
   if (!b) {
     renderBoothMetaSummary();
     els.boothDetails.innerHTML = '<div class="muted">Select a booth to see details</div>';
@@ -455,6 +478,30 @@ function createBoothData(totalVoters) {
     voters: buildBoothVoters(Number(totalVoters) || 0),
     summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
     completionPct: 0
+  };
+}
+
+function buildAggregateBoothData() {
+  const summary = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  const totalVoters = state.booths.reduce((sum, booth) => sum + (Number(booth.totalVoters) || 0), 0);
+
+  state.booths.forEach(booth => {
+    const cached = state.pageCache[Number(booth.booth)];
+    if (!cached?.summary) return;
+    summary.A += Number(cached.summary.A || 0);
+    summary.B += Number(cached.summary.B || 0);
+    summary.C += Number(cached.summary.C || 0);
+    summary.D += Number(cached.summary.D || 0);
+    summary.E += Number(cached.summary.E || 0);
+  });
+
+  const completed = summary.A + summary.B + summary.C + summary.D + summary.E;
+  const completionPct = totalVoters ? Math.round((completed / totalVoters) * 100) : 0;
+
+  return {
+    voters: [],
+    summary,
+    completionPct
   };
 }
 
@@ -934,7 +981,9 @@ function isRowLocked(slNo) {
 function renderVoters() {
   const voters = state.boothData?.voters || [];
   if (!voters.length) {
-    els.votersContainer.innerHTML = '<div class="muted">No voters found for this booth</div>';
+    els.votersContainer.innerHTML = state.selectedBoothAll
+      ? '<div class="muted">Showing aggregate summary for all visible booths. Select a specific booth to enter affinity.</div>'
+      : '<div class="muted">No voters found for this booth</div>';
     return;
   }
 
@@ -1329,6 +1378,7 @@ async function loadBoothData(booth) {
   if (!selected) throw new Error('Booth not found');
   const loadId = ++state.activeBoothLoadId;
 
+  state.selectedBoothAll = false;
   state.selectedBooth = selected;
   state.currentPage = 1;
   state.editingRows.clear();
@@ -1363,10 +1413,10 @@ async function loadBoothData(booth) {
 }
 
 async function onBoothChange() {
-  const booth = Number(els.boothSelect.value);
-
-  if (!booth) {
+  const rawValue = els.boothSelect.value;
+  if (!rawValue) {
     state.activeBoothLoadId++;
+    state.selectedBoothAll = false;
     state.selectedBooth = null;
     state.boothData = null;
     renderBoothDetails();
@@ -1376,6 +1426,27 @@ async function onBoothChange() {
     setAffinitySaveStatus('');
     return;
   }
+
+  if (rawValue === '__all__') {
+    state.activeBoothLoadId++;
+    state.selectedBoothAll = true;
+    state.selectedBooth = null;
+    state.currentPage = 1;
+    state.editingRows.clear();
+    if (state.pendingSaveTimer) {
+      clearTimeout(state.pendingSaveTimer);
+      state.pendingSaveTimer = null;
+    }
+    state.boothData = buildAggregateBoothData();
+    renderBoothDetails();
+    renderSummary();
+    renderVoters();
+    updateSubmitButton();
+    setAffinitySaveStatus('Showing aggregate data for all visible booths. Select a specific booth to enter affinity.');
+    return;
+  }
+
+  const booth = Number(rawValue);
 
   let loadingTimer = null;
 
@@ -1432,12 +1503,9 @@ function getBoothsForUser(user) {
 }
 
 function applyVisibleBoothScope() {
-  const showFilter = requiresMandalSelection();
-  const scopedBooths = showFilter && state.selectedMandal
+  const scopedBooths = state.selectedMandal
     ? state.allBooths.filter(booth => String(booth.mandal || '').trim() === state.selectedMandal)
-    : showFilter
-      ? []
-      : [...state.allBooths];
+    : [...state.allBooths];
 
   state.booths = scopedBooths.sort((a, b) => a.booth - b.booth);
   state.boothMap = new Map(state.booths.map(booth => [Number(booth.booth), booth]));
@@ -1446,10 +1514,20 @@ function applyVisibleBoothScope() {
 
   const currentBoothNo = Number(state.selectedBooth?.booth) || 0;
   if (currentBoothNo && state.boothMap.has(currentBoothNo)) {
+    state.selectedBoothAll = false;
     state.selectedBooth = state.boothMap.get(currentBoothNo);
     if (els.boothSelect) els.boothSelect.value = String(currentBoothNo);
+  } else if (state.selectedBoothAll && state.booths.length) {
+    if (els.boothSelect) els.boothSelect.value = '__all__';
+    state.boothData = buildAggregateBoothData();
+    renderBoothDetails();
+    renderSummary();
+    renderVoters();
+    updateSubmitButton();
+    setAffinitySaveStatus('Showing aggregate data for all visible booths. Select a specific booth to enter affinity.');
   } else {
     state.activeBoothLoadId++;
+    state.selectedBoothAll = false;
     state.selectedBooth = null;
     state.boothData = null;
     if (els.boothSelect) els.boothSelect.value = '';
@@ -1457,7 +1535,7 @@ function applyVisibleBoothScope() {
     renderSummary();
     renderVoters();
     updateSubmitButton();
-    setAffinitySaveStatus(showFilter && !state.selectedMandal ? 'Select a mandal to load booths.' : '');
+    setAffinitySaveStatus('');
   }
 
   renderDashboard();
@@ -1494,7 +1572,6 @@ function refreshAccessibleDataForUser(user) {
 
 async function ensureInitialBoothSelection() {
   if (state.selectedBooth || !state.booths.length || !els.boothSelect) return;
-  if (requiresMandalSelection() && !state.selectedMandal) return;
 
   const firstBooth = Number(state.booths[0]?.booth);
   if (!firstBooth) return;
@@ -1654,6 +1731,7 @@ function logout() {
   state.booths = [];
   state.boothMap = new Map();
   state.selectedMandal = '';
+  state.selectedBoothAll = false;
   state.dashboardSelectedMandal = '';
   state.dashboardSelectedVillage = '';
   state.selectedBooth = null;
