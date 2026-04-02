@@ -1322,6 +1322,21 @@ function refreshAccessibleDataForUser(user) {
   warmBoothCache();
 }
 
+async function ensureInitialBoothSelection() {
+  if (state.selectedBooth || !state.booths.length || !els.boothSelect) return;
+
+  const firstBooth = Number(state.booths[0]?.booth);
+  if (!firstBooth) return;
+
+  els.boothSelect.value = String(firstBooth);
+  try {
+    showLoading(true);
+    await loadBoothData(firstBooth);
+  } finally {
+    showLoading(false);
+  }
+}
+
 async function refreshStaticDataInBackground(options = {}) {
   const previousData = state.staticData
     ? JSON.parse(JSON.stringify(state.staticData))
@@ -1389,7 +1404,7 @@ async function onManualDataRefresh() {
   }
 }
 
-function onLoginSubmit(e) {
+async function onLoginSubmit(e) {
   e.preventDefault();
   setLoginError('');
 
@@ -1423,6 +1438,7 @@ function onLoginSubmit(e) {
   els.appSection.style.display = 'block';
 
   refreshAccessibleDataForUser(user);
+  await ensureInitialBoothSelection();
   syncPendingDrafts();
 }
 
