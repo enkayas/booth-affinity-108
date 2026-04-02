@@ -395,11 +395,36 @@ function formatPhone(phone) {
   return `${digits.slice(0, 5)} ${digits.slice(5)}`;
 }
 
+function hasScopedEntryAggregateView() {
+  return requiresMandalSelection() && !!state.selectedMandal && !state.selectedBooth && !state.selectedBoothAll;
+}
+
+function isEntryAggregateViewActive() {
+  return state.selectedBoothAll || hasScopedEntryAggregateView();
+}
+
+function getEntryAggregateStatusMessage() {
+  return state.selectedBoothAll
+    ? 'Showing aggregate data for all visible booths. Select a specific booth to enter affinity.'
+    : 'Showing aggregate data for the selected mandal. Select a specific booth to enter affinity.';
+}
+
+function renderEntryAggregateView() {
+  if (!isEntryAggregateViewActive()) return false;
+  state.boothData = buildAggregateBoothData();
+  renderBoothDetails();
+  renderSummary();
+  renderVoters();
+  updateSubmitButton();
+  setAffinitySaveStatus(getEntryAggregateStatusMessage());
+  return true;
+}
+
 function renderBoothMetaSummary() {
   const b = state.selectedBooth;
   if (!els.boothMetaSummary) return;
 
-  if (state.selectedBoothAll) {
+  if (isEntryAggregateViewActive()) {
     const totalVoters = state.booths.reduce((sum, booth) => sum + (Number(booth.totalVoters) || 0), 0);
     const mandalLabel = state.selectedMandal === '__all__' ? 'ALL' : (state.selectedMandal || 'All Mandals');
     els.boothMetaSummary.innerHTML = `
@@ -471,7 +496,7 @@ function renderSelectionContactCards(contactMap, fallbackLabel) {
 function renderBoothDetails() {
   const b = state.selectedBooth;
   const mandalLabel = getSelectionMandalLabel();
-  if (state.selectedBoothAll) {
+  if (isEntryAggregateViewActive()) {
     renderBoothMetaSummary();
     const boothCount = state.booths.length;
     const mandalPresident = getMandalPresidentForSelection();
@@ -483,7 +508,7 @@ function renderBoothDetails() {
       <div class="booth-details-layout">
         <div class="detail-grid detail-grid-selection">
           <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
-          <div><strong>Selection Scope</strong><span>All Booths (${boothCount})</span></div>
+          <div><strong>Selection Scope</strong><span>${state.selectedBoothAll ? 'All Booths' : 'Selected Mandal'} (${boothCount})</span></div>
         </div>
         <div class="contact-grid">
           ${renderSelectionContactCards(contactMap, 'Select a booth')}
@@ -659,6 +684,9 @@ function cacheCurrentBoothData() {
   const boothNo = Number(state.selectedBooth?.booth);
   if (!boothNo || !state.boothData) return;
   state.pageCache[boothNo] = cloneBoothData(state.boothData);
+  if (isEntryAggregateViewActive() && state.boothMap.has(boothNo)) {
+    renderEntryAggregateView();
+  }
   queueDashboardRender();
 }
 
@@ -1185,8 +1213,8 @@ function isRowLocked(slNo) {
 function renderVoters() {
   const voters = state.boothData?.voters || [];
   if (!voters.length) {
-    els.votersContainer.innerHTML = state.selectedBoothAll
-      ? '<div class="muted">Showing aggregate summary for all visible booths. Select a specific booth to enter affinity.</div>'
+    els.votersContainer.innerHTML = isEntryAggregateViewActive()
+      ? `<div class="muted">${getEntryAggregateStatusMessage()}</div>`
       : state.selectedBooth
         ? '<div class="muted">No voters found for this booth</div>'
         : '';
@@ -1350,6 +1378,10 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
   clearDraftForBooth(boothNo);
   queueDraftPersist();
   queueDashboardRender();
+
+  if (isEntryAggregateViewActive() && state.boothMap.has(boothNo)) {
+    renderEntryAggregateView();
+  }
 
   if (boothNo === getCurrentBoothNumber() && state.boothData) {
     state.boothData.summary = boothData.summary;
@@ -1528,6 +1560,9 @@ function fetchBoothData(booth) {
     applySavedAffinity(savedRows, boothData, selected.totalVoters || 0);
     applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
     state.pageCache[boothNo] = cloneBoothData(boothData);
+    if (isEntryAggregateViewActive() && state.boothMap.has(boothNo)) {
+      renderEntryAggregateView();
+    }
     queueDashboardRender();
     return boothData;
   })();
@@ -1624,12 +1659,14 @@ async function onBoothChange() {
     state.activeBoothLoadId++;
     state.selectedBoothAll = false;
     state.selectedBooth = null;
-    state.boothData = null;
-    renderBoothDetails();
-    renderSummary();
-    renderVoters();
-    updateSubmitButton();
-    setAffinitySaveStatus('');
+    if (!renderEntryAggregateView()) {
+      state.boothData = null;
+      renderBoothDetails();
+      renderSummary();
+      renderVoters();
+      updateSubmitButton();
+      setAffinitySaveStatus('');
+    }
     return;
   }
 
@@ -1643,12 +1680,7 @@ async function onBoothChange() {
       clearTimeout(state.pendingSaveTimer);
       state.pendingSaveTimer = null;
     }
-    state.boothData = buildAggregateBoothData();
-    renderBoothDetails();
-    renderSummary();
-    renderVoters();
-    updateSubmitButton();
-    setAffinitySaveStatus('Showing aggregate data for all visible booths. Select a specific booth to enter affinity.');
+    renderEntryAggregateView();
     return;
   }
 
@@ -1730,12 +1762,10 @@ function applyVisibleBoothScope() {
     if (els.boothSelect) els.boothSelect.value = String(currentBoothNo);
   } else if (state.selectedBoothAll && state.booths.length) {
     if (els.boothSelect) els.boothSelect.value = '__all__';
-    state.boothData = buildAggregateBoothData();
-    renderBoothDetails();
-    renderSummary();
-    renderVoters();
-    updateSubmitButton();
-    setAffinitySaveStatus('Showing aggregate data for all visible booths. Select a specific booth to enter affinity.');
+    renderEntryAggregateView();
+  } else if (hasScopedEntryAggregateView()) {
+    if (els.boothSelect) els.boothSelect.value = '';
+    renderEntryAggregateView();
   } else {
     state.activeBoothLoadId++;
     state.selectedBoothAll = false;
