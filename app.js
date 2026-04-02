@@ -9,8 +9,13 @@ const DASHBOARD_VISIBLE_ROLES = new Set(['sakthi kendra', 'mandal president', 'm
 const state = {
   staticData: null,
   user: null,
+  allBooths: [],
+  allBoothMap: new Map(),
   booths: [],
   boothMap: new Map(),
+  selectedMandal: '',
+  dashboardSelectedMandal: '',
+  dashboardSelectedVillage: '',
   selectedBooth: null,
   boothData: null,
   currentPage: 1,
@@ -209,7 +214,9 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select Booth';
+  defaultOpt.textContent = requiresMandalSelection() && !state.selectedMandal
+    ? 'Select Mandal First'
+    : 'Select Booth';
   els.boothSelect.appendChild(defaultOpt);
 
   state.booths.forEach(b => {
@@ -218,6 +225,140 @@ function renderBoothDropdown() {
     opt.textContent = `Booth ${b.booth} - ${b.village || ''}`;
     els.boothSelect.appendChild(opt);
   });
+}
+
+function requiresMandalSelection() {
+  const role = normalizeRole(state.user?.role);
+  return role === 'admin' || role === 'manager';
+}
+
+function getAvailableMandals() {
+  return Array.from(new Set(
+    (state.allBooths || [])
+      .map(booth => String(booth.mandal || '').trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b));
+}
+
+function getDashboardAvailableMandals() {
+  return Array.from(new Set(
+    (state.allBooths || [])
+      .map(booth => String(booth.mandal || '').trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b));
+}
+
+function getDashboardVillageOptions() {
+  const scopedByMandal = state.dashboardSelectedMandal
+    ? (state.allBooths || []).filter(booth => String(booth.mandal || '').trim() === state.dashboardSelectedMandal)
+    : (state.allBooths || []);
+
+  return Array.from(new Set(
+    scopedByMandal
+      .map(booth => String(booth.village || '').trim())
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b));
+}
+
+function syncDashboardFilterState() {
+  const mandals = getDashboardAvailableMandals();
+  if (state.dashboardSelectedMandal && !mandals.includes(state.dashboardSelectedMandal)) {
+    state.dashboardSelectedMandal = '';
+  }
+
+  const villages = getDashboardVillageOptions();
+  if (state.dashboardSelectedVillage && !villages.includes(state.dashboardSelectedVillage)) {
+    state.dashboardSelectedVillage = '';
+  }
+}
+
+function getDashboardScopedBooths() {
+  let scopedBooths = [...(state.allBooths || [])];
+
+  if (state.dashboardSelectedMandal) {
+    scopedBooths = scopedBooths.filter(
+      booth => String(booth.mandal || '').trim() === state.dashboardSelectedMandal
+    );
+  }
+
+  if (state.dashboardSelectedVillage) {
+    scopedBooths = scopedBooths.filter(
+      booth => String(booth.village || '').trim() === state.dashboardSelectedVillage
+    );
+  }
+
+  return scopedBooths.sort((a, b) => Number(a.booth) - Number(b.booth));
+}
+
+function renderDashboardFilters() {
+  if (!els.dashboardFilters || !els.dashboardMandalSelect || !els.dashboardVillageSelect) return;
+
+  if (!canViewDashboard()) {
+    els.dashboardFilters.style.display = 'none';
+    return;
+  }
+
+  els.dashboardFilters.style.display = 'grid';
+  syncDashboardFilterState();
+
+  const mandals = getDashboardAvailableMandals();
+  els.dashboardMandalSelect.innerHTML = '';
+  const defaultMandalOpt = document.createElement('option');
+  defaultMandalOpt.value = '';
+  defaultMandalOpt.textContent = mandals.length > 1 ? 'All Mandals' : (mandals[0] || 'All Mandals');
+  els.dashboardMandalSelect.appendChild(defaultMandalOpt);
+
+  mandals.forEach(mandal => {
+    const opt = document.createElement('option');
+    opt.value = mandal;
+    opt.textContent = mandal;
+    els.dashboardMandalSelect.appendChild(opt);
+  });
+  els.dashboardMandalSelect.value = state.dashboardSelectedMandal || '';
+
+  const villages = getDashboardVillageOptions();
+  els.dashboardVillageSelect.innerHTML = '';
+  const defaultVillageOpt = document.createElement('option');
+  defaultVillageOpt.value = '';
+  defaultVillageOpt.textContent = villages.length > 1 ? 'All Villages/Towns' : (villages[0] || 'All Villages/Towns');
+  els.dashboardVillageSelect.appendChild(defaultVillageOpt);
+
+  villages.forEach(village => {
+    const opt = document.createElement('option');
+    opt.value = village;
+    opt.textContent = village;
+    els.dashboardVillageSelect.appendChild(opt);
+  });
+  els.dashboardVillageSelect.value = state.dashboardSelectedVillage || '';
+}
+
+function renderMandalDropdown() {
+  if (!els.mandalFilterGroup || !els.mandalSelect) return;
+
+  const showFilter = requiresMandalSelection();
+  els.mandalFilterGroup.style.display = showFilter ? 'block' : 'none';
+
+  if (!showFilter) {
+    els.mandalSelect.innerHTML = '<option value="">Select Mandal</option>';
+    return;
+  }
+
+  const mandals = getAvailableMandals();
+  els.mandalSelect.innerHTML = '';
+
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.textContent = 'Select Mandal';
+  els.mandalSelect.appendChild(defaultOpt);
+
+  mandals.forEach(mandal => {
+    const opt = document.createElement('option');
+    opt.value = mandal;
+    opt.textContent = mandal;
+    els.mandalSelect.appendChild(opt);
+  });
+
+  els.mandalSelect.value = state.selectedMandal || '';
 }
 
 function formatPhone(phone) {
@@ -398,7 +539,7 @@ function cacheCurrentBoothData() {
 }
 
 function getBoothConfig(booth) {
-  return state.boothMap.get(Number(booth)) || null;
+  return state.allBoothMap.get(Number(booth)) || null;
 }
 
 function getDashboardScopeLabel() {
@@ -566,8 +707,8 @@ function renderDataRefreshLog() {
   `).join('');
 }
 
-function getAccessibleBoothStatusList() {
-  return state.booths.map(booth => {
+function getAccessibleBoothStatusList(booths = state.booths) {
+  return booths.map(booth => {
     const boothNo = Number(booth.booth);
     const cached = state.pageCache[boothNo];
     const total = Number(booth.totalVoters) || 0;
@@ -636,7 +777,10 @@ function renderDashboard() {
     return;
   }
 
-  const boothStatuses = getAccessibleBoothStatusList();
+  renderDashboardFilters();
+
+  const dashboardBooths = getDashboardScopedBooths();
+  const boothStatuses = getAccessibleBoothStatusList(dashboardBooths);
   const loadedCount = boothStatuses.filter(item => item.loaded).length;
   const totalBooths = boothStatuses.length;
   const totalVoters = boothStatuses.reduce((sum, item) => sum + item.total, 0);
@@ -645,7 +789,10 @@ function renderDashboard() {
   const pendingVoters = Math.max(totalVoters - completedVoters, 0);
   const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
 
-  els.dashboardScope.textContent = `${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`;
+  const scopeParts = [`${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`];
+  if (state.dashboardSelectedMandal) scopeParts.push(`Mandal: ${state.dashboardSelectedMandal}`);
+  if (state.dashboardSelectedVillage) scopeParts.push(`Village/Town: ${state.dashboardSelectedVillage}`);
+  els.dashboardScope.textContent = scopeParts.join(' | ');
   els.dashboardRefreshState.textContent = loadedCount < totalBooths
     ? `Updating ${loadedCount}/${totalBooths} booths`
     : 'Up to date';
@@ -678,6 +825,12 @@ function renderDashboard() {
   `;
 
   const villageGroups = groupBoothStatusesByVillage(boothStatuses);
+  if (!villageGroups.length) {
+    els.dashboardBoothList.innerHTML = '<div class="muted">No dashboard data available for the selected filters.</div>';
+    renderAppTabs();
+    return;
+  }
+
   els.dashboardBoothList.innerHTML = villageGroups.map(group => `
     <section class="dashboard-village-group">
       <div class="dashboard-village-header">
@@ -1278,32 +1431,23 @@ function getBoothsForUser(user) {
     .sort((a, b) => a.booth - b.booth);
 }
 
-function refreshAccessibleDataForUser(user) {
-  const currentBoothNo = Number(state.selectedBooth?.booth) || 0;
-  state.user = {
-    phone: user.phone,
-    name: user.name,
-    role: user.role,
-    mandal: user.mandal
-  };
-  state.booths = getBoothsForUser(user);
-  state.boothMap = new Map(state.booths.map(b => [Number(b.booth), b]));
-  state.pageCache = Object.fromEntries(
-    Object.entries(state.pageCache).filter(([boothNo]) => state.boothMap.has(Number(boothNo)))
-  );
-  state.pendingBoothLoads = {};
-  state.prefetchStarted = false;
+function applyVisibleBoothScope() {
+  const showFilter = requiresMandalSelection();
+  const scopedBooths = showFilter && state.selectedMandal
+    ? state.allBooths.filter(booth => String(booth.mandal || '').trim() === state.selectedMandal)
+    : showFilter
+      ? []
+      : [...state.allBooths];
 
-  renderUser();
+  state.booths = scopedBooths.sort((a, b) => a.booth - b.booth);
+  state.boothMap = new Map(state.booths.map(booth => [Number(booth.booth), booth]));
+  renderMandalDropdown();
   renderBoothDropdown();
 
+  const currentBoothNo = Number(state.selectedBooth?.booth) || 0;
   if (currentBoothNo && state.boothMap.has(currentBoothNo)) {
     state.selectedBooth = state.boothMap.get(currentBoothNo);
     if (els.boothSelect) els.boothSelect.value = String(currentBoothNo);
-    renderBoothDetails();
-    renderSummary();
-    renderVoters();
-    updateSubmitButton();
   } else {
     state.activeBoothLoadId++;
     state.selectedBooth = null;
@@ -1313,17 +1457,44 @@ function refreshAccessibleDataForUser(user) {
     renderSummary();
     renderVoters();
     updateSubmitButton();
-    setAffinitySaveStatus('');
+    setAffinitySaveStatus(showFilter && !state.selectedMandal ? 'Select a mandal to load booths.' : '');
   }
 
   renderDashboard();
   renderDataRefreshLog();
   renderAppTabs();
+}
+
+function refreshAccessibleDataForUser(user) {
+  state.user = {
+    phone: user.phone,
+    name: user.name,
+    role: user.role,
+    mandal: user.mandal
+  };
+  state.allBooths = getBoothsForUser(user);
+  state.allBoothMap = new Map(state.allBooths.map(b => [Number(b.booth), b]));
+  state.pageCache = Object.fromEntries(
+    Object.entries(state.pageCache).filter(([boothNo]) => state.allBoothMap.has(Number(boothNo)))
+  );
+  state.pendingBoothLoads = {};
+  state.prefetchStarted = false;
+  const availableMandals = getAvailableMandals();
+  if (!requiresMandalSelection()) {
+    state.selectedMandal = '';
+  } else if (state.selectedMandal && !availableMandals.includes(state.selectedMandal)) {
+    state.selectedMandal = '';
+  }
+  syncDashboardFilterState();
+
+  renderUser();
+  applyVisibleBoothScope();
   warmBoothCache();
 }
 
 async function ensureInitialBoothSelection() {
   if (state.selectedBooth || !state.booths.length || !els.boothSelect) return;
+  if (requiresMandalSelection() && !state.selectedMandal) return;
 
   const firstBooth = Number(state.booths[0]?.booth);
   if (!firstBooth) return;
@@ -1335,6 +1506,27 @@ async function ensureInitialBoothSelection() {
   } finally {
     showLoading(false);
   }
+}
+
+async function onMandalChange() {
+  if (!els.mandalSelect) return;
+  state.selectedMandal = els.mandalSelect.value || '';
+  state.prefetchStarted = false;
+  applyVisibleBoothScope();
+  await ensureInitialBoothSelection();
+}
+
+function onDashboardMandalChange() {
+  if (!els.dashboardMandalSelect) return;
+  state.dashboardSelectedMandal = els.dashboardMandalSelect.value || '';
+  syncDashboardFilterState();
+  renderDashboard();
+}
+
+function onDashboardVillageChange() {
+  if (!els.dashboardVillageSelect) return;
+  state.dashboardSelectedVillage = els.dashboardVillageSelect.value || '';
+  renderDashboard();
 }
 
 async function refreshStaticDataInBackground(options = {}) {
@@ -1457,8 +1649,13 @@ function logout() {
     state.pendingDraftPersistTimer = null;
   }
   state.user = null;
+  state.allBooths = [];
+  state.allBoothMap = new Map();
   state.booths = [];
   state.boothMap = new Map();
+  state.selectedMandal = '';
+  state.dashboardSelectedMandal = '';
+  state.dashboardSelectedVillage = '';
   state.selectedBooth = null;
   state.boothData = null;
   state.pageCache = {};
@@ -1504,6 +1701,11 @@ async function init() {
   els.dashboardRefreshState = byId('dashboardRefreshState');
   els.dashboardSummary = byId('dashboardSummary');
   els.dashboardBoothList = byId('dashboardBoothList');
+  els.dashboardFilters = byId('dashboardFilters');
+  els.dashboardMandalSelect = byId('dashboardMandalSelect');
+  els.dashboardVillageSelect = byId('dashboardVillageSelect');
+  els.mandalFilterGroup = byId('mandalFilterGroup');
+  els.mandalSelect = byId('mandalSelect');
   els.boothSelect = byId('boothSelect');
   els.boothMetaSummary = byId('boothMetaSummary');
   els.boothDetails = byId('boothDetails');
@@ -1524,6 +1726,9 @@ async function init() {
   }
 
   els.loginForm.addEventListener('submit', onLoginSubmit);
+  if (els.mandalSelect) els.mandalSelect.addEventListener('change', onMandalChange);
+  if (els.dashboardMandalSelect) els.dashboardMandalSelect.addEventListener('change', onDashboardMandalChange);
+  if (els.dashboardVillageSelect) els.dashboardVillageSelect.addEventListener('change', onDashboardVillageChange);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
   if (els.entryTabBtn) els.entryTabBtn.addEventListener('click', () => setActiveView('entry'));

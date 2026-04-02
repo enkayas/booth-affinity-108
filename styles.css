@@ -380,6 +380,27 @@ button:disabled {
   margin-bottom: 12px;
 }
 
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dashboard-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-filter-field label {
+  color: var(--accent);
+}
+
+.dashboard-filter-field select {
+  width: 100%;
+}
+
 .dashboard-metric {
   display: flex;
   flex-direction: column;
@@ -888,6 +909,10 @@ button:disabled {
 
   .dashboard-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dashboard-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-village-tiles {

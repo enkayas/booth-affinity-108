@@ -65,6 +65,12 @@
       <section id="entrySection">
         <div class="booth-toolbar">
           <div class="card booth-select-card">
+            <div id="mandalFilterGroup" style="display:none;">
+              <label for="mandalSelect"><strong>Select Mandal</strong></label>
+              <select id="mandalSelect">
+                <option value="">Select Mandal</option>
+              </select>
+            </div>
             <label for="boothSelect"><strong>Select Booth</strong></label>
             <select id="boothSelect">
               <option value="">Select Booth</option>
@@ -118,6 +124,20 @@
             <p id="dashboardScope" class="dashboard-scope"></p>
           </div>
           <div id="dashboardRefreshState" class="dashboard-refresh muted"></div>
+        </div>
+        <div id="dashboardFilters" class="dashboard-filters">
+          <div class="dashboard-filter-field">
+            <label for="dashboardMandalSelect"><strong>Select Mandal</strong></label>
+            <select id="dashboardMandalSelect">
+              <option value="">All Mandals</option>
+            </select>
+          </div>
+          <div class="dashboard-filter-field">
+            <label for="dashboardVillageSelect"><strong>Select Village/Town</strong></label>
+            <select id="dashboardVillageSelect">
+              <option value="">All Villages/Towns</option>
+            </select>
+          </div>
         </div>
         <div id="dashboardSummary" class="dashboard-summary"></div>
         <div id="dashboardBoothList" class="dashboard-booth-list"></div>
