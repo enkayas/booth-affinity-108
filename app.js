@@ -17,6 +17,8 @@ const state = {
   selectedBoothAll: false,
   dashboardSelectedMandal: '',
   dashboardSelectedVillage: '',
+  dashboardSelectedBooth: null,
+  dashboardDetailLoading: false,
   selectedBooth: null,
   boothData: null,
   currentPage: 1,
@@ -216,9 +218,7 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = canUseAllOptions && !state.selectedMandal
-    ? 'Select Mandal First'
-    : 'Select a Booth';
+  defaultOpt.textContent = 'Select Booth';
   els.boothSelect.appendChild(defaultOpt);
 
   if (canUseAllOptions && state.booths.length) {
@@ -314,7 +314,7 @@ function renderDashboardFilters() {
   els.dashboardMandalSelect.innerHTML = '';
   const defaultMandalOpt = document.createElement('option');
   defaultMandalOpt.value = '';
-  defaultMandalOpt.textContent = mandals.length > 1 ? 'All Mandals' : (mandals[0] || 'All Mandals');
+  defaultMandalOpt.textContent = 'All';
   els.dashboardMandalSelect.appendChild(defaultMandalOpt);
 
   mandals.forEach(mandal => {
@@ -329,7 +329,7 @@ function renderDashboardFilters() {
   els.dashboardVillageSelect.innerHTML = '';
   const defaultVillageOpt = document.createElement('option');
   defaultVillageOpt.value = '';
-  defaultVillageOpt.textContent = villages.length > 1 ? 'All Villages/Towns' : (villages[0] || 'All Villages/Towns');
+  defaultVillageOpt.textContent = 'All';
   els.dashboardVillageSelect.appendChild(defaultVillageOpt);
 
   villages.forEach(village => {
@@ -877,6 +877,89 @@ function groupBoothStatusesByVillage(boothStatuses) {
     });
 }
 
+function getDashboardSelectedBoothConfig() {
+  return state.allBoothMap.get(Number(state.dashboardSelectedBooth)) || null;
+}
+
+function renderDashboardBoothDetails() {
+  if (!els.dashboardBoothDetails) return;
+
+  if (!canViewDashboard()) {
+    els.dashboardBoothDetails.innerHTML = '';
+    return;
+  }
+
+  const booth = getDashboardSelectedBoothConfig();
+  if (!booth) {
+    els.dashboardBoothDetails.innerHTML = '<div class="muted">Select a booth tile to see details.</div>';
+    return;
+  }
+
+  if (state.dashboardDetailLoading) {
+    els.dashboardBoothDetails.innerHTML = `<div class="muted">Loading details for Booth ${booth.booth}...</div>`;
+    return;
+  }
+
+  const cached = state.pageCache[Number(booth.booth)];
+  const summary = cached?.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  const total = Number(booth.totalVoters) || 0;
+  const completed = cached?.voters
+    ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
+    : 0;
+  const pending = Math.max(total - completed, 0);
+  const completionPct = total ? Math.round((completed / total) * 100) : 0;
+  const contacts = getBoothContacts(booth.booth);
+  const contactMap = new Map(contacts.map(contact => [contact.role, contact]));
+
+  els.dashboardBoothDetails.innerHTML = `
+    <div class="dashboard-detail-header">
+      <div>
+        <strong>Booth ${booth.booth}</strong>
+        <span>${booth.village || '-'} | ${booth.mandal || '-'}</span>
+      </div>
+      <div class="dashboard-village-completion">${completionPct}%</div>
+    </div>
+    <div class="detail-grid detail-grid-selection">
+      <div><strong>Mandal</strong><span>${booth.mandal || '-'}</span></div>
+      <div><strong>Village/Town</strong><span>${booth.village || '-'}</span></div>
+    </div>
+    <div class="detail-grid detail-grid-location">
+      <div><strong>Polling Station</strong><span>${booth.pollingStation || '-'}</span></div>
+      <div><strong>Status</strong><span>${completed}/${total} completed | ${pending} pending</span></div>
+    </div>
+    <div class="dashboard-detail-summary">
+      <div class="dashboard-detail-metric"><strong>${summary.A || 0}</strong><span>A</span></div>
+      <div class="dashboard-detail-metric"><strong>${summary.B || 0}</strong><span>B</span></div>
+      <div class="dashboard-detail-metric"><strong>${summary.C || 0}</strong><span>C</span></div>
+      <div class="dashboard-detail-metric"><strong>${summary.D || 0}</strong><span>D</span></div>
+      <div class="dashboard-detail-metric"><strong>${summary.E || 0}</strong><span>E</span></div>
+    </div>
+    <div class="contact-grid">
+      ${renderSelectionContactCards(contactMap, 'Not assigned')}
+    </div>
+  `;
+}
+
+async function onDashboardBoothTileClick(e) {
+  const boothNo = Number(e.currentTarget.dataset.dashboardBooth || 0);
+  if (!boothNo) return;
+
+  state.dashboardSelectedBooth = boothNo;
+  state.dashboardDetailLoading = !state.pageCache[boothNo];
+  renderDashboard();
+
+  if (!state.dashboardDetailLoading) return;
+
+  try {
+    await fetchBoothData(boothNo);
+  } catch (err) {
+    console.error(`Unable to load dashboard details for booth ${boothNo}:`, err.message || err);
+  } finally {
+    state.dashboardDetailLoading = false;
+    renderDashboard();
+  }
+}
+
 function renderDashboard() {
   if (!els.dashboardSection || !els.dashboardSummary || !els.dashboardBoothList || !els.dashboardScope || !els.dashboardRefreshState) {
     return;
@@ -890,6 +973,10 @@ function renderDashboard() {
   renderDashboardFilters();
 
   const dashboardBooths = getDashboardScopedBooths();
+  if (state.dashboardSelectedBooth && !dashboardBooths.some(booth => Number(booth.booth) === Number(state.dashboardSelectedBooth))) {
+    state.dashboardSelectedBooth = null;
+    state.dashboardDetailLoading = false;
+  }
   const boothStatuses = getAccessibleBoothStatusList(dashboardBooths);
   const loadedCount = boothStatuses.filter(item => item.loaded).length;
   const totalBooths = boothStatuses.length;
@@ -937,6 +1024,9 @@ function renderDashboard() {
   const villageGroups = groupBoothStatusesByVillage(boothStatuses);
   if (!villageGroups.length) {
     els.dashboardBoothList.innerHTML = '<div class="muted">No dashboard data available for the selected filters.</div>';
+    state.dashboardSelectedBooth = null;
+    state.dashboardDetailLoading = false;
+    renderDashboardBoothDetails();
     renderAppTabs();
     return;
   }
@@ -952,7 +1042,7 @@ function renderDashboard() {
       </div>
       <div class="dashboard-village-tiles">
         ${group.items.map(item => `
-          <div class="dashboard-row ${getDashboardBoothStatusClass(item)}">
+          <button class="dashboard-row ${getDashboardBoothStatusClass(item)}${Number(state.dashboardSelectedBooth) === Number(item.boothNo) ? ' is-selected' : ''}" type="button" data-dashboard-booth="${item.boothNo}">
             <div class="dashboard-row-main">
               <strong>Booth ${item.boothNo}</strong>
               <span>${item.village || item.mandal}</span>
@@ -962,11 +1052,15 @@ function renderDashboard() {
               <span>${item.completionPct}%</span>
               <span>${item.loaded ? (item.completed >= item.total && item.total > 0 ? 'Completed' : 'In Progress') : 'Syncing'}</span>
             </div>
-          </div>
+          </button>
         `).join('')}
       </div>
     </section>
   `).join('');
+  els.dashboardBoothList.querySelectorAll('[data-dashboard-booth]').forEach(btn => {
+    btn.addEventListener('click', onDashboardBoothTileClick);
+  });
+  renderDashboardBoothDetails();
   renderAppTabs();
 }
 
@@ -1803,6 +1897,8 @@ function logout() {
   state.selectedBoothAll = false;
   state.dashboardSelectedMandal = '';
   state.dashboardSelectedVillage = '';
+  state.dashboardSelectedBooth = null;
+  state.dashboardDetailLoading = false;
   state.selectedBooth = null;
   state.boothData = null;
   state.pageCache = {};
@@ -1848,6 +1944,7 @@ async function init() {
   els.dashboardRefreshState = byId('dashboardRefreshState');
   els.dashboardSummary = byId('dashboardSummary');
   els.dashboardBoothList = byId('dashboardBoothList');
+  els.dashboardBoothDetails = byId('dashboardBoothDetails');
   els.dashboardFilters = byId('dashboardFilters');
   els.dashboardMandalSelect = byId('dashboardMandalSelect');
   els.dashboardVillageSelect = byId('dashboardVillageSelect');
