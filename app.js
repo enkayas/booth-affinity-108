@@ -215,13 +215,15 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select Booth';
+  defaultOpt.textContent = requiresMandalSelection() && !state.selectedMandal
+    ? 'Select Mandal First'
+    : 'Select A Booth';
   els.boothSelect.appendChild(defaultOpt);
 
   if (state.booths.length) {
     const allOpt = document.createElement('option');
     allOpt.value = '__all__';
-    allOpt.textContent = 'All Booths';
+    allOpt.textContent = 'All';
     els.boothSelect.appendChild(allOpt);
   }
 
@@ -354,8 +356,13 @@ function renderMandalDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'All Mandals';
+  defaultOpt.textContent = 'Select Mandal';
   els.mandalSelect.appendChild(defaultOpt);
+
+  const allOpt = document.createElement('option');
+  allOpt.value = '__all__';
+  allOpt.textContent = 'ALL';
+  els.mandalSelect.appendChild(allOpt);
 
   mandals.forEach(mandal => {
     const opt = document.createElement('option');
@@ -379,7 +386,7 @@ function renderBoothMetaSummary() {
 
   if (state.selectedBoothAll) {
     const totalVoters = state.booths.reduce((sum, booth) => sum + (Number(booth.totalVoters) || 0), 0);
-    const mandalLabel = state.selectedMandal || 'All Mandals';
+    const mandalLabel = state.selectedMandal === '__all__' ? 'ALL' : (state.selectedMandal || 'All Mandals');
     els.boothMetaSummary.innerHTML = `
       <div class="mini-detail-row">
         <div><strong>Booth #</strong><span>All Booths</span></div>
@@ -1503,9 +1510,14 @@ function getBoothsForUser(user) {
 }
 
 function applyVisibleBoothScope() {
-  const scopedBooths = state.selectedMandal
-    ? state.allBooths.filter(booth => String(booth.mandal || '').trim() === state.selectedMandal)
-    : [...state.allBooths];
+  const showFilter = requiresMandalSelection();
+  const scopedBooths = state.selectedMandal === '__all__'
+    ? [...state.allBooths]
+    : state.selectedMandal
+      ? state.allBooths.filter(booth => String(booth.mandal || '').trim() === state.selectedMandal)
+      : showFilter
+        ? []
+        : [...state.allBooths];
 
   state.booths = scopedBooths.sort((a, b) => a.booth - b.booth);
   state.boothMap = new Map(state.booths.map(booth => [Number(booth.booth), booth]));
@@ -1535,7 +1547,7 @@ function applyVisibleBoothScope() {
     renderSummary();
     renderVoters();
     updateSubmitButton();
-    setAffinitySaveStatus('');
+    setAffinitySaveStatus(showFilter ? 'Select a mandal to load booths.' : '');
   }
 
   renderDashboard();
@@ -1560,7 +1572,7 @@ function refreshAccessibleDataForUser(user) {
   const availableMandals = getAvailableMandals();
   if (!requiresMandalSelection()) {
     state.selectedMandal = '';
-  } else if (state.selectedMandal && !availableMandals.includes(state.selectedMandal)) {
+  } else if (state.selectedMandal && state.selectedMandal !== '__all__' && !availableMandals.includes(state.selectedMandal)) {
     state.selectedMandal = '';
   }
   syncDashboardFilterState();
