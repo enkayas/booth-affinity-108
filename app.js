@@ -217,7 +217,7 @@ function renderBoothDropdown() {
   defaultOpt.value = '';
   defaultOpt.textContent = requiresMandalSelection() && !state.selectedMandal
     ? 'Select Mandal First'
-    : 'Select A Booth';
+    : 'Select a Booth';
   els.boothSelect.appendChild(defaultOpt);
 
   if (state.booths.length) {
@@ -422,43 +422,98 @@ function getBoothContacts(booth) {
     .sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
 }
 
+function getSelectionMandalLabel() {
+  if (state.selectedBooth?.mandal) return state.selectedBooth.mandal;
+  if (state.selectedMandal === '__all__') return 'ALL';
+  return state.selectedMandal || 'Not selected';
+}
+
+function getMandalPresidentForSelection() {
+  if (!state.staticData?.users) return null;
+  const mandal = getSelectionMandalLabel();
+  if (!mandal || mandal === 'ALL' || mandal === 'Not selected') return null;
+
+  return state.staticData.users.find(user =>
+    normalizeRole(user.role) === 'mandal president' &&
+    String(user.mandal || '').trim() === mandal
+  ) || null;
+}
+
+function renderSelectionContactCards(contactMap, fallbackLabel) {
+  const roleOrder = ['Mandal President', 'Sakthi Kendra', 'BLA2', 'Booth President'];
+  return roleOrder.map(role => {
+    const contact = contactMap.get(role);
+    return `
+      <div class="contact-card${contact ? '' : ' contact-card-missing'}">
+        <strong>${role}</strong>
+        <span>${contact?.name || fallbackLabel}</span>
+        <span>${contact?.phone ? formatPhone(contact.phone) : '-'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderBoothDetails() {
   const b = state.selectedBooth;
+  const mandalLabel = getSelectionMandalLabel();
   if (state.selectedBoothAll) {
     renderBoothMetaSummary();
     const boothCount = state.booths.length;
-    els.boothDetails.innerHTML = `<div class="muted">Showing aggregate data for ${boothCount} booth${boothCount === 1 ? '' : 's'}. Select a specific booth to see booth details.</div>`;
+    const mandalPresident = getMandalPresidentForSelection();
+    const contactMap = new Map();
+    if (mandalPresident) {
+      contactMap.set('Mandal President', mandalPresident);
+    }
+    els.boothDetails.innerHTML = `
+      <div class="booth-details-layout">
+        <div class="detail-grid detail-grid-selection">
+          <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
+          <div><strong>Selection Scope</strong><span>All Booths (${boothCount})</span></div>
+        </div>
+        <div class="contact-grid">
+          ${renderSelectionContactCards(contactMap, 'Select a booth')}
+        </div>
+      </div>
+    `;
     return;
   }
 
   if (!b) {
     renderBoothMetaSummary();
-    els.boothDetails.innerHTML = '<div class="muted">Select a booth to see details</div>';
+    const mandalPresident = getMandalPresidentForSelection();
+    const contactMap = new Map();
+    if (mandalPresident) {
+      contactMap.set('Mandal President', mandalPresident);
+    }
+    els.boothDetails.innerHTML = `
+      <div class="booth-details-layout">
+        <div class="detail-grid detail-grid-selection">
+          <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
+          <div><strong>Selection Scope</strong><span>Select a booth</span></div>
+        </div>
+        <div class="contact-grid">
+          ${renderSelectionContactCards(contactMap, 'Select a booth')}
+        </div>
+      </div>
+    `;
     return;
   }
 
   renderBoothMetaSummary();
 
   const contacts = getBoothContacts(b.booth);
-  const roleOrder = ['Mandal President', 'Sakthi Kendra', 'BLA2', 'Booth President'];
   const contactMap = new Map(contacts.map(contact => [contact.role, contact]));
   els.boothDetails.innerHTML = `
     <div class="booth-details-layout">
+      <div class="detail-grid detail-grid-selection">
+        <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
+      </div>
       <div class="detail-grid detail-grid-location">
         <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
         <div><strong>Polling Station</strong><span>${b.pollingStation || ''}</span></div>
       </div>
       <div class="contact-grid">
-        ${roleOrder.map(role => {
-          const contact = contactMap.get(role);
-          return `
-            <div class="contact-card${contact ? '' : ' contact-card-missing'}">
-              <strong>${role}</strong>
-              <span>${contact?.name || 'Not assigned'}</span>
-              <span>${contact?.phone ? formatPhone(contact.phone) : '-'}</span>
-            </div>
-          `;
-        }).join('')}
+        ${renderSelectionContactCards(contactMap, 'Not assigned')}
       </div>
     </div>
   `;
