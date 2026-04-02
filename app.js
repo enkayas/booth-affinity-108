@@ -260,7 +260,7 @@ function getDashboardAvailableMandals() {
 function getDashboardVillageOptions() {
   if (!state.dashboardSelectedMandal) return [];
 
-  const scopedByMandal = state.dashboardSelectedMandal
+  const scopedByMandal = state.dashboardSelectedMandal && state.dashboardSelectedMandal !== '__all__'
     ? (state.allBooths || []).filter(booth => String(booth.mandal || '').trim() === state.dashboardSelectedMandal)
     : (state.allBooths || []);
 
@@ -273,7 +273,7 @@ function getDashboardVillageOptions() {
 
 function syncDashboardFilterState() {
   const mandals = getDashboardAvailableMandals();
-  if (state.dashboardSelectedMandal && !mandals.includes(state.dashboardSelectedMandal)) {
+  if (state.dashboardSelectedMandal && state.dashboardSelectedMandal !== '__all__' && !mandals.includes(state.dashboardSelectedMandal)) {
     state.dashboardSelectedMandal = '';
   }
 
@@ -288,13 +288,13 @@ function getDashboardScopedBooths() {
 
   let scopedBooths = [...(state.allBooths || [])];
 
-  if (state.dashboardSelectedMandal) {
+  if (state.dashboardSelectedMandal && state.dashboardSelectedMandal !== '__all__') {
     scopedBooths = scopedBooths.filter(
       booth => String(booth.mandal || '').trim() === state.dashboardSelectedMandal
     );
   }
 
-  if (state.dashboardSelectedVillage) {
+  if (state.dashboardSelectedVillage && state.dashboardSelectedVillage !== '__all__') {
     scopedBooths = scopedBooths.filter(
       booth => String(booth.village || '').trim() === state.dashboardSelectedVillage
     );
@@ -321,6 +321,11 @@ function renderDashboardFilters() {
   defaultMandalOpt.textContent = 'Select A Mandal';
   els.dashboardMandalSelect.appendChild(defaultMandalOpt);
 
+  const allMandalOpt = document.createElement('option');
+  allMandalOpt.value = '__all__';
+  allMandalOpt.textContent = 'All';
+  els.dashboardMandalSelect.appendChild(allMandalOpt);
+
   mandals.forEach(mandal => {
     const opt = document.createElement('option');
     opt.value = mandal;
@@ -335,6 +340,11 @@ function renderDashboardFilters() {
   defaultVillageOpt.value = '';
   defaultVillageOpt.textContent = 'Select A Village / Town';
   els.dashboardVillageSelect.appendChild(defaultVillageOpt);
+
+  const allVillageOpt = document.createElement('option');
+  allVillageOpt.value = '__all__';
+  allVillageOpt.textContent = 'All';
+  els.dashboardVillageSelect.appendChild(allVillageOpt);
 
   villages.forEach(village => {
     const opt = document.createElement('option');
@@ -1042,7 +1052,7 @@ function renderDashboard() {
   const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
 
   const scopeParts = [`${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`];
-  if (state.dashboardSelectedMandal) scopeParts.push(`Mandal: ${state.dashboardSelectedMandal}`);
+  if (state.dashboardSelectedMandal) scopeParts.push(`Mandal: ${state.dashboardSelectedMandal === '__all__' ? 'All' : state.dashboardSelectedMandal}`);
   if (state.dashboardSelectedVillage) scopeParts.push(`Village/Town: ${state.dashboardSelectedVillage}`);
   els.dashboardScope.textContent = scopeParts.join(' | ');
   els.dashboardRefreshState.textContent = loadedCount < totalBooths
