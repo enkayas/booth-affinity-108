@@ -3,6 +3,7 @@ const DRAFT_STORAGE_KEY = 'booth_affinity_drafts_v1';
 const DRAFT_PERSIST_DELAY_MS = 120;
 const RETRY_SYNC_DELAY_MS = 5000;
 const DASHBOARD_RENDER_DELAY_MS = 120;
+const DASHBOARD_STATUS_REFRESH_INTERVAL_MS = 45 * 1000;
 const STATIC_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
 const DASHBOARD_VISIBLE_ROLES = new Set(['sakthi kendra', 'mandal president', 'manager', 'admin']);
 
@@ -34,6 +35,8 @@ const state = {
   retrySyncTimer: null,
   syncInProgress: false,
   pendingDashboardRenderTimer: null,
+  dashboardStatusRefreshInProgress: false,
+  lastDashboardStatusRefreshAt: 0,
   activeBoothLoadId: 0,
   staticRefreshTimer: null,
   activeView: 'entry',
@@ -771,6 +774,7 @@ function setActiveView(view) {
       state.dashboardSelectedMandal = '__all__';
     }
     state.activeView = 'dashboard';
+    refreshDashboardStatusesInBackground();
   } else if (view === 'data-refresh' && canRefreshData) {
     state.activeView = 'data-refresh';
   } else {
@@ -1149,9 +1153,13 @@ function renderDashboard() {
   if (state.dashboardSelectedMandal) scopeParts.push(`Mandal: ${state.dashboardSelectedMandal === '__all__' ? 'All' : state.dashboardSelectedMandal}`);
   if (state.dashboardSelectedVillage) scopeParts.push(`Village/Town: ${state.dashboardSelectedVillage}`);
   els.dashboardScope.textContent = scopeParts.join(' | ');
-  els.dashboardRefreshState.textContent = loadedCount < totalBooths
-    ? `Updating ${loadedCount}/${totalBooths} booths`
-    : 'Up to date';
+  if (state.dashboardStatusRefreshInProgress) {
+    els.dashboardRefreshState.textContent = `Refreshing latest status (${loadedCount}/${totalBooths} loaded)`;
+  } else {
+    els.dashboardRefreshState.textContent = loadedCount < totalBooths
+      ? `Updating ${loadedCount}/${totalBooths} booths`
+      : 'Up to date';
+  }
 
   renderDashboardSummaryMetrics({
     totalVoters,
@@ -1631,14 +1639,15 @@ async function loadSavedAffinity(booth) {
   return result.saved || [];
 }
 
-function fetchBoothData(booth) {
+function fetchBoothData(booth, options = {}) {
+  const forceRefresh = !!options.forceRefresh;
   const boothNo = Number(booth);
   const selected = getBoothConfig(boothNo);
   if (!selected) {
     return Promise.reject(new Error('Booth not found'));
   }
 
-  if (state.pageCache[boothNo]) {
+  if (!forceRefresh && state.pageCache[boothNo]) {
     const cached = cloneBoothData(state.pageCache[boothNo]);
     applyDraftToBoothData(cached, boothNo, selected.totalVoters || 0);
     return Promise.resolve(cached);
@@ -1710,6 +1719,43 @@ function warmBoothCache() {
   } else {
     window.setTimeout(startWorkers, 250);
   }
+}
+
+function refreshDashboardStatusesInBackground() {
+  if (!canViewDashboard() || state.dashboardStatusRefreshInProgress) return;
+
+  const now = Date.now();
+  if (now - state.lastDashboardStatusRefreshAt < DASHBOARD_STATUS_REFRESH_INTERVAL_MS) {
+    return;
+  }
+
+  const scopedBooths = getDashboardScopedBooths();
+  if (!scopedBooths.length) return;
+
+  state.dashboardStatusRefreshInProgress = true;
+  state.lastDashboardStatusRefreshAt = now;
+  queueDashboardRender();
+
+  const boothNumbers = scopedBooths.map(booth => Number(booth.booth));
+  const concurrency = boothNumbers.length > 80 ? 3 : 4;
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < boothNumbers.length) {
+      const boothNo = boothNumbers[nextIndex++];
+      try {
+        await fetchBoothData(boothNo, { forceRefresh: true });
+      } catch (err) {
+        console.error(`Dashboard refresh failed for booth ${boothNo}:`, err.message || err);
+      }
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(concurrency, boothNumbers.length) }, () => worker());
+  Promise.all(workers).finally(() => {
+    state.dashboardStatusRefreshInProgress = false;
+    queueDashboardRender();
+  });
 }
 
 async function loadBoothData(booth) {
@@ -1951,13 +1997,17 @@ function onVillageChange() {
 function onDashboardMandalChange() {
   if (!els.dashboardMandalSelect) return;
   state.dashboardSelectedMandal = els.dashboardMandalSelect.value || '';
+  state.lastDashboardStatusRefreshAt = 0;
   syncDashboardFilterState();
+  refreshDashboardStatusesInBackground();
   renderDashboard();
 }
 
 function onDashboardVillageChange() {
   if (!els.dashboardVillageSelect) return;
   state.dashboardSelectedVillage = els.dashboardVillageSelect.value || '';
+  state.lastDashboardStatusRefreshAt = 0;
+  refreshDashboardStatusesInBackground();
   renderDashboard();
 }
 
@@ -2096,6 +2146,8 @@ function logout() {
   state.pageCache = {};
   state.pendingBoothLoads = {};
   state.prefetchStarted = false;
+  state.dashboardStatusRefreshInProgress = false;
+  state.lastDashboardStatusRefreshAt = 0;
   state.localDrafts = {};
   state.syncInProgress = false;
   state.activeView = 'entry';
