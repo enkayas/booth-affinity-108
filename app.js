@@ -767,6 +767,9 @@ function setActiveView(view) {
   const canUseDashboard = canViewDashboard();
   const canRefreshData = canUseDataRefresh();
   if (view === 'dashboard' && canUseDashboard) {
+    if (!state.dashboardSelectedMandal) {
+      state.dashboardSelectedMandal = '__all__';
+    }
     state.activeView = 'dashboard';
   } else if (view === 'data-refresh' && canRefreshData) {
     state.activeView = 'data-refresh';

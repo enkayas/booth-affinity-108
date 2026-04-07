@@ -488,18 +488,18 @@ button:disabled {
 
 .dashboard-village-tiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .dashboard-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 7px 8px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff5f5;
   text-align: left;
   cursor: pointer;
@@ -514,19 +514,20 @@ button:disabled {
 .dashboard-row-stats {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   align-items: flex-start;
   justify-content: flex-start;
   flex-wrap: wrap;
 }
 
 .dashboard-row-main strong {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .dashboard-row-main span,
 .dashboard-row-stats span {
-  font-size: 12px;
+  font-size: 10px;
+  line-height: 1.15;
   color: var(--text-muted);
 }
 
@@ -1016,7 +1017,7 @@ button:disabled {
   }
 
   .dashboard-village-tiles {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .summary-grid {
@@ -1080,7 +1081,7 @@ button:disabled {
   }
 
   .dashboard-village-tiles {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .booth-select-card select {
@@ -1118,6 +1119,6 @@ button:disabled {
 
 @media (min-width: 1080px) {
   .dashboard-village-tiles {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
