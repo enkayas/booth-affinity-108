@@ -636,14 +636,37 @@ function calculateSummary(voters, totalVoters = state.selectedBooth?.totalVoters
     ? Math.round((filled / totalVoters) * 100)
     : 0;
 
-  return { summary, completionPct };
+  return { summary, completionPct, filled };
+}
+
+function getCompletedCountFromCache(cached) {
+  if (!cached) return 0;
+
+  const completedCount = Number(cached.completedCount || 0);
+  if (completedCount > 0) return completedCount;
+
+  const summary = cached.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  const fromSummary = Number(summary.A || 0)
+    + Number(summary.B || 0)
+    + Number(summary.C || 0)
+    + Number(summary.D || 0)
+    + Number(summary.E || 0);
+  if (fromSummary > 0) return fromSummary;
+
+  if (Array.isArray(cached.voters)) {
+    return cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0);
+  }
+
+  return 0;
 }
 
 function createBoothData(totalVoters) {
   return {
     voters: buildBoothVoters(Number(totalVoters) || 0),
     summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
-    completionPct: 0
+    completionPct: 0,
+    completedCount: 0,
+    updatedAt: Date.now()
   };
 }
 
@@ -685,7 +708,9 @@ function cloneBoothData(boothData) {
       D: boothData.summary?.D || 0,
       E: boothData.summary?.E || 0
     },
-    completionPct: boothData.completionPct || 0
+    completionPct: boothData.completionPct || 0,
+    completedCount: Number(boothData.completedCount || 0),
+    updatedAt: Number(boothData.updatedAt || Date.now())
   };
 }
 
@@ -937,15 +962,7 @@ function getAccessibleBoothStatusList(booths = state.booths) {
     const cached = state.pageCache[boothNo];
     const total = Number(booth.totalVoters) || 0;
     const summary = cached?.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    const completedFromSummary = Number(summary.A || 0)
-      + Number(summary.B || 0)
-      + Number(summary.C || 0)
-      + Number(summary.D || 0)
-      + Number(summary.E || 0);
-    const completedFromVoters = cached?.voters
-      ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
-      : 0;
-    const completed = completedFromSummary || completedFromVoters;
+    const completed = getCompletedCountFromCache(cached);
     const calculatedPct = total ? Math.round((completed / total) * 100) : 0;
     const backendPct = Number(cached?.completionPct || 0);
     const completionPct = Math.max(calculatedPct, backendPct);
@@ -1060,9 +1077,7 @@ function renderDashboardBoothDetails() {
   const cached = state.pageCache[Number(booth.booth)];
   const summary = cached?.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
   const total = Number(booth.totalVoters) || 0;
-  const completed = cached?.voters
-    ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
-    : 0;
+  const completed = getCompletedCountFromCache(cached);
   const pending = Math.max(total - completed, 0);
   const completionPct = total ? Math.round((completed / total) * 100) : 0;
   const contacts = getBoothContacts(booth.booth);
@@ -1410,6 +1425,8 @@ function applySavedAffinity(savedRows, boothData = state.boothData, totalVoters 
   const calc = calculateSummary(boothData.voters, totalVoters);
   boothData.summary = calc.summary;
   boothData.completionPct = calc.completionPct;
+  boothData.completedCount = calc.filled;
+  boothData.updatedAt = Date.now();
 }
 
 function updateLocalSelection(slNo, affinity) {
@@ -1427,6 +1444,8 @@ function updateLocalSelection(slNo, affinity) {
   const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
   state.boothData.summary = calc.summary;
   state.boothData.completionPct = calc.completionPct;
+  state.boothData.completedCount = calc.filled;
+  state.boothData.updatedAt = Date.now();
   setDraftForBooth(getCurrentBoothNumber(), state.boothData);
   queueDraftPersist();
   cacheCurrentBoothData();
@@ -1709,7 +1728,6 @@ function fetchBoothData(booth, options = {}) {
     state.pageCache[boothNo] = cloneBoothData(boothData);
     if (isEntryAggregateViewActive() && state.boothMap.has(boothNo)) {
       renderEntryAggregateView();
-      const completed = Math.max(completedFromSummary, completedFromVoters);
     }
     queueDashboardRender();
     return boothData;
@@ -1777,27 +1795,77 @@ function refreshDashboardStatusesInBackground() {
   state.lastDashboardStatusRefreshAt = now;
   queueDashboardRender();
 
-  const boothNumbers = scopedBooths.map(booth => Number(booth.booth));
-  const concurrency = boothNumbers.length > 80 ? 3 : 4;
-  let nextIndex = 0;
-
-  const worker = async () => {
-    while (nextIndex < boothNumbers.length) {
-      const boothNo = boothNumbers[nextIndex++];
-      try {
-        await fetchBoothData(boothNo, { forceRefresh: true });
-        await fetchBoothData(boothNo, { forceRefresh: true, includeDrafts: false });
-      } catch (err) {
-        console.error(`Dashboard refresh failed for booth ${boothNo}:`, err.message || err);
-      }
-    }
+  const scopePayload = {
+    action: 'getDashboardSummary',
+    mandal: state.dashboardSelectedMandal || '',
+    village: state.dashboardSelectedVillage || ''
   };
 
-  const workers = Array.from({ length: Math.min(concurrency, boothNumbers.length) }, () => worker());
-  Promise.all(workers).finally(() => {
-    state.dashboardStatusRefreshInProgress = false;
-    queueDashboardRender();
-  });
+  callApi(scopePayload)
+    .then(result => {
+      if (!result?.ok || !Array.isArray(result.booths)) {
+        throw new Error(result?.message || 'Dashboard summary unavailable');
+      }
+
+      result.booths.forEach(row => {
+        const boothNo = Number(row?.booth ?? row?.boothNo);
+        if (!boothNo || !state.allBoothMap.has(boothNo)) return;
+        const boothConfig = state.allBoothMap.get(boothNo);
+        const total = Number(row?.totalVoters ?? boothConfig?.totalVoters ?? 0) || 0;
+        const cached = state.pageCache[boothNo]
+          ? cloneBoothData(state.pageCache[boothNo])
+          : createBoothData(total);
+
+        const summary = row?.summary;
+        if (summary && typeof summary === 'object') {
+          cached.summary = {
+            A: Number(summary.A || 0),
+            B: Number(summary.B || 0),
+            C: Number(summary.C || 0),
+            D: Number(summary.D || 0),
+            E: Number(summary.E || 0)
+          };
+        }
+
+        const completedCount = Number(row?.completed ?? row?.completedVoters ?? row?.filled ?? 0);
+        if (completedCount >= 0) {
+          cached.completedCount = completedCount;
+        }
+
+        const completionPct = Number(row?.completionPct ?? row?.completion ?? 0);
+        if (completionPct >= 0) {
+          cached.completionPct = completionPct;
+        }
+
+        cached.updatedAt = Date.now();
+        state.pageCache[boothNo] = cloneBoothData(cached);
+      });
+    })
+    .catch(async () => {
+      // Fallback: refresh only a small stale subset instead of all booths.
+      const maxRefresh = 12;
+      const staleAfterMs = 2 * 60 * 1000;
+      const boothNumbers = scopedBooths
+        .map(booth => Number(booth.booth))
+        .filter(boothNo => {
+          const cached = state.pageCache[boothNo];
+          if (!cached) return true;
+          return Date.now() - Number(cached.updatedAt || 0) > staleAfterMs;
+        })
+        .slice(0, maxRefresh);
+
+      for (const boothNo of boothNumbers) {
+        try {
+          await fetchBoothData(boothNo, { forceRefresh: true, includeDrafts: false });
+        } catch (err) {
+          console.error(`Dashboard refresh failed for booth ${boothNo}:`, err.message || err);
+        }
+      }
+    })
+    .finally(() => {
+      state.dashboardStatusRefreshInProgress = false;
+      queueDashboardRender();
+    });
 }
 
 async function loadBoothData(booth) {
