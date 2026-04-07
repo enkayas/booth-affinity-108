@@ -1272,8 +1272,8 @@ function isRowLocked(slNo) {
   if (!voter) return false;
   if (!canEditAnyRows()) return true;
   if (!voter.affinity) return false; // Not locked if no affinity selected
-  if (canEditSavedRows()) return false; // Not locked if user can edit saved rows
-  return !state.editingRows.has(slNo); // Locked unless edit checkbox is checked
+  // Row is locked if it has affinity selected and edit checkbox is not checked
+  return !state.editingRows.has(slNo);
 }
 
 function renderVoters() {
@@ -1382,10 +1382,8 @@ function updateLocalSelection(slNo, affinity) {
 
   voter.affinity = affinity;
   
-  // If user can't edit saved rows, remove from editing rows (lock it again)
-  if (!canEditSavedRows()) {
-    state.editingRows.delete(slNo);
-  }
+  // Always lock the row after selection by removing it from editing rows
+  state.editingRows.delete(slNo);
 
   const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
   state.boothData.summary = calc.summary;
