@@ -1325,12 +1325,17 @@ function renderVoters() {
     }).join('')}
   `;
 
-  els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
-    btn.addEventListener('click', onAffinityClick);
+  // Event delegation for affinity buttons and edit checkboxes
+  els.votersContainer.addEventListener('click', (e) => {
+    if (e.target.classList.contains('affinity-btn')) {
+      onAffinityClick(e);
+    }
   });
 
-  els.votersContainer.querySelectorAll('.edit-checkbox input').forEach(checkbox => {
-    checkbox.addEventListener('change', onEditCheckboxChange);
+  els.votersContainer.addEventListener('change', (e) => {
+    if (e.target.matches('.edit-checkbox input')) {
+      onEditCheckboxChange(e);
+    }
   });
 
   const prevBtn = byId('prevPageBtn');
@@ -1395,8 +1400,20 @@ function updateLocalSelection(slNo, affinity) {
   queueBackgroundSave();
 }
 
+function onAffinityClick(e) {
+  const btn = e.target;
+  if (btn.disabled) return;
+  
+  const slNo = Number(btn.dataset.sl);
+  const affinity = btn.dataset.affinity;
+
+  if (!slNo || !affinity) return;
+  
+  updateLocalSelection(slNo, affinity);
+}
+
 function onEditCheckboxChange(e) {
-  const checkbox = e.currentTarget;
+  const checkbox = e.target;
   const slNo = Number(checkbox.dataset.sl);
   
   if (checkbox.checked) {
