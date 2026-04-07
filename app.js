@@ -804,6 +804,10 @@ function renderAppTabs() {
   els.entryTabBtn.classList.toggle('active', entryActive);
   els.dashboardTabBtn.classList.toggle('active', dashboardActive);
   els.dataRefreshTabBtn.classList.toggle('active', dataRefreshActive);
+
+  if (dashboardActive) {
+    renderDashboard();
+  }
 }
 
 function serializeBoothList(value) {
@@ -1267,7 +1271,9 @@ function isRowLocked(slNo) {
   const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   if (!voter) return false;
   if (!canEditAnyRows()) return true;
-  return !!voter.affinity && !canEditSavedRows() && !state.editingRows.has(slNo);
+  if (!voter.affinity) return false; // Not locked if no affinity selected
+  if (canEditSavedRows()) return false; // Not locked if user can edit saved rows
+  return !state.editingRows.has(slNo); // Locked unless edit checkbox is checked
 }
 
 function renderVoters() {
@@ -1299,9 +1305,14 @@ function renderVoters() {
       const saved = isRowSaved(v.slNo);
       const locked = isRowLocked(v.slNo);
       const rowClass = saved ? ' voter-row-saved' : '';
+      const selectedAffinity = v.affinity || '';
       return `
         <div class="voter-row${rowClass}">
-          <div class="sl-box">SL# ${v.slNo}</div>
+          <div class="voter-row-header">
+            <div class="sl-box">SL# ${v.slNo}</div>
+            ${selectedAffinity ? `<div class="selected-affinity"><strong>${selectedAffinity}</strong></div>` : ''}
+            ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
+          </div>
           <div class="affinity-group">
             ${affinityButton('A', v.affinity, v.slNo)}
             ${affinityButton('B', v.affinity, v.slNo)}
@@ -1316,6 +1327,10 @@ function renderVoters() {
 
   els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
     btn.addEventListener('click', onAffinityClick);
+  });
+
+  els.votersContainer.querySelectorAll('.edit-checkbox input').forEach(checkbox => {
+    checkbox.addEventListener('change', onEditCheckboxChange);
   });
 
   const prevBtn = byId('prevPageBtn');
@@ -1357,8 +1372,15 @@ function updateLocalSelection(slNo, affinity) {
   const voter = state.boothData.voters.find(v => v.slNo === slNo);
   if (!voter) return;
 
+  // If the row is locked and user can't edit saved rows, don't allow changes
+  if (isRowLocked(slNo) && !canEditSavedRows()) return;
+
   voter.affinity = affinity;
-  state.editingRows.delete(slNo);
+  
+  // If user can't edit saved rows, remove from editing rows (lock it again)
+  if (!canEditSavedRows()) {
+    state.editingRows.delete(slNo);
+  }
 
   const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
   state.boothData.summary = calc.summary;
@@ -1373,14 +1395,17 @@ function updateLocalSelection(slNo, affinity) {
   queueBackgroundSave();
 }
 
-function onAffinityClick(e) {
-  if (!canEditAnyRows()) return;
-  const btn = e.currentTarget;
-  const slNo = Number(btn.dataset.sl);
-  const affinity = btn.dataset.affinity;
-
-  if (!slNo || !affinity) return;
-  updateLocalSelection(slNo, affinity);
+function onEditCheckboxChange(e) {
+  const checkbox = e.currentTarget;
+  const slNo = Number(checkbox.dataset.sl);
+  
+  if (checkbox.checked) {
+    state.editingRows.add(slNo);
+  } else {
+    state.editingRows.delete(slNo);
+  }
+  
+  renderVoters();
 }
 
 async function onSaveBooth() {

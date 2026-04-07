@@ -873,6 +873,45 @@ button:disabled {
   background: #fbfcfd;
 }
 
+.voter-row-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.selected-affinity {
+  font-size: 16px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 2px solid var(--accent);
+}
+
+.voter-row-saved .selected-affinity {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.edit-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.voter-row-saved .edit-checkbox {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.edit-checkbox input[type="checkbox"] {
+  margin: 0;
+}
+
 .voter-row-saved {
   background: #4b5563;
   border-color: #4b5563;
@@ -888,6 +927,7 @@ button:disabled {
   background: #e5e7eb;
   color: var(--text);
   font-weight: 700;
+  margin-bottom: 0;
 }
 
 .voter-row-saved .sl-box {
