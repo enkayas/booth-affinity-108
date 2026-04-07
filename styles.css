@@ -511,7 +511,7 @@ button:disabled {
 }
 
 .dashboard-row-main,
-.dashboard-row-stats {
+.dashboard-row-meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -520,12 +520,18 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.dashboard-row-meta {
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+}
+
 .dashboard-row-main strong {
   font-size: 12px;
 }
 
 .dashboard-row-main span,
-.dashboard-row-stats span {
+.dashboard-row-meta span {
   font-size: 10px;
   line-height: 1.15;
   color: var(--text-muted);
@@ -549,8 +555,8 @@ button:disabled {
 .dashboard-booth-complete .dashboard-row-main strong,
 .dashboard-booth-incomplete .dashboard-row-main span,
 .dashboard-booth-complete .dashboard-row-main span,
-.dashboard-booth-incomplete .dashboard-row-stats span,
-.dashboard-booth-complete .dashboard-row-stats span {
+.dashboard-booth-incomplete .dashboard-row-meta span,
+.dashboard-booth-complete .dashboard-row-meta span {
   color: #fff;
 }
 

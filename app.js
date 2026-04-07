@@ -1108,7 +1108,6 @@ function renderDashboard() {
   }
 
   if (!canViewDashboard()) {
-    renderAppTabs();
     return;
   }
 
@@ -1130,7 +1129,6 @@ function renderDashboard() {
     state.dashboardSelectedBooth = null;
     state.dashboardDetailLoading = false;
     renderDashboardBoothDetails();
-    renderAppTabs();
     return;
   }
 
@@ -1170,7 +1168,6 @@ function renderDashboard() {
     state.dashboardSelectedBooth = null;
     state.dashboardDetailLoading = false;
     renderDashboardBoothDetails();
-    renderAppTabs();
     return;
   }
 
@@ -1189,10 +1186,9 @@ function renderDashboard() {
             <div class="dashboard-row-main">
               <strong>Booth ${item.boothNo}</strong>
             </div>
-            <div class="dashboard-row-stats">
-              <span>${formatNumberIndian(item.completed)}/${formatNumberIndian(item.total)} voters</span>
+            <div class="dashboard-row-meta">
               <span>${item.completionPct}%</span>
-              <span>${item.loaded ? (item.completed >= item.total && item.total > 0 ? 'Completed' : 'In Progress') : 'Syncing'}</span>
+              <span>${formatNumberIndian(item.completed)}/${formatNumberIndian(item.total)}</span>
             </div>
           </button>
         `).join('')}
@@ -1203,7 +1199,6 @@ function renderDashboard() {
     btn.addEventListener('click', onDashboardBoothTileClick);
   });
   renderDashboardBoothDetails();
-  renderAppTabs();
 }
 
 function queueDashboardRender() {
