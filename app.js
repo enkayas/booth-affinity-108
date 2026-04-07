@@ -1357,17 +1357,13 @@ function renderVoters() {
     }).join('')}
   `;
 
-  // Event delegation for affinity buttons and edit checkboxes
-  els.votersContainer.addEventListener('click', (e) => {
-    if (e.target.classList.contains('affinity-btn')) {
-      onAffinityClick(e);
-    }
+  // Bind listeners to current page elements only, avoiding duplicate container listeners.
+  els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
+    btn.addEventListener('click', onAffinityClick);
   });
 
-  els.votersContainer.addEventListener('change', (e) => {
-    if (e.target.matches('.edit-checkbox input')) {
-      onEditCheckboxChange(e);
-    }
+  els.votersContainer.querySelectorAll('.edit-checkbox input').forEach(checkbox => {
+    checkbox.addEventListener('change', onEditCheckboxChange);
   });
 
   const prevBtn = byId('prevPageBtn');
