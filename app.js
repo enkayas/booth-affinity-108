@@ -937,9 +937,15 @@ function getAccessibleBoothStatusList(booths = state.booths) {
     const cached = state.pageCache[boothNo];
     const total = Number(booth.totalVoters) || 0;
     const summary = cached?.summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
-    const completed = cached?.voters
+    const completedFromSummary = Number(summary.A || 0)
+      + Number(summary.B || 0)
+      + Number(summary.C || 0)
+      + Number(summary.D || 0)
+      + Number(summary.E || 0);
+    const completedFromVoters = cached?.voters
       ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
       : 0;
+    const completed = completedFromSummary || completedFromVoters;
 
     return {
       boothNo,
@@ -1366,8 +1372,30 @@ function applySavedAffinity(savedRows, boothData = state.boothData, totalVoters 
   if (!boothData || !Array.isArray(boothData.voters)) return;
 
   const map = {};
+  const affinityCodes = new Set(['A', 'B', 'C', 'D', 'E']);
   savedRows.forEach(r => {
-    map[Number(r.slNo)] = String(r.affinity || '');
+    const slNo = Number(
+      r?.slNo ??
+      r?.slno ??
+      r?.sl_no ??
+      r?.SLNo ??
+      r?.SLNO ??
+      r?.serialNo ??
+      r?.serial_no
+    );
+
+    if (!slNo) return;
+
+    const rawAffinity = String(
+      r?.affinity ??
+      r?.Affinity ??
+      r?.AFFINITY ??
+      r?.value ??
+      r?.Value ??
+      ''
+    ).trim().toUpperCase();
+
+    map[slNo] = affinityCodes.has(rawAffinity) ? rawAffinity : '';
   });
 
   boothData.voters.forEach(v => {
