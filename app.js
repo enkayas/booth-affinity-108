@@ -1674,6 +1674,7 @@ async function loadSavedAffinity(booth) {
 
 function fetchBoothData(booth, options = {}) {
   const forceRefresh = !!options.forceRefresh;
+  const includeDrafts = options.includeDrafts !== false;
   const boothNo = Number(booth);
   const selected = getBoothConfig(boothNo);
   if (!selected) {
@@ -1682,14 +1683,18 @@ function fetchBoothData(booth, options = {}) {
 
   if (!forceRefresh && state.pageCache[boothNo]) {
     const cached = cloneBoothData(state.pageCache[boothNo]);
-    applyDraftToBoothData(cached, boothNo, selected.totalVoters || 0);
+    if (includeDrafts) {
+      applyDraftToBoothData(cached, boothNo, selected.totalVoters || 0);
+    }
     return Promise.resolve(cached);
   }
 
   if (state.pendingBoothLoads[boothNo]) {
     return state.pendingBoothLoads[boothNo].then(boothData => {
       const cloned = cloneBoothData(boothData);
-      applyDraftToBoothData(cloned, boothNo, selected.totalVoters || 0);
+      if (includeDrafts) {
+        applyDraftToBoothData(cloned, boothNo, selected.totalVoters || 0);
+      }
       return cloned;
     });
   }
@@ -1698,10 +1703,13 @@ function fetchBoothData(booth, options = {}) {
     const boothData = createBoothData(selected.totalVoters);
     const savedRows = await loadSavedAffinity(boothNo);
     applySavedAffinity(savedRows, boothData, selected.totalVoters || 0);
-    applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
+    if (includeDrafts) {
+      applyDraftToBoothData(boothData, boothNo, selected.totalVoters || 0);
+    }
     state.pageCache[boothNo] = cloneBoothData(boothData);
     if (isEntryAggregateViewActive() && state.boothMap.has(boothNo)) {
       renderEntryAggregateView();
+      const completed = Math.max(completedFromSummary, completedFromVoters);
     }
     queueDashboardRender();
     return boothData;
@@ -1778,6 +1786,7 @@ function refreshDashboardStatusesInBackground() {
       const boothNo = boothNumbers[nextIndex++];
       try {
         await fetchBoothData(boothNo, { forceRefresh: true });
+        await fetchBoothData(boothNo, { forceRefresh: true, includeDrafts: false });
       } catch (err) {
         console.error(`Dashboard refresh failed for booth ${boothNo}:`, err.message || err);
       }
