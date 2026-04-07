@@ -946,6 +946,10 @@ function getAccessibleBoothStatusList(booths = state.booths) {
       ? cached.voters.reduce((count, voter) => count + (voter.affinity ? 1 : 0), 0)
       : 0;
     const completed = completedFromSummary || completedFromVoters;
+    const calculatedPct = total ? Math.round((completed / total) * 100) : 0;
+    const backendPct = Number(cached?.completionPct || 0);
+    const completionPct = Math.max(calculatedPct, backendPct);
+    const isComplete = total > 0 && (completed >= total || completionPct >= 100);
 
     return {
       boothNo,
@@ -954,7 +958,8 @@ function getAccessibleBoothStatusList(booths = state.booths) {
       total,
       completed,
       pending: Math.max(total - completed, 0),
-      completionPct: total ? Math.round((completed / total) * 100) : 0,
+      completionPct,
+      isComplete,
       loaded: !!cached,
       summary
     };
@@ -962,7 +967,7 @@ function getAccessibleBoothStatusList(booths = state.booths) {
 }
 
 function getDashboardBoothStatusClass(item) {
-  if (item.completed >= item.total && item.total > 0) return 'dashboard-booth-complete';
+  if (item.isComplete) return 'dashboard-booth-complete';
   return 'dashboard-booth-incomplete';
 }
 
@@ -1151,7 +1156,7 @@ function renderDashboard() {
   const totalBooths = boothStatuses.length;
   const totalVoters = boothStatuses.reduce((sum, item) => sum + item.total, 0);
   const completedVoters = boothStatuses.reduce((sum, item) => sum + item.completed, 0);
-  const completedBooths = boothStatuses.reduce((sum, item) => sum + (item.completed >= item.total && item.total > 0 ? 1 : 0), 0);
+  const completedBooths = boothStatuses.reduce((sum, item) => sum + (item.isComplete ? 1 : 0), 0);
   const pendingVoters = Math.max(totalVoters - completedVoters, 0);
   const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
 
