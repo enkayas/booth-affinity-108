@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbzjoXHcSGmvVQjBi6OCjzsqlo1Rs7O2yyaSO7HNmjbZLizc5wA2FjsUu0Oushgrk-9C/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxPKgX704pUFmDWtVnlJMEraV1dKohtw4zF5Cwj7E-I0ffvP9D0jUwLavtt8HZcEGo01g/exec';
 const DRAFT_STORAGE_KEY = 'booth_affinity_drafts_v1';
 const DRAFT_PERSIST_DELAY_MS = 120;
 const RETRY_SYNC_DELAY_MS = 5000;
@@ -19,6 +19,7 @@ const state = {
   selectedBoothAll: false,
   dashboardSelectedMandal: '',
   dashboardSelectedVillage: '',
+  dashboardSelectedStatus: '',
   dashboardSelectedBooth: null,
   dashboardDetailLoading: false,
   selectedBooth: null,
@@ -76,13 +77,18 @@ function normalizeRole(role) {
   return String(role || '').trim().toLowerCase();
 }
 
+function canViewRelocatedFlag() {
+  const role = normalizeRole(state.user?.role);
+  return role === 'manager' || role === 'admin';
+}
+
 function canViewVotedFlag() {
   const role = normalizeRole(state.user?.role);
   return role === 'manager' || role === 'admin';
 }
 
 function canEditRelocatedFlag() {
-  return !!state.user;
+  return canViewRelocatedFlag();
 }
 
 function canEditVotedFlag() {
@@ -401,6 +407,10 @@ function renderDashboardFilters() {
     els.dashboardVillageSelect.appendChild(opt);
   });
   els.dashboardVillageSelect.value = state.dashboardSelectedVillage || '';
+
+  if (els.dashboardStatusSelect) {
+    els.dashboardStatusSelect.value = state.dashboardSelectedStatus || '';
+  }
 }
 
 function renderMandalDropdown() {
@@ -836,6 +846,7 @@ function setActiveView(view) {
       state.dashboardSelectedMandal = '__all__';
     }
     state.activeView = 'dashboard';
+    state.lastDashboardStatusRefreshAt = 0;
     refreshDashboardStatusesInBackground();
   } else if (view === 'data-refresh' && canRefreshData) {
     state.activeView = 'data-refresh';
@@ -1052,6 +1063,37 @@ function groupBoothStatusesByVillage(boothStatuses) {
     });
 }
 
+function groupBoothStatusesByMandal(boothStatuses) {
+  const groups = new Map();
+
+  boothStatuses.forEach(item => {
+    const key = (item.mandal || 'Unassigned Mandal').trim() || 'Unassigned Mandal';
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(item);
+  });
+
+  return Array.from(groups.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([mandal, items]) => {
+      const totalVoters = items.reduce((sum, item) => sum + item.total, 0);
+      const completedVoters = items.reduce((sum, item) => sum + item.completed, 0);
+      const totalBooths = items.length;
+      const completedBooths = items.filter(item => item.isComplete).length;
+      const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
+      return {
+        mandal,
+        totalVoters,
+        completedVoters,
+        totalBooths,
+        completedBooths,
+        completionPct,
+        items: items.sort((a, b) => a.boothNo - b.boothNo)
+      };
+    });
+}
+
 function getDashboardSelectedBoothConfig() {
   return state.allBoothMap.get(Number(state.dashboardSelectedBooth)) || null;
 }
@@ -1203,7 +1245,12 @@ function renderDashboard() {
     state.dashboardSelectedBooth = null;
     state.dashboardDetailLoading = false;
   }
-  const boothStatuses = getAccessibleBoothStatusList(dashboardBooths);
+  let boothStatuses = getAccessibleBoothStatusList(dashboardBooths);
+  if (state.dashboardSelectedStatus === 'completed') {
+    boothStatuses = boothStatuses.filter(item => item.total > 0 && item.completed >= item.total);
+  } else if (state.dashboardSelectedStatus === 'pending') {
+    boothStatuses = boothStatuses.filter(item => item.total === 0 || item.completed < item.total);
+  }
   const loadedCount = boothStatuses.filter(item => item.loaded).length;
   const totalBooths = boothStatuses.length;
   const totalVoters = boothStatuses.reduce((sum, item) => sum + item.total, 0);
@@ -1232,6 +1279,42 @@ function renderDashboard() {
     pendingVoters,
     completionPct
   });
+
+  if (state.dashboardSelectedMandal === '__all__') {
+    const mandalGroups = groupBoothStatusesByMandal(boothStatuses);
+    if (!mandalGroups.length) {
+      els.dashboardBoothList.innerHTML = '<div class="muted">No dashboard data available for the selected filters.</div>';
+      state.dashboardSelectedBooth = null;
+      state.dashboardDetailLoading = false;
+      renderDashboardBoothDetails();
+      return;
+    }
+
+    els.dashboardBoothList.innerHTML = `
+      <div class="dashboard-mandal-tiles">
+        ${mandalGroups.map(group => {
+          const allComplete = group.totalBooths > 0 && group.completedBooths === group.totalBooths;
+          return `
+          <button class="dashboard-mandal-tile ${allComplete ? 'dashboard-booth-complete' : 'dashboard-booth-incomplete'}" type="button" data-dashboard-mandal="${group.mandal}">
+            <div class="dashboard-mandal-tile-header">
+              <strong>${group.mandal}</strong>
+              <span class="dashboard-mandal-tile-pct">${group.completionPct}%</span>
+            </div>
+            <div class="dashboard-mandal-tile-stats">
+              <span>${formatNumberIndian(group.completedBooths)}/${formatNumberIndian(group.totalBooths)} booths</span>
+              <span>${formatNumberIndian(group.completedVoters)}/${formatNumberIndian(group.totalVoters)} voters</span>
+            </div>
+          </button>`;
+        }).join('')}
+      </div>
+    `;
+    els.dashboardBoothList.querySelectorAll('[data-dashboard-mandal]').forEach(btn => {
+      btn.addEventListener('click', onDashboardMandalTileClick);
+    });
+    state.dashboardSelectedBooth = null;
+    renderDashboardBoothDetails();
+    return;
+  }
 
   const villageGroups = groupBoothStatusesByVillage(boothStatuses);
   if (!villageGroups.length) {
@@ -1367,13 +1450,17 @@ function renderVoters() {
         <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
         <span class="muted">Showing SL# ${start + 1} to ${Math.min(end, voters.length)}</span>
       </div>
-      <button id="submitAffinityBtn" type="button">Submit</button>
+      <div class="toolbar-buttons">
+        <button id="submitAffinityBtn" type="button">Submit</button>
+        ${normalizeRole(state.user?.role) === 'admin' && state.selectedBooth ? `<button id="clearInputBtn" type="button" class="btn-clear">Clear Input</button>` : ''}
+      </div>
     </div>
 
     ${pageRows.map(v => {
       const saved = isRowSaved(v.slNo);
       const rowClass = saved ? ' voter-row-saved' : '';
       const selectedAffinity = v.affinity || '';
+      const showRelocated = canViewRelocatedFlag();
       const showVoted = canViewVotedFlag();
       return `
         <div class="voter-row${rowClass}">
@@ -1383,10 +1470,12 @@ function renderVoters() {
             ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
           </div>
           <div class="voter-flags">
-            <label class="voter-flag-checkbox${v.relocated ? ' is-checked' : ''}">
-              <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="relocated" ${v.relocated ? 'checked' : ''} ${canEditRelocatedFlag() ? '' : 'disabled'}>
-              <span>Relocated</span>
-            </label>
+            ${showRelocated ? `
+              <label class="voter-flag-checkbox${v.relocated ? ' is-checked' : ''}">
+                <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="relocated" ${v.relocated ? 'checked' : ''} ${canEditRelocatedFlag() ? '' : 'disabled'}>
+                <span>Relocated</span>
+              </label>
+            ` : ''}
             ${showVoted ? `
               <label class="voter-flag-checkbox${v.voted ? ' is-checked' : ''}">
                 <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} ${canEditVotedFlag() ? '' : 'disabled'}>
@@ -1422,10 +1511,12 @@ function renderVoters() {
   const prevBtn = byId('prevPageBtn');
   const nextBtn = byId('nextPageBtn');
   els.submitAffinityBtn = byId('submitAffinityBtn');
+  const clearBtn = byId('clearInputBtn');
 
   if (prevBtn) prevBtn.addEventListener('click', () => changePage(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => changePage(1));
   if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
+  if (clearBtn) clearBtn.addEventListener('click', onClearBoothData);
   updateSubmitButton();
 }
 
@@ -1617,6 +1708,66 @@ async function onSaveBooth() {
   } finally {
     showLoading(false);
   }
+}
+
+function onClearBoothData() {
+  if (!state.selectedBooth) {
+    console.warn('No booth selected');
+    return;
+  }
+  
+  const boothNo = Number(state.selectedBooth.booth);
+  console.log('Clear button clicked for booth:', boothNo);
+  if (!boothNo) {
+    console.warn('Invalid booth number:', boothNo);
+    return;
+  }
+
+  const confirmed = confirm(`Are you sure you want to clear all data for Booth ${boothNo}? This cannot be undone.`);
+  console.log('User confirmed clear:', confirmed);
+  if (!confirmed) return;
+
+  // Step 1: Clear frontend state first
+  try {
+    const selected = getBoothConfig(boothNo);
+    if (selected) {
+      state.boothData = createBoothData(selected.totalVoters);
+      state.editingRows.clear();
+      clearDraftForBooth(boothNo);
+      queueDraftPersist();
+      state.pageCache[boothNo] = cloneBoothData(state.boothData);
+      renderSummary();
+      renderVoters();
+      console.log('Local state cleared and UI re-rendered');
+    }
+  } catch (renderErr) {
+    console.error('Render error during clear (continuing with backend call):', renderErr);
+  }
+
+  // Step 2: Call backend — always runs, separate from UI update
+  setAffinitySaveStatus('Clearing backend data...', 'warning');
+  showLoading(true);
+  console.log('Sending clearBoothData request for booth:', boothNo);
+
+  postApi({
+    action: 'clearBoothData',
+    booth: boothNo
+  }).then(function(result) {
+    console.log('Clear API response:', result);
+    if (result.ok) {
+      setAffinitySaveStatus('All booth data cleared successfully.', 'success');
+      queueDashboardRender();
+    } else {
+      const errMsg = result.message || 'Unknown error';
+      console.error('Backend clear failed:', errMsg);
+      setAffinitySaveStatus('Backend clear failed: ' + errMsg, 'error');
+    }
+  }).catch(function(err) {
+    console.error('API call exception:', err);
+    setAffinitySaveStatus('Backend call failed: ' + (err.message || 'Network error'), 'error');
+  }).finally(function() {
+    showLoading(false);
+  });
 }
 
 function buildSavePayload(boothNo, boothData) {
@@ -2239,6 +2390,24 @@ function onDashboardVillageChange() {
   renderDashboard();
 }
 
+function onDashboardStatusChange() {
+  if (!els.dashboardStatusSelect) return;
+  state.dashboardSelectedStatus = els.dashboardStatusSelect.value || '';
+  renderDashboard();
+}
+
+function onDashboardMandalTileClick(e) {
+  const mandal = e.currentTarget.dataset.dashboardMandal;
+  if (!mandal) return;
+  state.dashboardSelectedMandal = mandal;
+  state.dashboardSelectedVillage = '';
+  state.dashboardSelectedBooth = null;
+  state.lastDashboardStatusRefreshAt = 0;
+  syncDashboardFilterState();
+  refreshDashboardStatusesInBackground();
+  renderDashboard();
+}
+
 async function refreshStaticDataInBackground(options = {}) {
   const previousData = state.staticData
     ? JSON.parse(JSON.stringify(state.staticData))
@@ -2420,6 +2589,7 @@ async function init() {
   els.dashboardFilters = byId('dashboardFilters');
   els.dashboardMandalSelect = byId('dashboardMandalSelect');
   els.dashboardVillageSelect = byId('dashboardVillageSelect');
+  els.dashboardStatusSelect = byId('dashboardStatusSelect');
   els.mandalFilterGroup = byId('mandalFilterGroup');
   els.mandalSelect = byId('mandalSelect');
   els.villageFilterGroup = byId('villageFilterGroup');
@@ -2448,6 +2618,7 @@ async function init() {
   if (els.villageSelect) els.villageSelect.addEventListener('change', onVillageChange);
   if (els.dashboardMandalSelect) els.dashboardMandalSelect.addEventListener('change', onDashboardMandalChange);
   if (els.dashboardVillageSelect) els.dashboardVillageSelect.addEventListener('change', onDashboardVillageChange);
+  if (els.dashboardStatusSelect) els.dashboardStatusSelect.addEventListener('change', onDashboardStatusChange);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
   if (els.entryTabBtn) els.entryTabBtn.addEventListener('click', () => setActiveView('entry'));

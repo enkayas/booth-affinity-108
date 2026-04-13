@@ -230,9 +230,3 @@ function deduplicateAffinitySheet() {
     lock.releaseLock();
   }
 }
-
-function readBooleanFlag_(value) {
-  if (value === true) return true;
-  var normalized = String(value == null ? '' : value).trim().toLowerCase();
-  return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'y';
-}

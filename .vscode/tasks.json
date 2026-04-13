@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Local Preview Server",
+			"type": "shell",
+			"command": "/Users/nk/Documents/GitHub/booth-affinity-108/Booth_Affinity/.venv/bin/python",
+			"args": [
+				"-m",
+				"http.server",
+				"4173"
+			],
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}

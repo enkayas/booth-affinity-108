@@ -1,0 +1,242 @@
+// Code.gs — FIXED: renamed helper functions to avoid conflicts with Api.gs
+// All shared helper names now have "Sync" suffix
+
+function syncBoothAffinityJson() {
+  const data = buildStaticDataFromSheets();
+  const jsonText = JSON.stringify(data, null, 2);
+  const result = updateGitHubFile(jsonText);
+
+  Logger.log('Sync complete');
+  Logger.log('GitHub commit: ' + (result.commit && result.commit.html_url ? result.commit.html_url : 'no commit url'));
+  return result;
+}
+
+function buildStaticDataFromSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const boothSheet = ss.getSheetByName(getRequiredProperty_('BOOTH_SHEET_NAME'));
+  const userSheet = ss.getSheetByName(getRequiredProperty_('USER_SHEET_NAME'));
+
+  if (!boothSheet) throw new Error('Booth sheet not found');
+  if (!userSheet) throw new Error('User sheet not found');
+
+  const boothRows = readSheetObjectsSync_(boothSheet)
+    .map(normalizeBoothRow_)
+    .filter(Boolean)
+    .sort((a, b) => a.booth - b.booth);
+
+  const userRows = readSheetObjectsSync_(userSheet)
+    .map(normalizeUserRow_)
+    .filter(Boolean);
+
+  return {
+    booths: boothRows,
+    users: userRows
+  };
+}
+
+function readSheetObjectsSync_(sheet) {
+  const values = sheet.getDataRange().getValues();
+  if (!values || values.length < 2) return [];
+
+  const headers = values[0].map(v => normalizeHeaderSync_(v));
+  const rows = [];
+
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const obj = {};
+    let hasValue = false;
+
+    headers.forEach((header, i) => {
+      obj[header] = row[i];
+      if (String(row[i] || '').trim() !== '') hasValue = true;
+    });
+
+    if (hasValue) rows.push(obj);
+  }
+
+  return rows;
+}
+
+function normalizeBoothRow_(row) {
+  const booth = toNumberSync_(pickSync_(row, [
+    'booth', 'booth no', 'booth number', 'booth#', 'booth no.'
+  ]));
+
+  if (!booth) return null;
+
+  return {
+    booth: booth,
+    village: cleanTextSync_(pickSync_(row, [
+      'village', 'village/town', 'town', 'village town'
+    ])),
+    mandal: cleanTextSync_(pickSync_(row, [
+      'mandal'
+    ])),
+    pollingStation: cleanTextSync_(pickSync_(row, [
+      'pollingstation', 'polling station', 'polling_station'
+    ])),
+    totalVoters: toNumberSync_(pickSync_(row, [
+      'totalvoters', 'total voters', 'total_voters'
+    ]))
+  };
+}
+
+function normalizeUserRow_(row) {
+  const phone = normalizePhone_(row['phone']);
+  if (!phone) return null;
+
+  const boothsRaw = String(row['booths csv'] == null ? '' : row['booths csv']).trim();
+
+  return {
+    phone: phone,
+    name: cleanTextSync_(row['name']),
+    role: cleanTextSync_(row['role']),
+    mandal: cleanTextSync_(row['mandal']),
+    booths: parseBooths_(boothsRaw)
+  };
+}
+
+function parseBooths_(value) {
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return [];
+
+  if (raw.toLowerCase() === 'all') return 'all';
+
+  const parts = raw
+    .split(/[,\n]/)
+    .map(v => toNumberSync_(v))
+    .filter(v => !!v);
+
+  return Array.from(new Set(parts)).sort((a, b) => a - b);
+}
+
+function updateGitHubFile(jsonText) {
+  const owner = getRequiredProperty_('GITHUB_OWNER');
+  const repo = getRequiredProperty_('GITHUB_REPO');
+  const branch = getRequiredProperty_('GITHUB_BRANCH');
+  const path = getRequiredProperty_('GITHUB_JSON_PATH');
+  const token = getRequiredProperty_('GITHUB_TOKEN');
+
+  const apiUrl = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/' + path;
+
+  const current = UrlFetchApp.fetch(apiUrl + '?ref=' + encodeURIComponent(branch), {
+    method: 'get',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json'
+    },
+    muteHttpExceptions: true
+  });
+
+  if (current.getResponseCode() !== 200) {
+    throw new Error('Unable to read current GitHub file: ' + current.getContentText());
+  }
+
+  const currentData = JSON.parse(current.getContentText());
+  const payload = {
+    message: 'Auto-update booth_affinity_static_data.json from Google Sheet',
+    content: Utilities.base64Encode(Utilities.newBlob(jsonText).getBytes()),
+    branch: branch,
+    sha: currentData.sha
+  };
+
+  const response = UrlFetchApp.fetch(apiUrl, {
+    method: 'put',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('GitHub update failed: ' + response.getContentText());
+  }
+
+  return JSON.parse(response.getContentText());
+}
+
+function getRequiredProperty_(key) {
+  const value = PropertiesService.getScriptProperties().getProperty(key);
+  if (!value) throw new Error('Missing script property: ' + key);
+  return value;
+}
+
+// ── Renamed helpers (Sync suffix) to avoid collisions with Api.gs ──
+
+function normalizeHeaderSync_(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\./g, '');
+}
+
+function pickSync_(row, keys) {
+  for (var i = 0; i < keys.length; i++) {
+    const key = normalizeHeaderSync_(keys[i]);
+    if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+      return row[key];
+    }
+  }
+  return '';
+}
+
+function cleanTextSync_(value) {
+  return String(value == null ? '' : value).trim();
+}
+
+function normalizePhone_(value) {
+  const digits = String(value == null ? '' : value).replace(/\D/g, '').slice(-10);
+  return digits || '';
+}
+
+function toNumberSync_(value) {
+  const digits = String(value == null ? '' : value).replace(/[^\d.-]/g, '');
+  const num = Number(digits);
+  return Number.isFinite(num) ? num : 0;
+}
+
+// ── Debug/preview functions ──
+
+function previewStaticData() {
+  const data = buildStaticDataFromSheets();
+  Logger.log(JSON.stringify(data.booths.slice(0, 3), null, 2));
+  Logger.log(JSON.stringify(data.users.slice(0, 5), null, 2));
+}
+
+function previewUserRecord() {
+  const data = buildStaticDataFromSheets();
+  const user = data.users.find(u => u.phone === 'PUT_THE_PHONE_NUMBER_HERE');
+  Logger.log(JSON.stringify(user, null, 2));
+}
+
+function previewUsers() {
+  const data = buildStaticDataFromSheets();
+  Logger.log(JSON.stringify(data.users.slice(0, 20), null, 2));
+}
+
+function debugUsersSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(getRequiredProperty_('USER_SHEET_NAME'));
+
+  Logger.log('Sheet name: ' + sheet.getName());
+  Logger.log('Last row: ' + sheet.getLastRow());
+  Logger.log('Last column: ' + sheet.getLastColumn());
+
+  const values = sheet.getDataRange().getValues();
+  Logger.log('Headers: ' + JSON.stringify(values[0]));
+
+  const rows = readSheetObjectsSync_(sheet);
+  Logger.log('Parsed row count: ' + rows.length);
+  Logger.log(JSON.stringify(rows.slice(0, 5), null, 2));
+}
+
+function previewOneUser() {
+  const data = buildStaticDataFromSheets();
+  const user = data.users.find(u => u.phone === '9443522730');
+  Logger.log(JSON.stringify(user, null, 2));
+}

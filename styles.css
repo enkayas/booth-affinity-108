@@ -382,7 +382,7 @@ button:disabled {
 
 .dashboard-filters {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -437,6 +437,54 @@ button:disabled {
   border: 1px solid #edf2f7;
   border-radius: 14px;
   background: var(--surface-muted);
+}
+
+.dashboard-mandal-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboard-mandal-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+}
+
+.dashboard-mandal-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashboard-mandal-tile-header strong {
+  font-size: 14px;
+  color: #fff;
+}
+
+.dashboard-mandal-tile-pct {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.dashboard-mandal-tile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dashboard-mandal-tile-stats span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .dashboard-village-group {
@@ -864,9 +912,20 @@ button:disabled {
   margin-bottom: 4px;
 }
 
+.toolbar-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .voters-toolbar button {
   padding: 9px 12px;
   font-size: 13px;
+}
+
+.btn-clear {
+  background-color: #c62828 !important;
+  color: #fff !important;
 }
 
 .voter-row {
@@ -1064,7 +1123,7 @@ button:disabled {
   }
 
   .dashboard-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .dashboard-village-tiles {
