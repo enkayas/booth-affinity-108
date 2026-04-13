@@ -76,6 +76,29 @@ function normalizeRole(role) {
   return String(role || '').trim().toLowerCase();
 }
 
+function canViewVotedFlag() {
+  const role = normalizeRole(state.user?.role);
+  return role === 'manager' || role === 'admin';
+}
+
+function canEditRelocatedFlag() {
+  return !!state.user;
+}
+
+function canEditVotedFlag() {
+  return canViewVotedFlag();
+}
+
+function canSubmitBoothChanges() {
+  return canEditAnyRows() || canEditRelocatedFlag() || canEditVotedFlag();
+}
+
+function readTruthyFlag(value) {
+  if (value === true) return true;
+  const normalized = String(value == null ? '' : value).trim().toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'y';
+}
+
 function canViewDashboard() {
   return DASHBOARD_VISIBLE_ROLES.has(normalizeRole(state.user?.role));
 }
@@ -666,6 +689,8 @@ function createBoothData(totalVoters) {
     summary: { A: 0, B: 0, C: 0, D: 0, E: 0 },
     completionPct: 0,
     completedCount: 0,
+    relocatedCount: 0,
+    votedCount: 0,
     updatedAt: Date.now()
   };
 }
@@ -699,7 +724,12 @@ function cloneBoothData(boothData) {
 
   return {
     voters: Array.isArray(boothData.voters)
-      ? boothData.voters.map(v => ({ slNo: v.slNo, affinity: v.affinity || '' }))
+      ? boothData.voters.map(v => ({
+          slNo: v.slNo,
+          affinity: v.affinity || '',
+          relocated: !!v.relocated,
+          voted: !!v.voted
+        }))
       : [],
     summary: {
       A: boothData.summary?.A || 0,
@@ -710,6 +740,8 @@ function cloneBoothData(boothData) {
     },
     completionPct: boothData.completionPct || 0,
     completedCount: Number(boothData.completedCount || 0),
+    relocatedCount: Number(boothData.relocatedCount || 0),
+    votedCount: Number(boothData.votedCount || 0),
     updatedAt: Number(boothData.updatedAt || Date.now())
   };
 }
@@ -718,8 +750,13 @@ function buildDraftFromBoothData(boothData) {
   if (!boothData?.voters?.length) return null;
 
   const voters = boothData.voters
-    .filter(v => v.affinity)
-    .map(v => ({ slNo: v.slNo, affinity: v.affinity }));
+    .filter(v => v.affinity || v.relocated || v.voted)
+    .map(v => ({
+      slNo: v.slNo,
+      affinity: v.affinity,
+      relocated: !!v.relocated,
+      voted: !!v.voted
+    }));
 
   return {
     voters,
@@ -1261,7 +1298,7 @@ function updateSubmitButton() {
   if (!els.submitAffinityBtn) return;
   const hasBooth = !!state.selectedBooth;
   const hasVoters = !!state.boothData?.voters?.length;
-  els.submitAffinityBtn.disabled = !(hasBooth && hasVoters && canEditAnyRows());
+  els.submitAffinityBtn.disabled = !(hasBooth && hasVoters && canSubmitBoothChanges());
 }
 
 function affinityButton(code, current, slNo) {
@@ -1335,15 +1372,27 @@ function renderVoters() {
 
     ${pageRows.map(v => {
       const saved = isRowSaved(v.slNo);
-      const locked = isRowLocked(v.slNo);
       const rowClass = saved ? ' voter-row-saved' : '';
       const selectedAffinity = v.affinity || '';
+      const showVoted = canViewVotedFlag();
       return `
         <div class="voter-row${rowClass}">
           <div class="voter-row-header">
             <div class="sl-box">SL# ${v.slNo}</div>
             ${selectedAffinity ? `<div class="selected-affinity"><strong>${selectedAffinity}</strong></div>` : ''}
             ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
+          </div>
+          <div class="voter-flags">
+            <label class="voter-flag-checkbox${v.relocated ? ' is-checked' : ''}">
+              <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="relocated" ${v.relocated ? 'checked' : ''} ${canEditRelocatedFlag() ? '' : 'disabled'}>
+              <span>Relocated</span>
+            </label>
+            ${showVoted ? `
+              <label class="voter-flag-checkbox${v.voted ? ' is-checked' : ''}">
+                <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} ${canEditVotedFlag() ? '' : 'disabled'}>
+                <span>Voted</span>
+              </label>
+            ` : ''}
           </div>
           <div class="affinity-group">
             ${affinityButton('A', v.affinity, v.slNo)}
@@ -1366,6 +1415,10 @@ function renderVoters() {
     checkbox.addEventListener('change', onEditCheckboxChange);
   });
 
+  els.votersContainer.querySelectorAll('.voter-flag-input').forEach(checkbox => {
+    checkbox.addEventListener('change', onVoterFlagChange);
+  });
+
   const prevBtn = byId('prevPageBtn');
   const nextBtn = byId('nextPageBtn');
   els.submitAffinityBtn = byId('submitAffinityBtn');
@@ -1379,7 +1432,7 @@ function renderVoters() {
 function buildBoothVoters(totalVoters) {
   const voters = [];
   for (let i = 1; i <= totalVoters; i++) {
-    voters.push({ slNo: i, affinity: '' });
+    voters.push({ slNo: i, affinity: '', relocated: false, voted: false });
   }
   return voters;
 }
@@ -1411,18 +1464,52 @@ function applySavedAffinity(savedRows, boothData = state.boothData, totalVoters 
       ''
     ).trim().toUpperCase();
 
-    map[slNo] = affinityCodes.has(rawAffinity) ? rawAffinity : '';
+    map[slNo] = {
+      affinity: affinityCodes.has(rawAffinity) ? rawAffinity : '',
+      relocated: readTruthyFlag(
+        r?.relocated ??
+        r?.Relocated ??
+        r?.RELOCATED
+      ),
+      voted: readTruthyFlag(
+        r?.voted ??
+        r?.Voted ??
+        r?.VOTED
+      )
+    };
   });
 
+  let relocatedCount = 0;
+  let votedCount = 0;
   boothData.voters.forEach(v => {
-    v.affinity = map[v.slNo] || '';
+    const saved = map[v.slNo] || null;
+    v.affinity = saved?.affinity || '';
+    v.relocated = !!saved?.relocated;
+    v.voted = !!saved?.voted;
+    if (v.relocated) relocatedCount++;
+    if (v.voted) votedCount++;
   });
 
   const calc = calculateSummary(boothData.voters, totalVoters);
   boothData.summary = calc.summary;
   boothData.completionPct = calc.completionPct;
   boothData.completedCount = calc.filled;
+  boothData.relocatedCount = relocatedCount;
+  boothData.votedCount = votedCount;
   boothData.updatedAt = Date.now();
+}
+
+function updateBoothFlagCounts(boothData = state.boothData) {
+  if (!boothData?.voters?.length) {
+    if (boothData) {
+      boothData.relocatedCount = 0;
+      boothData.votedCount = 0;
+    }
+    return;
+  }
+
+  boothData.relocatedCount = boothData.voters.reduce((count, voter) => count + (voter.relocated ? 1 : 0), 0);
+  boothData.votedCount = boothData.voters.reduce((count, voter) => count + (voter.voted ? 1 : 0), 0);
 }
 
 function updateLocalSelection(slNo, affinity) {
@@ -1441,6 +1528,7 @@ function updateLocalSelection(slNo, affinity) {
   state.boothData.summary = calc.summary;
   state.boothData.completionPct = calc.completionPct;
   state.boothData.completedCount = calc.filled;
+  updateBoothFlagCounts(state.boothData);
   state.boothData.updatedAt = Date.now();
   setDraftForBooth(getCurrentBoothNumber(), state.boothData);
   queueDraftPersist();
@@ -1477,8 +1565,38 @@ function onEditCheckboxChange(e) {
   renderVoters();
 }
 
+function onVoterFlagChange(e) {
+  const checkbox = e.target;
+  const slNo = Number(checkbox.dataset.sl);
+  const flag = String(checkbox.dataset.flag || '').trim();
+
+  if (!slNo || !flag) return;
+  if (flag === 'relocated' && !canEditRelocatedFlag()) {
+    checkbox.checked = !checkbox.checked;
+    return;
+  }
+  if (flag === 'voted' && !canEditVotedFlag()) {
+    checkbox.checked = !checkbox.checked;
+    return;
+  }
+
+  const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
+  if (!voter) return;
+
+  voter[flag] = checkbox.checked;
+  updateBoothFlagCounts(state.boothData);
+  state.boothData.updatedAt = Date.now();
+  setDraftForBooth(getCurrentBoothNumber(), state.boothData);
+  queueDraftPersist();
+  cacheCurrentBoothData();
+
+  renderVoters();
+  setAffinitySaveStatus('Saving changes...', 'warning');
+  queueBackgroundSave();
+}
+
 async function onSaveBooth() {
-  if (!canEditAnyRows()) {
+  if (!canSubmitBoothChanges()) {
     setAffinitySaveStatus('View-only access. Saving is disabled for this role.', 'warning');
     return false;
   }
@@ -1528,6 +1646,8 @@ function getBoothDataForSave(boothNo, boothDataOverride = null) {
 function finalizeSaveSuccess(boothNo, boothData, result) {
   boothData.summary = result.summary || boothData.summary;
   boothData.completionPct = result.completionPct || boothData.completionPct;
+  boothData.relocatedCount = Number(result.relocatedTotal ?? boothData.relocatedCount ?? 0);
+  boothData.votedCount = Number(result.votedTotal ?? boothData.votedCount ?? 0);
   state.pageCache[boothNo] = cloneBoothData(boothData);
   clearDraftForBooth(boothNo);
   queueDraftPersist();
@@ -1540,6 +1660,8 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
   if (boothNo === getCurrentBoothNumber() && state.boothData) {
     state.boothData.summary = boothData.summary;
     state.boothData.completionPct = boothData.completionPct;
+    state.boothData.relocatedCount = boothData.relocatedCount;
+    state.boothData.votedCount = boothData.votedCount;
     cacheCurrentBoothData();
     renderSummary();
   }

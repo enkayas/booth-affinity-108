@@ -942,6 +942,51 @@ button:disabled {
   color: #fff;
 }
 
+.voter-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.voter-flag-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voter-row-saved .voter-flag-checkbox {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.voter-flag-checkbox.is-checked {
+  border-color: rgba(249, 115, 22, 0.36);
+  background: #fff3e8;
+  color: var(--accent);
+}
+
+.voter-row-saved .voter-flag-checkbox.is-checked {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.voter-flag-input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
 .affinity-group {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1111,6 +1156,11 @@ button:disabled {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .voter-flags {
+    width: auto;
+    min-width: 180px;
   }
 
   .affinity-group {
