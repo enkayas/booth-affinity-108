@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Booth Intelligence</title>
+  <title>Voter Insights - வாக்காளர் நுண்ணறிவு</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -23,7 +23,7 @@
             <path d="M40 34c4 0 7 1 9 3-4 4-9 6-15 6 1-4 3-7 6-9Z" fill="currentColor"/>
             <path d="M30 30h4c3 10 8 17 14 21H16c6-4 11-11 14-21Z" fill="currentColor"/>
           </svg>
-          <h1>Booth Intelligence</h1>
+          <h1>Voter Insights - வாக்காளர் நுண்ணறிவு</h1>
         </div>
       </div>
       <p class="auth-powered">Powered by BJP Nilgiris - IT &amp; Data Management</p>
@@ -60,26 +60,27 @@
         <button id="entryTabBtn" class="app-tab active" type="button">Booth Entry</button>
         <button id="dashboardTabBtn" class="app-tab" type="button">Dashboard</button>
         <button id="dataRefreshTabBtn" class="app-tab" type="button">Data Refresh</button>
+        <button id="voterListTabBtn" class="app-tab" type="button" style="display:none;">Voter List</button>
       </div>
 
       <section id="entrySection">
         <div class="booth-toolbar">
           <div class="card booth-select-card">
             <div id="mandalFilterGroup" style="display:none;">
-              <label for="mandalSelect"><strong>Select Mandal</strong></label>
+              <label for="mandalSelect"><strong>Mandal / மண்டல்</strong></label>
               <select id="mandalSelect">
-                <option value="">Select A Mandal</option>
+                <option value="">Mandal / மண்டல்</option>
               </select>
             </div>
             <div id="villageFilterGroup" style="display:none;">
-              <label for="villageSelect"><strong>Select Village/Town</strong></label>
+              <label for="villageSelect"><strong>Panchyat / கிராமம் / பஞ்சாயத்து</strong></label>
               <select id="villageSelect">
-                <option value="">Select A Village / Town</option>
+                <option value="">Panchyat / கிராமம் / பஞ்சாயத்து</option>
               </select>
             </div>
-            <label for="boothSelect"><strong>Select Booth</strong></label>
+            <label for="boothSelect"><strong>Booth / வாக்குச் சாவடி</strong></label>
             <select id="boothSelect">
-              <option value="">Select A Booth</option>
+              <option value="">Booth / வாக்குச் சாவடி</option>
             </select>
             <div id="boothMetaSummary" class="booth-meta-summary"></div>
           </div>
@@ -115,7 +116,8 @@
         </div>
 
         <div class="card affinity-card">
-          <h3>Booth Insights - வாக்குச் சாவடி நுண்ணறிவுகள்</h3>
+          <h3>Voter Insights - வாக்காளர் நுண்ணறிவு</h3>
+          <p class="affinity-note muted">கீழே கொடுக்கப்பட்டுள்ள வாக்காளர் வரிசை எண், வாக்காளர் பட்டியலுடன் இணைக்கப்பட்டுள்ளது</p>
           <div id="votersContainer"></div>
           <div class="affinity-actions">
             <div id="affinitySaveStatus" class="muted"></div>
@@ -133,16 +135,16 @@
         </div>
         <div id="dashboardFilters" class="dashboard-filters">
           <div class="dashboard-filter-field">
-            <label for="dashboardMandalSelect"><strong>Select Mandal</strong></label>
+            <label for="dashboardMandalSelect"><strong>Mandal / மண்டல்</strong></label>
             <select id="dashboardMandalSelect">
-              <option value="">Select A Mandal</option>
+              <option value="">Mandal / மண்டல்</option>
               <option value="__all__">All</option>
             </select>
           </div>
           <div class="dashboard-filter-field">
-            <label for="dashboardVillageSelect"><strong>Select Village/Town</strong></label>
+            <label for="dashboardVillageSelect"><strong>Panchyat / கிராமம் / பஞ்சாயத்து</strong></label>
             <select id="dashboardVillageSelect">
-              <option value="">Select A Village / Town</option>
+              <option value="">Panchyat / கிராமம் / பஞ்சாயத்து</option>
               <option value="__all__">All</option>
             </select>
           </div>
@@ -154,11 +156,70 @@
               <option value="pending">Pending</option>
             </select>
           </div>
+          <div class="dashboard-filter-field dashboard-filter-refresh">
+            <label>&nbsp;</label>
+            <button id="dashboardRefreshBtn" type="button">Refresh</button>
+          </div>
         </div>
         <div id="dashboardSummary" class="dashboard-summary"></div>
         <div id="dashboardBoothList" class="dashboard-booth-list"></div>
         <div id="dashboardBoothDetails" class="dashboard-booth-details">
           <div class="muted">Select a booth tile to see details.</div>
+        </div>
+      </section>
+
+      <!-- ── Voter List (Admin only) ──────────────────────────────────────── -->
+      <section id="voterListSection" class="card voter-list-card" style="display:none;">
+        <div class="vl-header">
+          <div>
+            <h3>Voter List — வாக்காளர் பட்டியல்</h3>
+            <p class="muted vl-subtitle">AC 108 Udhagamandalam · Full electoral roll</p>
+          </div>
+          <div id="vlStats" class="vl-stats"></div>
+        </div>
+
+        <div class="vl-filters">
+          <input id="vlSearch" type="search" placeholder="Search name / EPIC / House No…" class="vl-search" />
+          <select id="vlMandal" class="vl-select">
+            <option value="">All Mandals</option>
+          </select>
+          <select id="vlBooth" class="vl-select">
+            <option value="">All Booths</option>
+          </select>
+          <select id="vlGender" class="vl-select">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Third Gender">Third Gender</option>
+          </select>
+          <select id="vlBjp" class="vl-select">
+            <option value="">All Voters</option>
+            <option value="1">BJP Members only</option>
+          </select>
+          <label class="vl-checkbox-label">
+            <input id="vlShowDeleted" type="checkbox" /> Show deleted
+          </label>
+        </div>
+
+        <div id="vlLoading" class="vl-loading">Loading voter data…</div>
+        <div id="vlError" class="vl-error" style="display:none;"></div>
+
+        <div id="vlTableWrap" style="display:none;">
+          <div id="vlResultBar" class="vl-result-bar"></div>
+          <div class="vl-table-scroll">
+            <table class="vl-table" id="vlTable">
+              <thead>
+                <tr>
+                  <th>#</th><th>Booth</th><th>Mandal</th><th>Sl#</th>
+                  <th>EPIC No</th><th>Voter Name</th><th>Relation</th>
+                  <th>House</th><th>Age</th><th>Gender</th>
+                  <th>Phone</th><th>BJP</th><th>Del</th>
+                </tr>
+              </thead>
+              <tbody id="vlBody"></tbody>
+            </table>
+          </div>
+          <div class="vl-pagination" id="vlPagination"></div>
         </div>
       </section>
 

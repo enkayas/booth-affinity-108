@@ -5,6 +5,7 @@ const RETRY_SYNC_DELAY_MS = 5000;
 const DASHBOARD_RENDER_DELAY_MS = 120;
 const DASHBOARD_STATUS_REFRESH_INTERVAL_MS = 45 * 1000;
 const STATIC_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
+const BOOTH_PREFETCH_DELAY_MS = 1500;
 const DASHBOARD_VISIBLE_ROLES = new Set(['sakthi kendra', 'mandal president', 'manager', 'admin']);
 
 const state = {
@@ -25,10 +26,12 @@ const state = {
   selectedBooth: null,
   boothData: null,
   currentPage: 1,
-  pageSize: 20,
+  pageSize: 50,
   pageCache: {},
   pendingBoothLoads: {},
   prefetchStarted: false,
+  pendingPrefetchTimer: null,
+  prefetchToken: 0,
   localDrafts: {},
   editingRows: new Set(),
   pendingSaveTimer: null,
@@ -42,7 +45,11 @@ const state = {
   staticRefreshTimer: null,
   activeView: 'entry',
   dataRefreshLogs: [],
-  dataRefreshInProgress: false
+  dataRefreshInProgress: false,
+  voterListData: null,       // null = not loaded, [] = loaded
+  voterListLoading: false,
+  vlPage: 1,
+  vlFiltered: [],
 };
 
 const els = {};
@@ -75,6 +82,23 @@ function setAffinitySaveStatus(msg, tone = 'muted') {
 
 function normalizeRole(role) {
   return String(role || '').trim().toLowerCase();
+}
+
+function normalizeBoothRating(rating) {
+  const normalized = String(rating || '').trim().toUpperCase();
+  return /^[A-F]$/.test(normalized) ? normalized : '';
+}
+
+function getBoothRatingClass(rating) {
+  const normalized = normalizeBoothRating(rating);
+  return normalized ? `booth-rating-${normalized.toLowerCase()}` : 'booth-rating-na';
+}
+
+function renderBoothRatingBadge(rating, options = {}) {
+  const normalized = normalizeBoothRating(rating);
+  const label = normalized || options.fallbackLabel || 'NA';
+  const compactClass = options.compact ? ' booth-rating-badge-compact' : '';
+  return `<span class="booth-rating-badge ${getBoothRatingClass(normalized)}${compactClass}">${label}</span>`;
 }
 
 function canViewRelocatedFlag() {
@@ -110,6 +134,10 @@ function canViewDashboard() {
 }
 
 function canUseDataRefresh() {
+  return normalizeRole(state.user?.role) === 'admin';
+}
+
+function canViewVoterList() {
   return normalizeRole(state.user?.role) === 'admin';
 }
 
@@ -241,7 +269,9 @@ async function postApi(payload, options = {}) {
 function renderUser() {
   if (!state.user) return;
   const mandal = state.user.mandal || '';
-  els.userName.textContent = mandal ? `Booth Insights | ${mandal}` : 'Booth Insights';
+  els.userName.textContent = mandal
+    ? `Voter Insights - வாக்காளர் நுண்ணறிவு | ${mandal}`
+    : 'Voter Insights - வாக்காளர் நுண்ணறிவு';
   els.userMeta.textContent = `${state.user.name || ''} | ${state.user.role || ''}`;
 }
 
@@ -251,7 +281,7 @@ function renderBoothDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select A Booth';
+  defaultOpt.textContent = 'Booth / வாக்குச் சாவடி';
   els.boothSelect.appendChild(defaultOpt);
 
   if (canUseAllOptions && state.booths.length) {
@@ -304,11 +334,7 @@ function syncEntryFilterState() {
 }
 
 function getDashboardAvailableMandals() {
-  return Array.from(new Set(
-    (state.allBooths || [])
-      .map(booth => String(booth.mandal || '').trim())
-      .filter(Boolean)
-  )).sort((a, b) => a.localeCompare(b));
+  return getAvailableMandals();
 }
 
 function getDashboardVillageOptions() {
@@ -372,7 +398,7 @@ function renderDashboardFilters() {
   els.dashboardMandalSelect.innerHTML = '';
   const defaultMandalOpt = document.createElement('option');
   defaultMandalOpt.value = '';
-  defaultMandalOpt.textContent = 'Select A Mandal';
+  defaultMandalOpt.textContent = 'Mandal / மண்டல்';
   els.dashboardMandalSelect.appendChild(defaultMandalOpt);
 
   const allMandalOpt = document.createElement('option');
@@ -392,7 +418,7 @@ function renderDashboardFilters() {
   els.dashboardVillageSelect.innerHTML = '';
   const defaultVillageOpt = document.createElement('option');
   defaultVillageOpt.value = '';
-  defaultVillageOpt.textContent = 'Select A Village / Town';
+  defaultVillageOpt.textContent = 'Panchyat / கிராமம் / பஞ்சாயத்து';
   els.dashboardVillageSelect.appendChild(defaultVillageOpt);
 
   const allVillageOpt = document.createElement('option');
@@ -420,7 +446,7 @@ function renderMandalDropdown() {
   els.mandalFilterGroup.style.display = showFilter ? 'block' : 'none';
 
   if (!showFilter) {
-    els.mandalSelect.innerHTML = '<option value="">Select A Mandal</option>';
+    els.mandalSelect.innerHTML = '<option value="">Mandal / மண்டல்</option>';
     return;
   }
 
@@ -429,7 +455,7 @@ function renderMandalDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select A Mandal';
+  defaultOpt.textContent = 'Mandal / மண்டல்';
   els.mandalSelect.appendChild(defaultOpt);
 
   const allOpt = document.createElement('option');
@@ -454,7 +480,7 @@ function renderVillageDropdown() {
   els.villageFilterGroup.style.display = showFilter ? 'block' : 'none';
 
   if (!showFilter) {
-    els.villageSelect.innerHTML = '<option value="">Select A Village / Town</option>';
+    els.villageSelect.innerHTML = '<option value="">Panchyat / கிராமம் / பஞ்சாயத்து</option>';
     return;
   }
 
@@ -463,7 +489,7 @@ function renderVillageDropdown() {
 
   const defaultOpt = document.createElement('option');
   defaultOpt.value = '';
-  defaultOpt.textContent = 'Select A Village / Town';
+  defaultOpt.textContent = 'Panchyat / கிராமம் / பஞ்சாயத்து';
   els.villageSelect.appendChild(defaultOpt);
 
   const allOpt = document.createElement('option');
@@ -526,7 +552,7 @@ function renderBoothMetaSummary() {
     const mandalLabel = state.selectedMandal === '__all__' ? 'ALL' : (state.selectedMandal || 'All Mandals');
     els.boothMetaSummary.innerHTML = `
       <div class="mini-detail-row">
-        <div><strong>Booth #</strong><span>All Booths</span></div>
+        <div><strong>Booth # / வாக்குச் சாவடி எண்</strong><span>All Booths</span></div>
         <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
         <div><strong>Total Voters</strong><span>${totalVoters}</span></div>
       </div>
@@ -541,9 +567,10 @@ function renderBoothMetaSummary() {
 
   els.boothMetaSummary.innerHTML = `
     <div class="mini-detail-row">
-      <div><strong>Booth #</strong><span>${b.booth}</span></div>
+      <div><strong>Booth # / வாக்குச் சாவடி எண்</strong><span>${b.booth}</span></div>
       <div><strong>Mandal</strong><span>${b.mandal || ''}</span></div>
       <div><strong>Total Voters</strong><span>${b.totalVoters || 0}</span></div>
+      <div><strong>Booth Rating</strong>${renderBoothRatingBadge(b.boothRating)}</div>
     </div>
   `;
 }
@@ -644,6 +671,7 @@ function renderBoothDetails() {
     <div class="booth-details-layout">
       <div class="detail-grid detail-grid-selection">
         <div><strong>Mandal</strong><span>${mandalLabel}</span></div>
+        <div><strong>Booth Rating</strong>${renderBoothRatingBadge(b.boothRating)}</div>
       </div>
       <div class="detail-grid detail-grid-location">
         <div><strong>Village/Town</strong><span>${b.village || ''}</span></div>
@@ -862,31 +890,37 @@ function renderAppTabs() {
   }
 
   const canUseDashboard = canViewDashboard();
-  const canRefreshData = canUseDataRefresh();
+  const canRefreshData  = canUseDataRefresh();
+  const canSeeVoterList = canViewVoterList();
   els.appTabs.style.display = canUseDashboard ? 'flex' : 'none';
-  els.dashboardTabBtn.style.display = canUseDashboard ? 'inline-flex' : 'none';
-  els.dataRefreshTabBtn.style.display = canRefreshData ? 'inline-flex' : 'none';
+  els.dashboardTabBtn.style.display  = canUseDashboard  ? 'inline-flex' : 'none';
+  els.dataRefreshTabBtn.style.display= canRefreshData   ? 'inline-flex' : 'none';
+  if (els.voterListTabBtn) els.voterListTabBtn.style.display = canSeeVoterList ? 'inline-flex' : 'none';
 
   if (!canUseDashboard && !canRefreshData) {
     state.activeView = 'entry';
-  } else if (state.activeView === 'dashboard' && !canUseDashboard) {
-    state.activeView = 'entry';
-  } else if (state.activeView === 'data-refresh' && !canRefreshData) {
-    state.activeView = 'entry';
-  }
+  } else if (state.activeView === 'dashboard'    && !canUseDashboard)  { state.activeView = 'entry'; }
+  else if   (state.activeView === 'data-refresh' && !canRefreshData)   { state.activeView = 'entry'; }
+  else if   (state.activeView === 'voter-list'   && !canSeeVoterList)  { state.activeView = 'entry'; }
 
-  const entryActive = state.activeView === 'entry';
-  const dashboardActive = state.activeView === 'dashboard' && canUseDashboard;
-  const dataRefreshActive = state.activeView === 'data-refresh' && canRefreshData;
-  els.entrySection.style.display = entryActive ? 'block' : 'none';
-  els.dashboardSection.style.display = dashboardActive ? 'block' : 'none';
+  const entryActive      = state.activeView === 'entry';
+  const dashboardActive  = state.activeView === 'dashboard'   && canUseDashboard;
+  const dataRefreshActive= state.activeView === 'data-refresh'&& canRefreshData;
+  const voterListActive  = state.activeView === 'voter-list'  && canSeeVoterList;
+  els.entrySection.style.display       = entryActive       ? 'block' : 'none';
+  els.dashboardSection.style.display   = dashboardActive   ? 'block' : 'none';
   els.dataRefreshSection.style.display = dataRefreshActive ? 'block' : 'none';
+  if (els.voterListSection) els.voterListSection.style.display = voterListActive ? 'block' : 'none';
   els.entryTabBtn.classList.toggle('active', entryActive);
   els.dashboardTabBtn.classList.toggle('active', dashboardActive);
   els.dataRefreshTabBtn.classList.toggle('active', dataRefreshActive);
+  if (els.voterListTabBtn) els.voterListTabBtn.classList.toggle('active', voterListActive);
 
   if (dashboardActive) {
     renderDashboard();
+  }
+  if (voterListActive) {
+    initVoterListIfNeeded();
   }
 }
 
@@ -1173,6 +1207,7 @@ function renderDashboardBoothDetails() {
     <div class="detail-grid detail-grid-selection">
       <div><strong>Mandal</strong><span>${booth.mandal || '-'}</span></div>
       <div><strong>Village/Town</strong><span>${booth.village || '-'}</span></div>
+      <div><strong>Booth Rating</strong>${renderBoothRatingBadge(booth.boothRating)}</div>
     </div>
     <div class="detail-grid detail-grid-location">
       <div><strong>Polling Station</strong><span>${booth.pollingStation || '-'}</span></div>
@@ -1338,7 +1373,10 @@ function renderDashboard() {
         ${group.items.map(item => `
           <button class="dashboard-row ${getDashboardBoothStatusClass(item)}${Number(state.dashboardSelectedBooth) === Number(item.boothNo) ? ' is-selected' : ''}" type="button" data-dashboard-booth="${item.boothNo}">
             <div class="dashboard-row-main">
-              <strong>Booth ${item.boothNo}</strong>
+              <div class="dashboard-row-title">
+                <strong>Booth ${item.boothNo}</strong>
+                ${renderBoothRatingBadge(state.allBoothMap.get(Number(item.boothNo))?.boothRating, { compact: true })}
+              </div>
             </div>
             <div class="dashboard-row-meta">
               <span>${item.completionPct}%</span>
@@ -1384,11 +1422,11 @@ function updateSubmitButton() {
   els.submitAffinityBtn.disabled = !(hasBooth && hasVoters && canSubmitBoothChanges());
 }
 
-function affinityButton(code, current, slNo) {
+function affinityButton(code, current, slNo, locked) {
   const active = current === code ? 'active' : '';
-  const locked = isRowLocked(slNo) ? 'disabled' : '';
+  const disabledAttr = locked ? 'disabled' : '';
   return `
-    <button class="affinity-btn affinity-${code} ${active}" data-sl="${slNo}" data-affinity="${code}" type="button" ${locked}>
+    <button class="affinity-btn affinity-${code} ${active}" data-sl="${slNo}" data-affinity="${code}" type="button" ${disabledAttr}>
       ${code}
     </button>
   `;
@@ -1428,6 +1466,88 @@ function isRowLocked(slNo) {
   return !state.editingRows.has(slNo);
 }
 
+function cancelBoothPrefetch() {
+  state.prefetchToken++;
+  state.prefetchStarted = false;
+  if (state.pendingPrefetchTimer) {
+    clearTimeout(state.pendingPrefetchTimer);
+    state.pendingPrefetchTimer = null;
+  }
+}
+
+function getPrefetchBoothOrder(priorityBoothNo = 0) {
+  const boothNumbers = state.booths.map(b => Number(b.booth)).filter(Boolean);
+  if (!priorityBoothNo) return boothNumbers;
+
+  const index = boothNumbers.indexOf(Number(priorityBoothNo));
+  if (index < 0) return boothNumbers;
+
+  return boothNumbers
+    .slice(index + 1)
+    .concat(boothNumbers.slice(0, index + 1));
+}
+
+function queueWarmBoothCache(options = {}) {
+  if (!state.booths.length || state.prefetchStarted || state.pendingPrefetchTimer) return;
+
+  const expectedToken = state.prefetchToken;
+  const delayMs = Number(options.delayMs || BOOTH_PREFETCH_DELAY_MS);
+
+  state.pendingPrefetchTimer = setTimeout(() => {
+    state.pendingPrefetchTimer = null;
+    if (expectedToken !== state.prefetchToken) return;
+    warmBoothCache(options);
+  }, delayMs);
+}
+
+function renderVoterRow(v) {
+  const canEditRows = canEditAnyRows();
+  const saved = !!v.affinity;
+  const rowClass = saved ? ' voter-row-saved' : '';
+  const selectedAffinity = v.affinity || '';
+  const showRelocated = canViewRelocatedFlag();
+  const showVoted = canViewVotedFlag();
+  const locked = !canEditRows || (saved && !state.editingRows.has(v.slNo));
+  return `
+    <div class="voter-row${rowClass}" data-voter-sl="${v.slNo}">
+      <div class="voter-row-header">
+        <div class="sl-box">வாக்காளர் வரிசை எண் : ${v.slNo}</div>
+        ${selectedAffinity ? `<div class="selected-affinity"><strong>${selectedAffinity}</strong></div>` : ''}
+        ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
+      </div>
+      <div class="voter-flags">
+        ${showRelocated ? `
+          <label class="voter-flag-checkbox${v.relocated ? ' is-checked' : ''}">
+            <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="relocated" ${v.relocated ? 'checked' : ''} ${canEditRelocatedFlag() ? '' : 'disabled'}>
+            <span>Relocated</span>
+          </label>
+        ` : ''}
+        ${showVoted ? `
+          <label class="voter-flag-checkbox${v.voted ? ' is-checked' : ''}">
+            <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} ${canEditVotedFlag() ? '' : 'disabled'}>
+            <span>Voted</span>
+          </label>
+        ` : ''}
+      </div>
+      <div class="affinity-group">
+        ${affinityButton('A', v.affinity, v.slNo, locked)}
+        ${affinityButton('B', v.affinity, v.slNo, locked)}
+        ${affinityButton('C', v.affinity, v.slNo, locked)}
+        ${affinityButton('D', v.affinity, v.slNo, locked)}
+        ${affinityButton('E', v.affinity, v.slNo, locked)}
+      </div>
+    </div>
+  `;
+}
+
+function updateVoterRowEl(slNo) {
+  const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
+  if (!voter) return;
+  const rowEl = els.votersContainer.querySelector(`[data-voter-sl="${slNo}"]`);
+  if (!rowEl) return;
+  rowEl.outerHTML = renderVoterRow(voter);
+}
+
 function renderVoters() {
   const voters = state.boothData?.voters || [];
   if (!voters.length) {
@@ -1456,67 +1576,10 @@ function renderVoters() {
       </div>
     </div>
 
-    ${pageRows.map(v => {
-      const saved = isRowSaved(v.slNo);
-      const rowClass = saved ? ' voter-row-saved' : '';
-      const selectedAffinity = v.affinity || '';
-      const showRelocated = canViewRelocatedFlag();
-      const showVoted = canViewVotedFlag();
-      return `
-        <div class="voter-row${rowClass}">
-          <div class="voter-row-header">
-            <div class="sl-box">SL# ${v.slNo}</div>
-            ${selectedAffinity ? `<div class="selected-affinity"><strong>${selectedAffinity}</strong></div>` : ''}
-            ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
-          </div>
-          <div class="voter-flags">
-            ${showRelocated ? `
-              <label class="voter-flag-checkbox${v.relocated ? ' is-checked' : ''}">
-                <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="relocated" ${v.relocated ? 'checked' : ''} ${canEditRelocatedFlag() ? '' : 'disabled'}>
-                <span>Relocated</span>
-              </label>
-            ` : ''}
-            ${showVoted ? `
-              <label class="voter-flag-checkbox${v.voted ? ' is-checked' : ''}">
-                <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} ${canEditVotedFlag() ? '' : 'disabled'}>
-                <span>Voted</span>
-              </label>
-            ` : ''}
-          </div>
-          <div class="affinity-group">
-            ${affinityButton('A', v.affinity, v.slNo)}
-            ${affinityButton('B', v.affinity, v.slNo)}
-            ${affinityButton('C', v.affinity, v.slNo)}
-            ${affinityButton('D', v.affinity, v.slNo)}
-            ${affinityButton('E', v.affinity, v.slNo)}
-          </div>
-        </div>
-      `;
-    }).join('')}
+    ${pageRows.map(renderVoterRow).join('')}
   `;
 
-  // Bind listeners to current page elements only, avoiding duplicate container listeners.
-  els.votersContainer.querySelectorAll('.affinity-btn').forEach(btn => {
-    btn.addEventListener('click', onAffinityClick);
-  });
-
-  els.votersContainer.querySelectorAll('.edit-checkbox input').forEach(checkbox => {
-    checkbox.addEventListener('change', onEditCheckboxChange);
-  });
-
-  els.votersContainer.querySelectorAll('.voter-flag-input').forEach(checkbox => {
-    checkbox.addEventListener('change', onVoterFlagChange);
-  });
-
-  const prevBtn = byId('prevPageBtn');
-  const nextBtn = byId('nextPageBtn');
-  els.submitAffinityBtn = byId('submitAffinityBtn');
-  const clearBtn = byId('clearInputBtn');
-
-  if (prevBtn) prevBtn.addEventListener('click', () => changePage(-1));
-  if (nextBtn) nextBtn.addEventListener('click', () => changePage(1));
-  if (els.submitAffinityBtn) els.submitAffinityBtn.addEventListener('click', onSaveBooth);
-  if (clearBtn) clearBtn.addEventListener('click', onClearBoothData);
+  els.submitAffinityBtn = byId('submitAffinityBtn') || els.submitAffinityBtn;
   updateSubmitButton();
 }
 
@@ -1604,29 +1667,33 @@ function updateBoothFlagCounts(boothData = state.boothData) {
 }
 
 function updateLocalSelection(slNo, affinity) {
-  const voter = state.boothData.voters.find(v => v.slNo === slNo);
+  const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   if (!voter) return;
 
-  // If the row is locked and user can't edit saved rows, don't allow changes
-  if (isRowLocked(slNo) && !canEditSavedRows()) return;
+  if (!canEditAnyRows()) return;
+  if (voter.affinity && !state.editingRows.has(slNo) && !canEditSavedRows()) return;
 
+  const oldAffinity = voter.affinity;
   voter.affinity = affinity;
-  
-  // Always lock the row after selection by removing it from editing rows
   state.editingRows.delete(slNo);
 
-  const calc = calculateSummary(state.boothData.voters, state.selectedBooth?.totalVoters || 0);
-  state.boothData.summary = calc.summary;
-  state.boothData.completionPct = calc.completionPct;
-  state.boothData.completedCount = calc.filled;
-  updateBoothFlagCounts(state.boothData);
+  // Delta summary update — avoids rescanning all voters on each click
+  const summary = state.boothData.summary;
+  const totalVoters = state.selectedBooth?.totalVoters || 0;
+  if (oldAffinity && summary.hasOwnProperty(oldAffinity)) summary[oldAffinity]--;
+  if (summary.hasOwnProperty(affinity)) summary[affinity]++;
+  if (!oldAffinity) state.boothData.completedCount = (state.boothData.completedCount || 0) + 1;
+  state.boothData.completionPct = totalVoters
+    ? Math.round((state.boothData.completedCount / totalVoters) * 100)
+    : 0;
   state.boothData.updatedAt = Date.now();
+
   setDraftForBooth(getCurrentBoothNumber(), state.boothData);
   queueDraftPersist();
   cacheCurrentBoothData();
 
   renderSummary();
-  renderVoters();
+  updateVoterRowEl(slNo);
   setAffinitySaveStatus('Saving changes...', 'warning');
   queueBackgroundSave();
 }
@@ -1646,14 +1713,15 @@ function onAffinityClick(e) {
 function onEditCheckboxChange(e) {
   const checkbox = e.target;
   const slNo = Number(checkbox.dataset.sl);
-  
+  if (!slNo) return;
+
   if (checkbox.checked) {
     state.editingRows.add(slNo);
   } else {
     state.editingRows.delete(slNo);
   }
-  
-  renderVoters();
+
+  updateVoterRowEl(slNo);
 }
 
 function onVoterFlagChange(e) {
@@ -1681,7 +1749,8 @@ function onVoterFlagChange(e) {
   queueDraftPersist();
   cacheCurrentBoothData();
 
-  renderVoters();
+  const label = checkbox.closest('.voter-flag-checkbox');
+  if (label) label.classList.toggle('is-checked', checkbox.checked);
   setAffinitySaveStatus('Saving changes...', 'warning');
   queueBackgroundSave();
 }
@@ -2011,21 +2080,23 @@ function fetchBoothData(booth, options = {}) {
     });
 }
 
-function warmBoothCache() {
+function warmBoothCache(options = {}) {
   if (state.prefetchStarted || !state.booths.length) return;
   state.prefetchStarted = true;
 
-  const boothNumbers = state.booths.map(b => Number(b.booth));
+  const token = state.prefetchToken;
+  const boothNumbers = getPrefetchBoothOrder(options.priorityBoothNo);
   const totalBooths = boothNumbers.length;
   const concurrency = totalBooths > 60
-    ? 2
-    : totalBooths > 24
-      ? 3
-      : Math.min(4, totalBooths);
+    ? 1
+    : totalBooths > 18
+      ? 2
+      : Math.min(2, totalBooths);
   let nextIndex = 0;
 
   const worker = async () => {
     while (nextIndex < boothNumbers.length) {
+      if (token !== state.prefetchToken || !state.user) return;
       const boothNo = boothNumbers[nextIndex++];
       if (state.pageCache[boothNo]) continue;
       try {
@@ -2141,6 +2212,7 @@ async function loadBoothData(booth) {
   const selected = getBoothConfig(booth);
   if (!selected) throw new Error('Booth not found');
   const loadId = ++state.activeBoothLoadId;
+  cancelBoothPrefetch();
 
   state.selectedBoothAll = false;
   state.selectedBooth = selected;
@@ -2174,6 +2246,7 @@ async function loadBoothData(booth) {
     getDraftForBooth(Number(booth)) ? 'warning' : 'muted'
   );
   queueDashboardRender();
+  queueWarmBoothCache({ priorityBoothNo: Number(booth) });
 }
 
 async function onBoothChange() {
@@ -2327,7 +2400,7 @@ function refreshAccessibleDataForUser(user) {
     Object.entries(state.pageCache).filter(([boothNo]) => state.allBoothMap.has(Number(boothNo)))
   );
   state.pendingBoothLoads = {};
-  state.prefetchStarted = false;
+  cancelBoothPrefetch();
   const availableMandals = getAvailableMandals();
   if (!requiresMandalSelection()) {
     state.selectedMandal = '';
@@ -2341,7 +2414,6 @@ function refreshAccessibleDataForUser(user) {
 
   renderUser();
   applyVisibleBoothScope();
-  warmBoothCache();
 }
 
 async function ensureInitialBoothSelection() {
@@ -2363,21 +2435,30 @@ async function onMandalChange() {
   if (!els.mandalSelect) return;
   state.selectedMandal = els.mandalSelect.value || '';
   state.selectedVillage = '';
-  state.prefetchStarted = false;
+  cancelBoothPrefetch();
   applyVisibleBoothScope();
 }
 
 function onVillageChange() {
   if (!els.villageSelect) return;
   state.selectedVillage = els.villageSelect.value || '';
+  cancelBoothPrefetch();
   applyVisibleBoothScope();
 }
 
 function onDashboardMandalChange() {
   if (!els.dashboardMandalSelect) return;
-  state.dashboardSelectedMandal = els.dashboardMandalSelect.value || '';
+  // Treat empty selection as __all__ so summary stays visible
+  state.dashboardSelectedMandal = els.dashboardMandalSelect.value || '__all__';
   state.lastDashboardStatusRefreshAt = 0;
   syncDashboardFilterState();
+  refreshDashboardStatusesInBackground();
+  renderDashboard();
+}
+
+function onDashboardRefresh() {
+  state.lastDashboardStatusRefreshAt = 0;
+  renderDashboardFilters();
   refreshDashboardStatusesInBackground();
   renderDashboard();
 }
@@ -2410,7 +2491,7 @@ function onDashboardMandalTileClick(e) {
 
 async function refreshStaticDataInBackground(options = {}) {
   const previousData = state.staticData
-    ? JSON.parse(JSON.stringify(state.staticData))
+    ? structuredClone(state.staticData)
     : null;
   const logChanges = !!options.logChanges;
 
@@ -2503,7 +2584,7 @@ async function onLoginSubmit(e) {
   state.localDrafts = readLocalDrafts();
   state.pageCache = {};
   state.pendingBoothLoads = {};
-  state.prefetchStarted = false;
+  cancelBoothPrefetch();
 
   els.loginSection.style.display = 'none';
   els.appSection.style.display = 'block';
@@ -2514,6 +2595,7 @@ async function onLoginSubmit(e) {
 
 function logout() {
   persistDraftsNow();
+  cancelBoothPrefetch();
   if (state.pendingSaveTimer) {
     clearTimeout(state.pendingSaveTimer);
     state.pendingSaveTimer = null;
@@ -2542,7 +2624,6 @@ function logout() {
   state.boothData = null;
   state.pageCache = {};
   state.pendingBoothLoads = {};
-  state.prefetchStarted = false;
   state.dashboardStatusRefreshInProgress = false;
   state.lastDashboardStatusRefreshAt = 0;
   state.localDrafts = {};
@@ -2557,9 +2638,160 @@ function logout() {
 
   els.loginSection.style.display = 'block';
   els.appSection.style.display = 'none';
-  if (els.dashboardSection) els.dashboardSection.style.display = 'none';
-  if (els.dataRefreshSection) els.dataRefreshSection.style.display = 'none';
+  if (els.dashboardSection)  els.dashboardSection.style.display  = 'none';
+  if (els.dataRefreshSection)els.dataRefreshSection.style.display= 'none';
+  if (els.voterListSection)  els.voterListSection.style.display  = 'none';
+  state.activeView = 'entry';
   updateSubmitButton();
+}
+
+// ── Voter List ───────────────────────────────────────────────────────────────
+
+const VL_PAGE_SIZE = 100;
+
+async function initVoterListIfNeeded() {
+  if (state.voterListData !== null || state.voterListLoading) return;
+  state.voterListLoading = true;
+  if (els.vlLoading) els.vlLoading.style.display = 'block';
+  if (els.vlTableWrap) els.vlTableWrap.style.display = 'none';
+  if (els.vlError) els.vlError.style.display = 'none';
+  try {
+    const res = await fetch('voter_list.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.json();
+    // cols: ['booth','mandal','sl','epic','name','relation','house','age','gender','deleted','phone','bjp']
+    const cols = raw.cols;
+    state.voterListData = raw.rows.map(r => {
+      const o = {};
+      cols.forEach((c, i) => { o[c] = r[i]; });
+      return o;
+    });
+    populateVlFilters();
+    applyVlFilters();
+    if (els.vlLoading) els.vlLoading.style.display = 'none';
+  } catch (err) {
+    if (els.vlLoading) els.vlLoading.style.display = 'none';
+    if (els.vlError) {
+      els.vlError.textContent = 'Failed to load voter data: ' + err.message;
+      els.vlError.style.display = 'block';
+    }
+  } finally {
+    state.voterListLoading = false;
+  }
+}
+
+function populateVlFilters() {
+  const data = state.voterListData || [];
+  const mandals = [...new Set(data.map(r => r.mandal).filter(Boolean))].sort();
+  if (els.vlMandal) {
+    els.vlMandal.innerHTML = '<option value="">All Mandals</option>' +
+      mandals.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  // booths populated after mandal select; start with all
+  populateVlBoothFilter('');
+}
+
+function populateVlBoothFilter(mandal) {
+  const data = state.voterListData || [];
+  const src  = mandal ? data.filter(r => r.mandal === mandal) : data;
+  const booths = [...new Set(src.map(r => r.booth))].sort((a, b) => a - b);
+  if (els.vlBooth) {
+    els.vlBooth.innerHTML = '<option value="">All Booths</option>' +
+      booths.map(b => `<option value="${b}">Booth ${b}</option>`).join('');
+  }
+}
+
+function applyVlFilters() {
+  const data = state.voterListData;
+  if (!data) return;
+  const search   = (els.vlSearch?.value   || '').trim().toLowerCase();
+  const mandal   = els.vlMandal?.value    || '';
+  const booth    = els.vlBooth?.value     || '';
+  const gender   = els.vlGender?.value    || '';
+  const bjpOnly  = els.vlBjp?.value === '1';
+  const showDel  = els.vlShowDeleted?.checked;
+
+  state.vlFiltered = data.filter(r => {
+    if (!showDel && r.deleted === 'Y') return false;
+    if (mandal && r.mandal !== mandal) return false;
+    if (booth  && String(r.booth) !== String(booth)) return false;
+    if (gender && r.gender !== gender) return false;
+    if (bjpOnly && !r.bjp) return false;
+    if (search) {
+      const hay = (r.name + ' ' + r.epic + ' ' + r.house).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  state.vlPage = 1;
+  renderVlStats();
+  renderVlTable();
+}
+
+function renderVlStats() {
+  if (!els.vlStats) return;
+  const all  = state.voterListData || [];
+  const filt = state.vlFiltered;
+  const bjp  = all.filter(r => r.bjp).length;
+  const phone= all.filter(r => r.phone).length;
+  els.vlStats.innerHTML = [
+    ['Total Voters', all.length.toLocaleString()],
+    ['Filtered',     filt.length.toLocaleString()],
+    ['BJP Members',  bjp.toLocaleString()],
+    ['With Phone',   phone.toLocaleString()],
+  ].map(([label, val]) =>
+    `<div class="vl-stat"><span class="vl-stat-value">${val}</span><span class="vl-stat-label">${label}</span></div>`
+  ).join('');
+}
+
+function renderVlTable() {
+  if (!els.vlTableWrap || !els.vlBody) return;
+  els.vlTableWrap.style.display = 'block';
+  const filtered = state.vlFiltered;
+  const total    = filtered.length;
+  const pages    = Math.max(1, Math.ceil(total / VL_PAGE_SIZE));
+  state.vlPage   = Math.min(state.vlPage, pages);
+  const start    = (state.vlPage - 1) * VL_PAGE_SIZE;
+  const slice    = filtered.slice(start, start + VL_PAGE_SIZE);
+
+  if (els.vlResultBar) {
+    els.vlResultBar.textContent = total
+      ? `Showing ${start + 1}–${Math.min(start + VL_PAGE_SIZE, total)} of ${total.toLocaleString()} voters`
+      : 'No voters match the current filters.';
+  }
+
+  els.vlBody.innerHTML = slice.map((r, i) => {
+    const isDeleted = r.deleted === 'Y';
+    return `<tr class="${isDeleted ? 'vl-row-deleted' : ''}">
+      <td>${start + i + 1}</td>
+      <td>${r.booth}</td>
+      <td>${r.mandal}</td>
+      <td>${r.sl}</td>
+      <td style="font-family:monospace;font-size:11px">${r.epic}</td>
+      <td class="vl-name">${r.name}</td>
+      <td>${r.relation || ''}</td>
+      <td>${r.house || ''}</td>
+      <td>${r.age ?? ''}</td>
+      <td>${r.gender}</td>
+      <td>${r.phone ? `<a href="tel:${r.phone}">${r.phone}</a>` : ''}</td>
+      <td>${r.bjp ? '<span class="vl-bjp-badge">BJP</span>' : ''}</td>
+      <td>${isDeleted ? '<span class="vl-del-badge">DEL</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  renderVlPagination(pages);
+}
+
+function renderVlPagination(pages) {
+  if (!els.vlPagination) return;
+  if (pages <= 1) { els.vlPagination.innerHTML = ''; return; }
+  els.vlPagination.innerHTML =
+    `<button class="vl-page-btn" id="vlPrevBtn" ${state.vlPage === 1 ? 'disabled' : ''}>← Prev</button>
+     <span class="vl-page-info">Page ${state.vlPage} of ${pages}</span>
+     <button class="vl-page-btn" id="vlNextBtn" ${state.vlPage === pages ? 'disabled' : ''}>Next →</button>`;
+  byId('vlPrevBtn')?.addEventListener('click', () => { state.vlPage--; renderVlTable(); });
+  byId('vlNextBtn')?.addEventListener('click', () => { state.vlPage++; renderVlTable(); });
 }
 
 async function init() {
@@ -2578,6 +2810,21 @@ async function init() {
   els.entryTabBtn = byId('entryTabBtn');
   els.dashboardTabBtn = byId('dashboardTabBtn');
   els.dataRefreshTabBtn = byId('dataRefreshTabBtn');
+  els.voterListTabBtn   = byId('voterListTabBtn');
+  els.voterListSection  = byId('voterListSection');
+  els.vlSearch          = byId('vlSearch');
+  els.vlMandal          = byId('vlMandal');
+  els.vlBooth           = byId('vlBooth');
+  els.vlGender          = byId('vlGender');
+  els.vlBjp             = byId('vlBjp');
+  els.vlShowDeleted     = byId('vlShowDeleted');
+  els.vlLoading         = byId('vlLoading');
+  els.vlError           = byId('vlError');
+  els.vlTableWrap       = byId('vlTableWrap');
+  els.vlStats           = byId('vlStats');
+  els.vlResultBar       = byId('vlResultBar');
+  els.vlBody            = byId('vlBody');
+  els.vlPagination      = byId('vlPagination');
   els.runDataRefreshBtn = byId('runDataRefreshBtn');
   els.dataRefreshStatus = byId('dataRefreshStatus');
   els.dataRefreshLog = byId('dataRefreshLog');
@@ -2590,6 +2837,7 @@ async function init() {
   els.dashboardMandalSelect = byId('dashboardMandalSelect');
   els.dashboardVillageSelect = byId('dashboardVillageSelect');
   els.dashboardStatusSelect = byId('dashboardStatusSelect');
+  els.dashboardRefreshBtn = byId('dashboardRefreshBtn');
   els.mandalFilterGroup = byId('mandalFilterGroup');
   els.mandalSelect = byId('mandalSelect');
   els.villageFilterGroup = byId('villageFilterGroup');
@@ -2619,12 +2867,53 @@ async function init() {
   if (els.dashboardMandalSelect) els.dashboardMandalSelect.addEventListener('change', onDashboardMandalChange);
   if (els.dashboardVillageSelect) els.dashboardVillageSelect.addEventListener('change', onDashboardVillageChange);
   if (els.dashboardStatusSelect) els.dashboardStatusSelect.addEventListener('change', onDashboardStatusChange);
+  if (els.dashboardRefreshBtn) els.dashboardRefreshBtn.addEventListener('click', onDashboardRefresh);
   if (els.boothSelect) els.boothSelect.addEventListener('change', onBoothChange);
   if (els.logoutBtn) els.logoutBtn.addEventListener('click', logout);
   if (els.entryTabBtn) els.entryTabBtn.addEventListener('click', () => setActiveView('entry'));
   if (els.dashboardTabBtn) els.dashboardTabBtn.addEventListener('click', () => setActiveView('dashboard'));
   if (els.dataRefreshTabBtn) els.dataRefreshTabBtn.addEventListener('click', () => setActiveView('data-refresh'));
+  if (els.voterListTabBtn)   els.voterListTabBtn.addEventListener('click', () => setActiveView('voter-list'));
   if (els.runDataRefreshBtn) els.runDataRefreshBtn.addEventListener('click', onManualDataRefresh);
+
+  // Voter list filter listeners
+  const vlFilterChange = () => applyVlFilters();
+  const vlMandalChange = () => {
+    populateVlBoothFilter(els.vlMandal?.value || '');
+    if (els.vlBooth) els.vlBooth.value = '';
+    applyVlFilters();
+  };
+  if (els.vlSearch)      els.vlSearch.addEventListener('input', vlFilterChange);
+  if (els.vlMandal)      els.vlMandal.addEventListener('change', vlMandalChange);
+  if (els.vlBooth)       els.vlBooth.addEventListener('change', vlFilterChange);
+  if (els.vlGender)      els.vlGender.addEventListener('change', vlFilterChange);
+  if (els.vlBjp)         els.vlBjp.addEventListener('change', vlFilterChange);
+  if (els.vlShowDeleted) els.vlShowDeleted.addEventListener('change', vlFilterChange);
+
+  // Delegated listeners on votersContainer — survive innerHTML replacement in renderVoters()
+  if (els.votersContainer) {
+    els.votersContainer.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn || btn.disabled) return;
+      if (btn.id === 'prevPageBtn') { changePage(-1); return; }
+      if (btn.id === 'nextPageBtn') { changePage(1); return; }
+      if (btn.id === 'submitAffinityBtn') { onSaveBooth(); return; }
+      if (btn.id === 'clearInputBtn') { onClearBoothData(); return; }
+      if (btn.classList.contains('affinity-btn')) {
+        onAffinityClick({ target: btn });
+      }
+    });
+    els.votersContainer.addEventListener('change', e => {
+      const input = e.target;
+      if (!input) return;
+      if (input.closest('.edit-checkbox')) {
+        onEditCheckboxChange(e);
+      } else if (input.classList.contains('voter-flag-input')) {
+        onVoterFlagChange(e);
+      }
+    });
+  }
+
   window.addEventListener('online', syncPendingDrafts);
   window.addEventListener('pagehide', flushPendingBoothData);
   document.addEventListener('visibilitychange', () => {
