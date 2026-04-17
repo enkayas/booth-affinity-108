@@ -46,8 +46,8 @@ const state = {
   activeView: 'entry',
   dataRefreshLogs: [],
   dataRefreshInProgress: false,
-  voterListData: null,       // null = not loaded, [] = loaded
-  voterListLoading: false,
+  vlBoothData: null,         // rows for the currently loaded booth
+  vlLoadedBooth: null,       // booth number currently loaded
   vlPage: 1,
   vlFiltered: [],
 };
@@ -2641,84 +2641,113 @@ function logout() {
   if (els.dashboardSection)  els.dashboardSection.style.display  = 'none';
   if (els.dataRefreshSection)els.dataRefreshSection.style.display= 'none';
   if (els.voterListSection)  els.voterListSection.style.display  = 'none';
-  state.activeView = 'entry';
+  state.vlBoothData   = null;
+  state.vlLoadedBooth = null;
+  state.vlFiltered    = [];
+  state.vlPage        = 1;
+  state.activeView    = 'entry';
   updateSubmitButton();
 }
 
 // ── Voter List ───────────────────────────────────────────────────────────────
+// Data is loaded per-booth from voter_data/{boothNo}.json (~51KB each).
+// Nothing is fetched until an admin selects a specific booth.
 
 const VL_PAGE_SIZE = 100;
+// cols order inside each per-booth file row:
+// [sl, epic, name, relation, house, age, gender, deleted, phone, bjp]
+const VL_COLS = ['sl','epic','name','relation','house','age','gender','deleted','phone','bjp'];
 
-async function initVoterListIfNeeded() {
-  if (state.voterListData !== null || state.voterListLoading) return;
-  state.voterListLoading = true;
-  if (els.vlLoading) els.vlLoading.style.display = 'block';
-  if (els.vlTableWrap) els.vlTableWrap.style.display = 'none';
-  if (els.vlError) els.vlError.style.display = 'none';
-  try {
-    const res = await fetch('voter_list.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const raw = await res.json();
-    // cols: ['booth','mandal','sl','epic','name','relation','house','age','gender','deleted','phone','bjp']
-    const cols = raw.cols;
-    state.voterListData = raw.rows.map(r => {
-      const o = {};
-      cols.forEach((c, i) => { o[c] = r[i]; });
-      return o;
-    });
-    populateVlFilters();
-    applyVlFilters();
-    if (els.vlLoading) els.vlLoading.style.display = 'none';
-  } catch (err) {
-    if (els.vlLoading) els.vlLoading.style.display = 'none';
-    if (els.vlError) {
-      els.vlError.textContent = 'Failed to load voter data: ' + err.message;
-      els.vlError.style.display = 'block';
-    }
-  } finally {
-    state.voterListLoading = false;
-  }
+// Populate mandal + booth dropdowns from the static booth list (no data fetch needed)
+function initVoterListIfNeeded() {
+  if (!canViewVoterList()) return;            // hard guard: admin only
+  populateVlMandals();
+  showVlPrompt();
 }
 
-function populateVlFilters() {
-  const data = state.voterListData || [];
-  const mandals = [...new Set(data.map(r => r.mandal).filter(Boolean))].sort();
-  if (els.vlMandal) {
-    els.vlMandal.innerHTML = '<option value="">All Mandals</option>' +
-      mandals.map(m => `<option value="${m}">${m}</option>`).join('');
-  }
-  // booths populated after mandal select; start with all
+function populateVlMandals() {
+  if (!els.vlMandal) return;
+  const booths  = state.allBooths || [];
+  const mandals = [...new Set(booths.map(b => String(b.mandal || '').trim()).filter(Boolean))].sort();
+  els.vlMandal.innerHTML = '<option value="">All Mandals</option>' +
+    mandals.map(m => `<option value="${m}">${m}</option>`).join('');
   populateVlBoothFilter('');
 }
 
 function populateVlBoothFilter(mandal) {
-  const data = state.voterListData || [];
-  const src  = mandal ? data.filter(r => r.mandal === mandal) : data;
-  const booths = [...new Set(src.map(r => r.booth))].sort((a, b) => a - b);
-  if (els.vlBooth) {
-    els.vlBooth.innerHTML = '<option value="">All Booths</option>' +
-      booths.map(b => `<option value="${b}">Booth ${b}</option>`).join('');
+  if (!els.vlBooth) return;
+  const all = state.allBooths || [];
+  const src = mandal ? all.filter(b => String(b.mandal || '').trim() === mandal) : all;
+  const sorted = src.slice().sort((a, b) => Number(a.booth) - Number(b.booth));
+  els.vlBooth.innerHTML = '<option value="">— Select a Booth —</option>' +
+    sorted.map(b => `<option value="${b.booth}">Booth ${b.booth} · ${b.village || ''}</option>`).join('');
+}
+
+function showVlPrompt() {
+  if (els.vlLoading)    els.vlLoading.style.display    = 'none';
+  if (els.vlError)      els.vlError.style.display      = 'none';
+  if (els.vlTableWrap)  els.vlTableWrap.style.display  = 'none';
+  if (els.vlSubFilters) els.vlSubFilters.style.display = 'none';
+  if (els.vlPrompt)     els.vlPrompt.style.display     = 'block';
+  if (els.vlStats)      els.vlStats.innerHTML          = '';
+}
+
+async function loadVlBooth(boothNo) {
+  if (!canViewVoterList()) return;           // re-check: never fetch for non-admin
+  if (!boothNo) { showVlPrompt(); return; }
+
+  // Already loaded this booth — just re-apply filters
+  if (state.vlLoadedBooth === boothNo && state.vlBoothData) {
+    applyVlFilters();
+    return;
+  }
+
+  if (els.vlPrompt)    els.vlPrompt.style.display    = 'none';
+  if (els.vlError)     els.vlError.style.display     = 'none';
+  if (els.vlTableWrap) els.vlTableWrap.style.display = 'none';
+  if (els.vlLoading)   els.vlLoading.style.display   = 'block';
+  if (els.vlLoading)   els.vlLoading.textContent     = `Loading Booth ${boothNo}…`;
+
+  try {
+    const res = await fetch(`voter_data/${boothNo}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.json();
+    // raw = { booth, mandal, rows: [[sl,epic,name,relation,house,age,gender,deleted,phone,bjp], ...] }
+    state.vlBoothData  = raw.rows.map(r => {
+      const o = { booth: raw.booth, mandal: raw.mandal };
+      VL_COLS.forEach((c, i) => { o[c] = r[i]; });
+      return o;
+    });
+    state.vlLoadedBooth = boothNo;
+    if (els.vlLoading)    els.vlLoading.style.display    = 'none';
+    if (els.vlPrompt)     els.vlPrompt.style.display     = 'none';
+    if (els.vlSubFilters) els.vlSubFilters.style.display = 'flex';
+    applyVlFilters();
+  } catch (err) {
+    if (els.vlLoading) els.vlLoading.style.display = 'none';
+    if (els.vlError) {
+      els.vlError.textContent = `Failed to load Booth ${boothNo} data: ${err.message}`;
+      els.vlError.style.display = 'block';
+    }
+    state.vlBoothData   = null;
+    state.vlLoadedBooth = null;
   }
 }
 
 function applyVlFilters() {
-  const data = state.voterListData;
+  const data = state.vlBoothData;
   if (!data) return;
-  const search   = (els.vlSearch?.value   || '').trim().toLowerCase();
-  const mandal   = els.vlMandal?.value    || '';
-  const booth    = els.vlBooth?.value     || '';
-  const gender   = els.vlGender?.value    || '';
-  const bjpOnly  = els.vlBjp?.value === '1';
-  const showDel  = els.vlShowDeleted?.checked;
+  const search  = (els.vlSearch?.value || '').trim().toLowerCase();
+  const gender  = els.vlGender?.value  || '';
+  const bjpOnly = els.vlBjp?.value === '1';
+  const showDel = els.vlShowDeleted?.checked;
 
   state.vlFiltered = data.filter(r => {
     if (!showDel && r.deleted === 'Y') return false;
-    if (mandal && r.mandal !== mandal) return false;
-    if (booth  && String(r.booth) !== String(booth)) return false;
-    if (gender && r.gender !== gender) return false;
+    if (gender  && r.gender !== gender) return false;
     if (bjpOnly && !r.bjp) return false;
     if (search) {
-      const hay = (r.name + ' ' + r.epic + ' ' + r.house).toLowerCase();
+      const hay = ((r.name||'') + ' ' + (r.epic||'') + ' ' + (r.house||'')).toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
@@ -2730,16 +2759,16 @@ function applyVlFilters() {
 }
 
 function renderVlStats() {
-  if (!els.vlStats) return;
-  const all  = state.voterListData || [];
+  if (!els.vlStats || !state.vlBoothData) return;
+  const all  = state.vlBoothData;
   const filt = state.vlFiltered;
   const bjp  = all.filter(r => r.bjp).length;
   const phone= all.filter(r => r.phone).length;
   els.vlStats.innerHTML = [
-    ['Total Voters', all.length.toLocaleString()],
-    ['Filtered',     filt.length.toLocaleString()],
-    ['BJP Members',  bjp.toLocaleString()],
-    ['With Phone',   phone.toLocaleString()],
+    ['Total in Booth', all.length.toLocaleString()],
+    ['Filtered',       filt.length.toLocaleString()],
+    ['BJP Members',    bjp.toLocaleString()],
+    ['With Phone',     phone.toLocaleString()],
   ].map(([label, val]) =>
     `<div class="vl-stat"><span class="vl-stat-value">${val}</span><span class="vl-stat-label">${label}</span></div>`
   ).join('');
@@ -2765,15 +2794,13 @@ function renderVlTable() {
     const isDeleted = r.deleted === 'Y';
     return `<tr class="${isDeleted ? 'vl-row-deleted' : ''}">
       <td>${start + i + 1}</td>
-      <td>${r.booth}</td>
-      <td>${r.mandal}</td>
       <td>${r.sl}</td>
-      <td style="font-family:monospace;font-size:11px">${r.epic}</td>
-      <td class="vl-name">${r.name}</td>
+      <td style="font-family:monospace;font-size:11px">${r.epic || ''}</td>
+      <td class="vl-name">${r.name || ''}</td>
       <td>${r.relation || ''}</td>
       <td>${r.house || ''}</td>
       <td>${r.age ?? ''}</td>
-      <td>${r.gender}</td>
+      <td>${r.gender || ''}</td>
       <td>${r.phone ? `<a href="tel:${r.phone}">${r.phone}</a>` : ''}</td>
       <td>${r.bjp ? '<span class="vl-bjp-badge">BJP</span>' : ''}</td>
       <td>${isDeleted ? '<span class="vl-del-badge">DEL</span>' : ''}</td>
@@ -2820,6 +2847,8 @@ async function init() {
   els.vlShowDeleted     = byId('vlShowDeleted');
   els.vlLoading         = byId('vlLoading');
   els.vlError           = byId('vlError');
+  els.vlPrompt          = byId('vlPrompt');
+  els.vlSubFilters      = byId('vlSubFilters');
   els.vlTableWrap       = byId('vlTableWrap');
   els.vlStats           = byId('vlStats');
   els.vlResultBar       = byId('vlResultBar');
@@ -2878,16 +2907,18 @@ async function init() {
 
   // Voter list filter listeners
   const vlFilterChange = () => applyVlFilters();
-  const vlMandalChange = () => {
-    populateVlBoothFilter(els.vlMandal?.value || '');
+  if (els.vlMandal) els.vlMandal.addEventListener('change', () => {
+    populateVlBoothFilter(els.vlMandal.value);
     if (els.vlBooth) els.vlBooth.value = '';
-    applyVlFilters();
-  };
-  if (els.vlSearch)      els.vlSearch.addEventListener('input', vlFilterChange);
-  if (els.vlMandal)      els.vlMandal.addEventListener('change', vlMandalChange);
-  if (els.vlBooth)       els.vlBooth.addEventListener('change', vlFilterChange);
+    showVlPrompt();                            // booth deselected — clear table
+  });
+  if (els.vlBooth) els.vlBooth.addEventListener('change', () => {
+    state.vlPage = 1;
+    loadVlBooth(els.vlBooth.value);           // fetch only this booth
+  });
+  if (els.vlSearch)      els.vlSearch.addEventListener('input',  vlFilterChange);
   if (els.vlGender)      els.vlGender.addEventListener('change', vlFilterChange);
-  if (els.vlBjp)         els.vlBjp.addEventListener('change', vlFilterChange);
+  if (els.vlBjp)         els.vlBjp.addEventListener('change',   vlFilterChange);
   if (els.vlShowDeleted) els.vlShowDeleted.addEventListener('change', vlFilterChange);
 
   // Delegated listeners on votersContainer — survive innerHTML replacement in renderVoters()

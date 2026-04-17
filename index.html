@@ -173,19 +173,24 @@
         <div class="vl-header">
           <div>
             <h3>Voter List — வாக்காளர் பட்டியல்</h3>
-            <p class="muted vl-subtitle">AC 108 Udhagamandalam · Full electoral roll</p>
+            <p class="muted vl-subtitle">AC 108 Udhagamandalam · Select a booth to load data</p>
           </div>
           <div id="vlStats" class="vl-stats"></div>
         </div>
 
-        <div class="vl-filters">
-          <input id="vlSearch" type="search" placeholder="Search name / EPIC / House No…" class="vl-search" />
+        <!-- Booth selector row (always visible) -->
+        <div class="vl-booth-row">
           <select id="vlMandal" class="vl-select">
             <option value="">All Mandals</option>
           </select>
-          <select id="vlBooth" class="vl-select">
-            <option value="">All Booths</option>
+          <select id="vlBooth" class="vl-select vl-booth-select">
+            <option value="">— Select a Booth —</option>
           </select>
+        </div>
+
+        <!-- Sub-filters (visible only after booth loaded) -->
+        <div class="vl-filters" id="vlSubFilters" style="display:none;">
+          <input id="vlSearch" type="search" placeholder="Search name / EPIC / House No…" class="vl-search" />
           <select id="vlGender" class="vl-select">
             <option value="">All Genders</option>
             <option value="Male">Male</option>
@@ -201,18 +206,18 @@
           </label>
         </div>
 
-        <div id="vlLoading" class="vl-loading">Loading voter data…</div>
+        <div id="vlPrompt" class="vl-prompt">Select a Booth above to load voter data.</div>
+        <div id="vlLoading" class="vl-loading" style="display:none;">Loading…</div>
         <div id="vlError" class="vl-error" style="display:none;"></div>
 
         <div id="vlTableWrap" style="display:none;">
           <div id="vlResultBar" class="vl-result-bar"></div>
           <div class="vl-table-scroll">
-            <table class="vl-table" id="vlTable">
+            <table class="vl-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Booth</th><th>Mandal</th><th>Sl#</th>
-                  <th>EPIC No</th><th>Voter Name</th><th>Relation</th>
-                  <th>House</th><th>Age</th><th>Gender</th>
+                  <th>#</th><th>Sl#</th><th>EPIC No</th><th>Voter Name</th>
+                  <th>Relation</th><th>House</th><th>Age</th><th>Gender</th>
                   <th>Phone</th><th>BJP</th><th>Del</th>
                 </tr>
               </thead>

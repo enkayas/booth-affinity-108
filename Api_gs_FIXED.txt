@@ -158,11 +158,23 @@ function getSavedAffinity_(params) {
   var boothNo = toNumber_(params && params.booth);
   if (!boothNo) return { ok: false, message: 'Invalid booth' };
 
-  var sheet = getAffinitySheet_();
-  var values = sheet.getDataRange().getValues();
-  if (!values || values.length < 2) return { ok: true, saved: [] };
+  var cache = CacheService.getScriptCache();
+  var cacheKey = getBoothAffinityCacheKey_(boothNo);
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    try {
+      return { ok: true, saved: JSON.parse(cached) };
+    } catch (_) {
+      cache.remove(cacheKey);
+    }
+  }
 
-  var headers = values[0].map(function(h) {
+  var sheet = getAffinitySheet_();
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  if (lastRow < 2 || lastCol < 1) return { ok: true, saved: [] };
+
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h) {
     return normalizeHeader_(h);
   });
 
@@ -177,10 +189,31 @@ function getSavedAffinity_(params) {
     return { ok: false, message: 'Affinity sheet headers missing required columns' };
   }
 
+  var boothColumnRange = sheet.getRange(2, iBooth + 1, lastRow - 1, 1);
+  var finder = boothColumnRange.createTextFinder(String(boothNo));
+  finder.matchEntireCell(true);
+  var matches = finder.findAll();
+  if (!matches || !matches.length) {
+    cache.put(cacheKey, JSON.stringify([]), 300);
+    return { ok: true, saved: [] };
+  }
+
+  var rowNumbers = matches
+    .map(function(range) {
+      return range.getRow();
+    })
+    .sort(function(a, b) {
+      return a - b;
+    });
+
+  var minRow = rowNumbers[0];
+  var maxRow = rowNumbers[rowNumbers.length - 1];
+  var values = sheet.getRange(minRow, 1, maxRow - minRow + 1, lastCol).getValues();
+
   var bySl = {};
   var timeBySl = {};
 
-  for (var r = 1; r < values.length; r++) {
+  for (var r = 0; r < values.length; r++) {
     var row = values[r];
     if (toNumber_(row[iBooth]) !== boothNo) continue;
 
@@ -219,6 +252,7 @@ function getSavedAffinity_(params) {
       return a.slNo - b.slNo;
     });
 
+  cache.put(cacheKey, JSON.stringify(out), 300);
   return { ok: true, saved: out };
 }
 
@@ -315,6 +349,7 @@ function saveBoothAffinities_(body) {
 
     var completed = summary.A + summary.B + summary.C + summary.D + summary.E;
     var completionPct = upsertBoothMasterSummary_(boothNo, summary, completed, relocatedCount, votedCount);
+    clearBoothAffinityCache_(boothNo);
 
     return {
       ok: true,
@@ -387,6 +422,7 @@ function clearBoothData_(body) {
     console.log('Calling upsertBoothMasterSummary_ to clear booth ' + boothNo);
     var completionPct = upsertBoothMasterSummary_(boothNo, summary, 0, 0, 0);
     console.log('Master summary updated, completionPct: ' + completionPct);
+    clearBoothAffinityCache_(boothNo);
 
     return {
       ok: true,
@@ -588,4 +624,12 @@ function readBooleanFlag_(value) {
   if (value === true) return true;
   var normalized = String(value == null ? '' : value).trim().toLowerCase();
   return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'y';
+}
+
+function getBoothAffinityCacheKey_(boothNo) {
+  return 'saved_affinity_v2_' + String(boothNo || '');
+}
+
+function clearBoothAffinityCache_(boothNo) {
+  CacheService.getScriptCache().remove(getBoothAffinityCacheKey_(boothNo));
 }

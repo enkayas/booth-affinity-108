@@ -1525,3 +1525,19 @@ button:disabled {
 .vl-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .vl-page-btn:not(:disabled):hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 .vl-page-info { color: var(--text-muted); }
+
+.vl-booth-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.vl-booth-select { flex: 1 1 220px; font-weight: 600; }
+.vl-prompt {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}

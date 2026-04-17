@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m http.server 8080)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/index.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/booth_affinity_static_data.json)",
+      "Bash(curl -s http://localhost:8080/booth_affinity_static_data.json)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); users=d.get\\('users',[]\\); print\\(f'Users: {len\\(users\\)}'\\); [print\\(f'  phone={u.get\\(\\\\\"phone\\\\\",\\\\\"\\\\\"\\)} role={u.get\\(\\\\\"role\\\\\",\\\\\"\\\\\"\\)}'\\) for u in users[:5]]\")",
+      "Bash(netlify --version)",
+      "Bash(netlify deploy *)",
+      "Bash(python3)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 update_dashboard_data.py)"
+    ]
+  }
+}
