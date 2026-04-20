@@ -41,6 +41,7 @@ const state = {
   pendingDashboardRenderTimer: null,
   dashboardStatusRefreshInProgress: false,
   lastDashboardStatusRefreshAt: 0,
+  dashboardRefreshTimer: null,
   activeBoothLoadId: 0,
   staticRefreshTimer: null,
   activeView: 'entry',
@@ -48,8 +49,16 @@ const state = {
   dataRefreshInProgress: false,
   vlBoothData: null,         // rows for the currently loaded booth
   vlLoadedBooth: null,       // booth number currently loaded
+  vlFiltersPopulated: false, // mandal/booth dropdowns have been built
   vlPage: 1,
   vlFiltered: [],
+  hmBoothNo: null,           // heatmap: currently loaded booth
+  hmVoters: [],              // heatmap: [{slNo, affinity, relocated, voted}]
+  hmFiltersPopulated: false, // heatmap: booth dropdowns built
+  hmSaving: false,           // heatmap: save in progress
+  hmActiveView: 'heatmap',   // 'heatmap' | 'progress'
+  hmProgLoading: false,
+  hmVotedBooths: {},         // boothNo → votedCount, only from heatmap clicks or explicit refresh
 };
 
 const els = {};
@@ -354,7 +363,8 @@ function getDashboardVillageOptions() {
 function syncDashboardFilterState() {
   const mandals = getDashboardAvailableMandals();
   if (state.dashboardSelectedMandal && state.dashboardSelectedMandal !== '__all__' && !mandals.includes(state.dashboardSelectedMandal)) {
-    state.dashboardSelectedMandal = '';
+    // Mandal no longer available (e.g. after data refresh) — fall back to All instead of clearing
+    state.dashboardSelectedMandal = '__all__';
   }
 
   const villages = getDashboardVillageOptions();
@@ -866,6 +876,22 @@ function getDashboardScopeLabel() {
   return 'No dashboard access';
 }
 
+function startDashboardRefreshTimer() {
+  stopDashboardRefreshTimer();
+  state.dashboardRefreshTimer = window.setInterval(() => {
+    if (state.activeView === 'dashboard') {
+      refreshDashboardStatusesInBackground();
+    }
+  }, DASHBOARD_STATUS_REFRESH_INTERVAL_MS);
+}
+
+function stopDashboardRefreshTimer() {
+  if (state.dashboardRefreshTimer) {
+    clearInterval(state.dashboardRefreshTimer);
+    state.dashboardRefreshTimer = null;
+  }
+}
+
 function setActiveView(view) {
   const canUseDashboard = canViewDashboard();
   const canRefreshData = canUseDataRefresh();
@@ -875,11 +901,19 @@ function setActiveView(view) {
     }
     state.activeView = 'dashboard';
     state.lastDashboardStatusRefreshAt = 0;
+    startDashboardRefreshTimer();
     refreshDashboardStatusesInBackground();
-  } else if (view === 'data-refresh' && canRefreshData) {
-    state.activeView = 'data-refresh';
   } else {
-    state.activeView = 'entry';
+    stopDashboardRefreshTimer();
+    if (view === 'data-refresh' && canRefreshData) {
+      state.activeView = 'data-refresh';
+    } else if (view === 'voter-list' && canViewVoterList()) {
+      state.activeView = 'voter-list';
+    } else if (view === 'heatmap' && canViewVotedFlag()) {
+      state.activeView = 'heatmap';
+    } else {
+      state.activeView = 'entry';
+    }
   }
   renderAppTabs();
 }
@@ -892,35 +926,44 @@ function renderAppTabs() {
   const canUseDashboard = canViewDashboard();
   const canRefreshData  = canUseDataRefresh();
   const canSeeVoterList = canViewVoterList();
+  const canSeeHeatmap   = canViewVotedFlag();
   els.appTabs.style.display = canUseDashboard ? 'flex' : 'none';
   els.dashboardTabBtn.style.display  = canUseDashboard  ? 'inline-flex' : 'none';
   els.dataRefreshTabBtn.style.display= canRefreshData   ? 'inline-flex' : 'none';
   if (els.voterListTabBtn) els.voterListTabBtn.style.display = canSeeVoterList ? 'inline-flex' : 'none';
+  if (els.heatmapTabBtn)   els.heatmapTabBtn.style.display   = canSeeHeatmap   ? 'inline-flex' : 'none';
 
   if (!canUseDashboard && !canRefreshData) {
     state.activeView = 'entry';
   } else if (state.activeView === 'dashboard'    && !canUseDashboard)  { state.activeView = 'entry'; }
   else if   (state.activeView === 'data-refresh' && !canRefreshData)   { state.activeView = 'entry'; }
   else if   (state.activeView === 'voter-list'   && !canSeeVoterList)  { state.activeView = 'entry'; }
+  else if   (state.activeView === 'heatmap'      && !canSeeHeatmap)    { state.activeView = 'entry'; }
 
   const entryActive      = state.activeView === 'entry';
   const dashboardActive  = state.activeView === 'dashboard'   && canUseDashboard;
   const dataRefreshActive= state.activeView === 'data-refresh'&& canRefreshData;
   const voterListActive  = state.activeView === 'voter-list'  && canSeeVoterList;
+  const heatmapActive    = state.activeView === 'heatmap'     && canSeeHeatmap;
   els.entrySection.style.display       = entryActive       ? 'block' : 'none';
   els.dashboardSection.style.display   = dashboardActive   ? 'block' : 'none';
   els.dataRefreshSection.style.display = dataRefreshActive ? 'block' : 'none';
-  if (els.voterListSection) els.voterListSection.style.display = voterListActive ? 'block' : 'none';
+  if (els.voterListSection)  els.voterListSection.style.display  = voterListActive  ? 'block' : 'none';
+  if (els.heatmapSection)    els.heatmapSection.style.display    = heatmapActive    ? 'block' : 'none';
   els.entryTabBtn.classList.toggle('active', entryActive);
   els.dashboardTabBtn.classList.toggle('active', dashboardActive);
   els.dataRefreshTabBtn.classList.toggle('active', dataRefreshActive);
   if (els.voterListTabBtn) els.voterListTabBtn.classList.toggle('active', voterListActive);
+  if (els.heatmapTabBtn)   els.heatmapTabBtn.classList.toggle('active', heatmapActive);
 
   if (dashboardActive) {
     renderDashboard();
   }
   if (voterListActive) {
     initVoterListIfNeeded();
+  }
+  if (heatmapActive) {
+    initHeatmapIfNeeded();
   }
 }
 
@@ -1097,6 +1140,180 @@ function groupBoothStatusesByVillage(boothStatuses) {
     });
 }
 
+function aggregateSummary(items) {
+  return items.reduce((agg, item) => {
+    const s = item.summary || {};
+    agg.A += s.A || 0; agg.B += s.B || 0; agg.C += s.C || 0;
+    agg.D += s.D || 0; agg.E += s.E || 0;
+    return agg;
+  }, { A: 0, B: 0, C: 0, D: 0, E: 0 });
+}
+
+// ── Win Score helpers ─────────────────────────────────────────────────────────
+// Weights: A=confirmed BJP/NDA, B=NDA allied, C=sympathiser, D=undecided, E=opposition
+const WIN_WEIGHTS = { A: 1.0, B: 0.8, C: 0.55, D: 0.20, E: 0.0 };
+// Historical NDA share weights — 2024 LS most recent (0.5), 2021 assembly (0.35), 2016 assembly (0.15)
+const HIST_WEIGHT = { y2016: 0.15, y2021: 0.35, y2024: 0.50 };
+// Fallback NDA share when no history exists (constituency average ~45%)
+const FALLBACK_NDA_SHARE = 0.45;
+
+function getStaticBoothConfig(boothNo) {
+  return state.staticData?.booths?.find(b => Number(b.booth) === Number(boothNo)) || null;
+}
+
+/** Compute weighted historical NDA share for a booth config object. */
+function calcHistNDA(cfg) {
+  const n16 = cfg?.nda2016 || 0;
+  const n21 = cfg?.nda2021 || 0;
+  const n24 = cfg?.nda2024 || 0;
+  // Use as many years as available, re-normalise weights
+  const entries = [
+    [n16, HIST_WEIGHT.y2016],
+    [n21, HIST_WEIGHT.y2021],
+    [n24, HIST_WEIGHT.y2024]
+  ].filter(([v]) => v > 0);
+  if (!entries.length) return FALLBACK_NDA_SHARE;
+  const wSum = entries.reduce((s, [, w]) => s + w, 0);
+  return entries.reduce((s, [v, w]) => s + v * (w / wSum), 0);
+}
+
+/**
+ * Calculate win score for a single booth.
+ * NDA = BJP + ADMK combined vote share from historical elections.
+ */
+function calcWinScore(summary, boothNo) {
+  const cfg = getStaticBoothConfig(boothNo);
+  const { A=0, B=0, C=0, D=0, E=0 } = summary || {};
+  const tagged = A + B + C + D + E;
+  const total = Number(cfg?.totalVoters) || 0;
+
+  const histNDA = calcHistNDA(cfg);
+
+  const p21 = cfg?.poll2021 || 0;
+  const p24 = cfg?.poll2024 || 0;
+  const avgPoll = (p21 && p24) ? (p21 + p24) / 2 : p24 || p21 || 0.75;
+
+  const affinityNDA = tagged > 0
+    ? (A * WIN_WEIGHTS.A + B * WIN_WEIGHTS.B + C * WIN_WEIGHTS.C + D * WIN_WEIGHTS.D) / tagged
+    : histNDA;
+
+  const coverage = total > 0 ? Math.min(tagged / total, 1) : 0;
+  const blended  = affinityNDA * coverage + histNDA * (1 - coverage);
+
+  return {
+    score:    Math.round(blended  * 100),
+    coverage: Math.round(coverage * 100),
+    avgPoll:  Math.round(avgPoll  * 100),
+    histNDA:  Math.round(histNDA  * 100),
+    nda2016:  cfg?.nda2016 || null,
+    nda2021:  cfg?.nda2021 || null,
+    nda2024:  cfg?.nda2024 || null
+  };
+}
+
+/**
+ * Aggregate win score across a group of booth status items.
+ * Uses poll turnout as vote-cast weight so large high-turnout booths contribute more.
+ */
+function calcGroupWinScore(boothStatuses) {
+  let totalExpNDA = 0, totalExpCast = 0, totalTagged = 0, totalVoters = 0;
+  let totalHistWeighted = 0, totalPollWeighted = 0;
+
+  boothStatuses.forEach(item => {
+    const cfg = getStaticBoothConfig(item.boothNo);
+    const { A=0, B=0, C=0, D=0, E=0 } = item.summary || {};
+    const tagged = A + B + C + D + E;
+    const total  = Number(cfg?.totalVoters || item.total) || 0;
+
+    const histNDA = calcHistNDA(cfg);
+    const p21 = cfg?.poll2021 || 0, p24 = cfg?.poll2024 || 0;
+    const avgPoll = (p21 && p24) ? (p21 + p24) / 2 : p24 || p21 || 0.75;
+
+    const affinityNDA = tagged > 0
+      ? (A * WIN_WEIGHTS.A + B * WIN_WEIGHTS.B + C * WIN_WEIGHTS.C + D * WIN_WEIGHTS.D) / tagged
+      : histNDA;
+    const coverage = total > 0 ? Math.min(tagged / total, 1) : 0;
+    const blended  = affinityNDA * coverage + histNDA * (1 - coverage);
+
+    const expCast = total * avgPoll;
+    totalExpNDA       += blended  * expCast;
+    totalExpCast      += expCast;
+    totalTagged       += tagged;
+    totalVoters       += total;
+    totalHistWeighted += histNDA  * total;
+    totalPollWeighted += avgPoll  * total;
+  });
+
+  return {
+    score:   totalExpCast > 0 ? Math.round((totalExpNDA       / totalExpCast) * 100) : 0,
+    coverage:totalVoters > 0  ? Math.round((totalTagged       / totalVoters)  * 100) : 0,
+    histNDA: totalVoters > 0  ? Math.round((totalHistWeighted / totalVoters)  * 100) : 0,
+    avgPoll: totalVoters > 0  ? Math.round((totalPollWeighted / totalVoters)  * 100) : 0
+  };
+}
+
+/**
+ * Render a win score badge with label and status class.
+ * showDetail = true adds coverage tooltip text.
+ *
+ * Coverage tiers:
+ *   0%        → gray "No Tagging Data" — shows historical % for context only
+ *   1–14%     → amber warning "Historical (Low Coverage)"
+ *   ≥ 15%     → normal colored win score prediction
+ */
+function renderWinScoreBadge(ws, showDetail) {
+  if (!ws) return '';
+  const { score, coverage, avgPoll, histNDA } = ws;
+
+  // No tagging yet — show NDA historical average from past elections
+  if (coverage === 0) {
+    const projScore = histNDA || score;
+    if (!projScore) return `<span class="win-score-badge ws--no-data">No Data</span>`;
+    const histCls = projScore >= 50 ? 'ws--strong'
+                  : projScore >= 42 ? 'ws--likely'
+                  : projScore >= 33 ? 'ws--competitive'
+                  : 'ws--atrisk';
+    const yrs = [
+      ws.nda2016 != null ? `2016: ${Math.round(ws.nda2016*100)}%` : null,
+      ws.nda2021 != null ? `2021: ${Math.round(ws.nda2021*100)}%` : null,
+      ws.nda2024 != null ? `2024: ${Math.round(ws.nda2024*100)}%` : null
+    ].filter(Boolean).join(' · ');
+    const detail = showDetail && yrs
+      ? `<span class="ws-detail">(NDA: ${yrs} · Turnout ~${avgPoll || '?'}%)</span>`
+      : '';
+    return `<span class="win-score-badge ws--historical ${histCls}">${projScore}% <em>Past Election Avg</em>${detail}</span>`;
+  }
+
+  // Very low coverage — flag as partially informed
+  if (coverage < 15) {
+    const detail = showDetail
+      ? `<span class="ws-detail">(${coverage}% surveyed · Past NDA avg ${histNDA}% · Turnout ~${avgPoll}%)</span>`
+      : `<span class="ws-detail">${coverage}% surveyed</span>`;
+    return `<span class="win-score-badge ws--low-coverage">${score}% <em>Early Est. (${coverage}% surveyed)</em>${detail}</span>`;
+  }
+
+  // Sufficient coverage — blended affinity + history prediction
+  const cls = score >= 50 ? 'ws--strong'
+            : score >= 42 ? 'ws--likely'
+            : score >= 33 ? 'ws--competitive'
+            : 'ws--atrisk';
+  const label = score >= 50 ? 'On Track'
+              : score >= 42 ? 'Likely'
+              : score >= 33 ? 'Tight'
+              : 'Needs Attention';
+  const detail = showDetail
+    ? ` <span class="ws-detail">(${coverage}% surveyed · Past NDA avg ${histNDA}% · Turnout ~${avgPoll}%)</span>`
+    : `<span class="ws-detail">${coverage}% surveyed</span>`;
+  return `<span class="win-score-badge ${cls}">${score}% <em>${label}</em>${detail}</span>`;
+}
+
+function renderAffinitySummaryBadges(summary) {
+  const s = summary || { A: 0, B: 0, C: 0, D: 0, E: 0 };
+  return ['A','B','C','D','E'].map(k =>
+    `<span class="aff-badge aff-badge-${k}">${k} <strong>${formatNumberIndian(s[k] || 0)}</strong></span>`
+  ).join('');
+}
+
 function groupBoothStatusesByMandal(boothStatuses) {
   const groups = new Map();
 
@@ -1123,6 +1340,7 @@ function groupBoothStatusesByMandal(boothStatuses) {
         totalBooths,
         completedBooths,
         completionPct,
+        summary: aggregateSummary(items),
         items: items.sort((a, b) => a.boothNo - b.boothNo)
       };
     });
@@ -1132,8 +1350,19 @@ function getDashboardSelectedBoothConfig() {
   return state.allBoothMap.get(Number(state.dashboardSelectedBooth)) || null;
 }
 
+function getMandalPresident(mandalName) {
+  if (!state.staticData?.users) return null;
+  return state.staticData.users.find(u =>
+    String(u.role || '').toLowerCase() === 'mandal president' &&
+    String(u.mandal || '').trim().toUpperCase() === String(mandalName || '').trim().toUpperCase()
+  ) || null;
+}
+
 function renderDashboardSummaryMetrics(metrics) {
   if (!els.dashboardSummary) return;
+
+  const boothPct  = metrics.totalBooths  ? Math.round((metrics.completedBooths  / metrics.totalBooths)  * 100) : 0;
+  const voterPct  = metrics.completionPct;
 
   els.dashboardSummary.innerHTML = `
     <div class="dashboard-metric">
@@ -1146,19 +1375,52 @@ function renderDashboardSummaryMetrics(metrics) {
     </div>
     <div class="dashboard-metric">
       <strong>${formatNumberIndian(metrics.completedBooths)}</strong>
-      <span>Total Booths Completed</span>
+      <span>Booths Completed</span>
     </div>
     <div class="dashboard-metric">
       <strong>${formatNumberIndian(metrics.completedVoters)}</strong>
-      <span>Total Voters Completed</span>
+      <span>Voters Updated</span>
     </div>
     <div class="dashboard-metric">
       <strong>${formatNumberIndian(metrics.pendingVoters)}</strong>
-      <span>Pending Voters</span>
+      <span>Voters Pending</span>
     </div>
     <div class="dashboard-metric">
-      <strong>${metrics.completionPct}%</strong>
-      <span>Overall Completion %</span>
+      <strong>${voterPct}%</strong>
+      <span>Overall Completion</span>
+    </div>
+    <div class="dashboard-summary-progress">
+      <div class="dashboard-summary-progress-row">
+        <span class="dashboard-summary-progress-label">Voters Updated</span>
+        <span class="dashboard-summary-progress-val">${formatNumberIndian(metrics.completedVoters)} / ${formatNumberIndian(metrics.totalVoters)}</span>
+      </div>
+      <div class="dashboard-summary-bar-wrap">
+        <div class="dashboard-summary-bar" style="width:${voterPct}%"></div>
+      </div>
+      <div class="dashboard-summary-progress-row">
+        <span class="dashboard-summary-progress-label">Booths Completed</span>
+        <span class="dashboard-summary-progress-val">${formatNumberIndian(metrics.completedBooths)} / ${formatNumberIndian(metrics.totalBooths)}</span>
+      </div>
+      <div class="dashboard-summary-bar-wrap dashboard-summary-bar-wrap--booths">
+        <div class="dashboard-summary-bar" style="width:${boothPct}%"></div>
+      </div>
+    </div>
+    <div class="dashboard-affinity-panel">
+      <div class="dashboard-affinity-panel-header">
+        <div class="dashboard-affinity-panel-title">Voter Affinity Breakdown</div>
+        ${metrics.winScore ? `<div class="dashboard-win-score-summary">${renderWinScoreBadge(metrics.winScore, true)}</div>` : ''}
+      </div>
+      <div class="dashboard-affinity-panel-row">
+        ${['A','B','C','D','E'].map(k => {
+          const val = (metrics.summary || {})[k] || 0;
+          const labels = { A:'BJP உறுதி', B:'NDA வாக்கு', C:'ஆதரவு', D:'முடிவில்லை', E:'எதிர்ப்பு' };
+          return `<div class="dashboard-affinity-cell dashboard-affinity-cell--${k}">
+            <div class="dac-letter">${k}</div>
+            <div class="dac-value">${formatNumberIndian(val)}</div>
+            <div class="dac-label">${labels[k]}</div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
   `;
 }
@@ -1193,8 +1455,10 @@ function renderDashboardBoothDetails() {
   const completed = getCompletedCountFromCache(cached);
   const pending = Math.max(total - completed, 0);
   const completionPct = total ? Math.round((completed / total) * 100) : 0;
+  const ws = calcWinScore(summary, booth.booth);
   const contacts = getBoothContacts(booth.booth);
   const contactMap = new Map(contacts.map(contact => [contact.role, contact]));
+  const cfg = getStaticBoothConfig(booth.booth);
 
   els.dashboardBoothDetails.innerHTML = `
     <div class="dashboard-detail-header">
@@ -1219,6 +1483,32 @@ function renderDashboardBoothDetails() {
       <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.C || 0)}</strong><span>C</span></div>
       <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.D || 0)}</strong><span>D</span></div>
       <div class="dashboard-detail-metric"><strong>${formatNumberIndian(summary.E || 0)}</strong><span>E</span></div>
+    </div>
+    <div class="booth-win-score-row">
+      ${renderWinScoreBadge(ws, true)}
+      <span class="ws-history muted">
+        NDA: 2016 ${cfg?.nda2016 ? Math.round(cfg.nda2016*100)+'%' : 'N/A'}
+        &nbsp;·&nbsp; 2021 ${cfg?.nda2021 ? Math.round(cfg.nda2021*100)+'%' : 'N/A'}
+        &nbsp;·&nbsp; 2024 ${cfg?.nda2024 ? Math.round(cfg.nda2024*100)+'%' : 'N/A'}
+        &nbsp;·&nbsp; Turnout ~${ws.avgPoll}%
+      </span>
+    </div>
+    <div class="booth-detail-demographics">
+      <div class="bdd-section">
+        <div class="bdd-title">Religion</div>
+        <div class="bdd-row">
+          <span class="bdd-item bdd-hindu">Hindu <strong>${formatNumberIndian(cfg?.rHindu || 0)}</strong></span>
+          <span class="bdd-item bdd-christian">Christian <strong>${formatNumberIndian(cfg?.rChristian || 0)}</strong></span>
+          <span class="bdd-item bdd-muslim">Muslim <strong>${formatNumberIndian(cfg?.rMuslim || 0)}</strong></span>
+          ${cfg?.rOthers ? `<span class="bdd-item bdd-others">Others <strong>${formatNumberIndian(cfg.rOthers)}</strong></span>` : ''}
+        </div>
+      </div>
+      <div class="bdd-section">
+        <div class="bdd-title">Membership</div>
+        <div class="bdd-row">
+          <span class="bdd-item bdd-bjp">BJP Members <strong>${formatNumberIndian(cfg?.bjpMembers || 0)}</strong></span>
+        </div>
+      </div>
     </div>
     <div class="contact-grid">
       ${renderSelectionContactCards(contactMap, 'Not assigned')}
@@ -1293,6 +1583,7 @@ function renderDashboard() {
   const completedBooths = boothStatuses.reduce((sum, item) => sum + (item.isComplete ? 1 : 0), 0);
   const pendingVoters = Math.max(totalVoters - completedVoters, 0);
   const completionPct = totalVoters ? Math.round((completedVoters / totalVoters) * 100) : 0;
+  const overallSummary = aggregateSummary(boothStatuses);
 
   const scopeParts = [`${state.user?.role || ''} scope: ${getDashboardScopeLabel()}`];
   if (state.dashboardSelectedMandal) scopeParts.push(`Mandal: ${state.dashboardSelectedMandal === '__all__' ? 'All' : state.dashboardSelectedMandal}`);
@@ -1306,13 +1597,16 @@ function renderDashboard() {
       : 'Up to date';
   }
 
+  const overallWinScore = calcGroupWinScore(boothStatuses);
   renderDashboardSummaryMetrics({
     totalVoters,
     totalBooths,
     completedBooths,
     completedVoters,
     pendingVoters,
-    completionPct
+    completionPct,
+    summary: overallSummary,
+    winScore: overallWinScore
   });
 
   if (state.dashboardSelectedMandal === '__all__') {
@@ -1328,16 +1622,39 @@ function renderDashboard() {
     els.dashboardBoothList.innerHTML = `
       <div class="dashboard-mandal-tiles">
         ${mandalGroups.map(group => {
-          const allComplete = group.totalBooths > 0 && group.completedBooths === group.totalBooths;
+          const allComplete  = group.totalBooths > 0 && group.completedBooths === group.totalBooths;
+          const notStarted   = group.completedVoters === 0;
+          const statusClass  = allComplete ? 'dmstatus--complete' : notStarted ? 'dmstatus--not-started' : 'dmstatus--in-progress';
+          const statusLabel  = allComplete ? 'Complete' : notStarted ? 'Not Started' : 'In Progress';
+          const mp           = getMandalPresident(group.mandal);
+          const mandalWS     = calcGroupWinScore(group.items);
+          const presidentRow = mp
+            ? `<div class="dashboard-mandal-tile-president">
+                 <span>${mp.name}</span>
+                 <a href="tel:${mp.phone}" class="dm-phone" onclick="event.stopPropagation()">&#9742; ${mp.phone}</a>
+               </div>`
+            : '';
+          const wsBadge = renderWinScoreBadge(mandalWS, false);
           return `
-          <button class="dashboard-mandal-tile ${allComplete ? 'dashboard-booth-complete' : 'dashboard-booth-incomplete'}" type="button" data-dashboard-mandal="${group.mandal}">
+          <button class="dashboard-mandal-tile" type="button" data-dashboard-mandal="${group.mandal}">
             <div class="dashboard-mandal-tile-header">
-              <strong>${group.mandal}</strong>
-              <span class="dashboard-mandal-tile-pct">${group.completionPct}%</span>
+              <strong class="dashboard-mandal-tile-name">${group.mandal}</strong>
+              <span class="dashboard-mandal-status ${statusClass}">${statusLabel}</span>
+            </div>
+            ${presidentRow}
+            <div class="dashboard-mandal-tile-bar-wrap">
+              <div class="dashboard-mandal-tile-bar" style="width:${group.completionPct}%"></div>
+            </div>
+            <div class="dashboard-mandal-tile-bar-footer">
+              <span class="dashboard-mandal-tile-pct">${group.completionPct}% surveyed</span>
+              ${wsBadge ? `<span class="dashboard-mandal-tile-ws-inline">${wsBadge}</span>` : ''}
             </div>
             <div class="dashboard-mandal-tile-stats">
               <span>${formatNumberIndian(group.completedBooths)}/${formatNumberIndian(group.totalBooths)} booths</span>
-              <span>${formatNumberIndian(group.completedVoters)}/${formatNumberIndian(group.totalVoters)} voters</span>
+              <span>${formatNumberIndian(group.completedVoters)}/${formatNumberIndian(group.totalVoters)} voters updated</span>
+            </div>
+            <div class="dashboard-mandal-tile-aff">
+              ${renderAffinitySummaryBadges(group.summary)}
             </div>
           </button>`;
         }).join('')}
@@ -1869,6 +2186,14 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
   boothData.relocatedCount = Number(result.relocatedTotal ?? boothData.relocatedCount ?? 0);
   boothData.votedCount = Number(result.votedTotal ?? boothData.votedCount ?? 0);
   state.pageCache[boothNo] = cloneBoothData(boothData);
+
+  // Keep Voting Progress in sync — don't let a background dashboard refresh zero this out
+  const prevHm = state.hmVotedBooths[boothNo] ?? 0;
+  state.hmVotedBooths[boothNo] = Math.max(prevHm, boothData.votedCount);
+  if (state.activeView === 'heatmap' && state.hmActiveView === 'progress') {
+    renderHmProgressView();
+  }
+
   clearDraftForBooth(boothNo);
   queueDraftPersist();
   queueDashboardRender();
@@ -2307,7 +2632,7 @@ function getUserFromStatic(phone, password) {
 
   return state.staticData.users.find(u => {
     const userPhone = String(u.phone || '').replace(/\D/g, '').slice(-10);
-    return userPhone === cleanPhone && userPhone.slice(-4) === cleanPassword;
+    return userPhone === cleanPhone && userPhone.slice(-6) === cleanPassword;
   }) || null;
 }
 
@@ -2382,7 +2707,6 @@ function applyVisibleBoothScope() {
     setAffinitySaveStatus(showFilter ? 'Select a mandal to load booths.' : '');
   }
 
-  renderDashboard();
   renderDataRefreshLog();
   renderAppTabs();
 }
@@ -2457,7 +2781,12 @@ function onDashboardMandalChange() {
 }
 
 function onDashboardRefresh() {
+  // Force-reset both throttle and in-progress flag so a stuck refresh can recover
   state.lastDashboardStatusRefreshAt = 0;
+  state.dashboardStatusRefreshInProgress = false;
+  if (!state.dashboardSelectedMandal) {
+    state.dashboardSelectedMandal = '__all__';
+  }
   renderDashboardFilters();
   refreshDashboardStatusesInBackground();
   renderDashboard();
@@ -2608,6 +2937,7 @@ function logout() {
     clearTimeout(state.pendingDraftPersistTimer);
     state.pendingDraftPersistTimer = null;
   }
+  stopDashboardRefreshTimer();
   state.user = null;
   state.allBooths = [];
   state.allBoothMap = new Map();
@@ -2641,10 +2971,18 @@ function logout() {
   if (els.dashboardSection)  els.dashboardSection.style.display  = 'none';
   if (els.dataRefreshSection)els.dataRefreshSection.style.display= 'none';
   if (els.voterListSection)  els.voterListSection.style.display  = 'none';
-  state.vlBoothData   = null;
-  state.vlLoadedBooth = null;
-  state.vlFiltered    = [];
-  state.vlPage        = 1;
+  if (els.heatmapSection)    els.heatmapSection.style.display    = 'none';
+  state.vlBoothData        = null;
+  state.vlLoadedBooth      = null;
+  state.vlFiltersPopulated = false;
+  state.vlFiltered         = [];
+  state.vlPage             = 1;
+  state.hmBoothNo          = null;
+  state.hmVoters           = [];
+  state.hmFiltersPopulated = false;
+  state.hmActiveView       = 'heatmap';
+  state.hmProgLoading      = false;
+  state.hmVotedBooths      = {};
   state.activeView    = 'entry';
   updateSubmitButton();
 }
@@ -2655,14 +2993,25 @@ function logout() {
 
 const VL_PAGE_SIZE = 100;
 // cols order inside each per-booth file row:
-// [sl, epic, name, relation, house, age, gender, deleted, phone, bjp]
-const VL_COLS = ['sl','epic','name','relation','house','age','gender','deleted','phone','bjp'];
+// [sl, epic, name, relation, house, age, gender, deleted, phone, bjp, religion]
+const VL_COLS = ['sl','epic','name','relation','house','age','gender','deleted','phone','bjp','religion'];
 
-// Populate mandal + booth dropdowns from the static booth list (no data fetch needed)
+// Populate mandal + booth dropdowns from the static booth list (no data fetch needed).
+// Called every time the voter list tab becomes active — must be idempotent.
 function initVoterListIfNeeded() {
   if (!canViewVoterList()) return;            // hard guard: admin only
-  populateVlMandals();
-  showVlPrompt();
+
+  // Populate mandal/booth selects only on first visit (dropdowns already have content after that)
+  if (!state.vlFiltersPopulated) {
+    populateVlMandals();
+    state.vlFiltersPopulated = true;
+  }
+
+  // Only reset to prompt view if no booth has been loaded yet
+  if (!state.vlBoothData) {
+    showVlPrompt();
+  }
+  // If booth data is already loaded, leave the table visible — don't reset
 }
 
 function populateVlMandals() {
@@ -2724,6 +3073,7 @@ async function loadVlBooth(boothNo) {
     if (els.vlSubFilters) els.vlSubFilters.style.display = 'flex';
     applyVlFilters();
   } catch (err) {
+    console.error('[VoterList] fetch failed for booth', boothNo, err);
     if (els.vlLoading) els.vlLoading.style.display = 'none';
     if (els.vlError) {
       els.vlError.textContent = `Failed to load Booth ${boothNo} data: ${err.message}`;
@@ -2740,10 +3090,8 @@ function applyVlFilters() {
   const search  = (els.vlSearch?.value || '').trim().toLowerCase();
   const gender  = els.vlGender?.value  || '';
   const bjpOnly = els.vlBjp?.value === '1';
-  const showDel = els.vlShowDeleted?.checked;
 
   state.vlFiltered = data.filter(r => {
-    if (!showDel && r.deleted === 'Y') return false;
     if (gender  && r.gender !== gender) return false;
     if (bjpOnly && !r.bjp) return false;
     if (search) {
@@ -2790,20 +3138,19 @@ function renderVlTable() {
       : 'No voters match the current filters.';
   }
 
-  els.vlBody.innerHTML = slice.map((r, i) => {
+  els.vlBody.innerHTML = slice.map(r => {
     const isDeleted = r.deleted === 'Y';
     return `<tr class="${isDeleted ? 'vl-row-deleted' : ''}">
-      <td>${start + i + 1}</td>
       <td>${r.sl}</td>
       <td style="font-family:monospace;font-size:11px">${r.epic || ''}</td>
-      <td class="vl-name">${r.name || ''}</td>
-      <td>${r.relation || ''}</td>
+      <td class="vl-name">${(r.name || '').toUpperCase()}</td>
+      <td>${(r.relation || '').toUpperCase()}</td>
       <td>${r.house || ''}</td>
       <td>${r.age ?? ''}</td>
       <td>${r.gender || ''}</td>
       <td>${r.phone ? `<a href="tel:${r.phone}">${r.phone}</a>` : ''}</td>
       <td>${r.bjp ? '<span class="vl-bjp-badge">BJP</span>' : ''}</td>
-      <td>${isDeleted ? '<span class="vl-del-badge">DEL</span>' : ''}</td>
+      <td>${r.religion ? `<span class="vl-religion-badge vl-rel-${(r.religion||'').toLowerCase()}">${r.religion}</span>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -2819,6 +3166,74 @@ function renderVlPagination(pages) {
      <button class="vl-page-btn" id="vlNextBtn" ${state.vlPage === pages ? 'disabled' : ''}>Next →</button>`;
   byId('vlPrevBtn')?.addEventListener('click', () => { state.vlPage--; renderVlTable(); });
   byId('vlNextBtn')?.addEventListener('click', () => { state.vlPage++; renderVlTable(); });
+}
+
+function printVoterList() {
+  const data = state.vlBoothData;
+  if (!data || !data.length) return;
+
+  const boothNo  = state.vlLoadedBooth;
+  const booth    = state.allBoothMap.get(Number(boothNo));
+  const mandal   = booth?.mandal  || '';
+  const village  = booth?.village || '';
+  const title    = `AC 108 Udhagamandalam — Booth ${boothNo}${village ? ' · ' + village : ''}${mandal ? ' · ' + mandal : ''}`;
+
+  const rows = data.map((r, i) => {
+    const isDeleted = r.deleted === 'Y';
+    const style = isDeleted
+      ? 'color:#dc2626;text-decoration:line-through;'
+      : (i % 2 === 0 ? 'background:#f9fafb;' : '');
+    return `<tr style="${style}">
+      <td style="padding:3px 6px;border:1px solid #ddd;white-space:nowrap">${r.sl}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd;font-family:monospace;font-size:11px">${r.epic || ''}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd;min-width:140px">${(r.name || '').toUpperCase()}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd">${(r.relation || '').toUpperCase()}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd">${r.house || ''}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd;text-align:center">${r.age ?? ''}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd">${r.gender || ''}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd">${r.phone || ''}</td>
+      <td style="padding:3px 6px;border:1px solid #ddd;text-align:center">${r.bjp ? 'BJP' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${title}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; margin: 16px; color: #111; }
+    h2   { font-size: 14px; margin: 0 0 4px; }
+    p    { margin: 0 0 10px; font-size: 11px; color: #555; }
+    table { border-collapse: collapse; width: 100%; }
+    th { background: #1e3a5f; color: #fff; padding: 4px 6px; border: 1px solid #1e3a5f; font-size: 11px; text-align: left; }
+    @media print {
+      @page { size: A4 landscape; margin: 10mm; }
+      button { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <h2>${title}</h2>
+  <p>Total voters: ${data.length} &nbsp;|&nbsp; Printed: ${new Date().toLocaleString('en-IN')}</p>
+  <p style="color:#dc2626;font-size:10px">Deleted voters shown in red with strikethrough. &nbsp;|&nbsp; Proprietary data of BJP — Do not share.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl#</th><th>EPIC No</th><th>Voter Name</th><th>Relationship Name</th>
+        <th>House</th><th>Age</th><th>Gender</th><th>Phone</th><th>BJP</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <script>window.onload = function(){ window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow pop-ups to print the voter list.'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 async function init() {
@@ -2839,12 +3254,29 @@ async function init() {
   els.dataRefreshTabBtn = byId('dataRefreshTabBtn');
   els.voterListTabBtn   = byId('voterListTabBtn');
   els.voterListSection  = byId('voterListSection');
+  els.heatmapTabBtn     = byId('heatmapTabBtn');
+  els.heatmapSection    = byId('heatmapSection');
+  els.hmMandalBtns      = byId('hmMandalBtns');
+  els.hmBoothBtns       = byId('hmBoothBtns');
+  els.hmStats           = byId('hmStats');
+  els.hmGrid            = byId('hmGrid');
+  els.hmPrompt          = byId('hmPrompt');
+  els.hmLoading         = byId('hmLoading');
+  els.hmSaveStatus      = byId('hmSaveStatus');
+  els.hmHeatmapView     = byId('hmHeatmapView');
+  els.hmProgressView    = byId('hmProgressView');
+  els.hmViewHeatmap     = byId('hmViewHeatmap');
+  els.hmViewProgress    = byId('hmViewProgress');
+  els.hmProgOverall     = byId('hmProgOverall');
+  els.hmProgMandals     = byId('hmProgMandals');
+  els.hmProgRefreshBtn  = byId('hmProgRefreshBtn');
   els.vlSearch          = byId('vlSearch');
   els.vlMandal          = byId('vlMandal');
   els.vlBooth           = byId('vlBooth');
   els.vlGender          = byId('vlGender');
   els.vlBjp             = byId('vlBjp');
-  els.vlShowDeleted     = byId('vlShowDeleted');
+  els.vlShowDeleted     = null; // removed from UI
+  els.vlPrintBtn        = byId('vlPrintBtn');
   els.vlLoading         = byId('vlLoading');
   els.vlError           = byId('vlError');
   els.vlPrompt          = byId('vlPrompt');
@@ -2903,6 +3335,30 @@ async function init() {
   if (els.dashboardTabBtn) els.dashboardTabBtn.addEventListener('click', () => setActiveView('dashboard'));
   if (els.dataRefreshTabBtn) els.dataRefreshTabBtn.addEventListener('click', () => setActiveView('data-refresh'));
   if (els.voterListTabBtn)   els.voterListTabBtn.addEventListener('click', () => setActiveView('voter-list'));
+  if (els.heatmapTabBtn)     els.heatmapTabBtn.addEventListener('click', () => setActiveView('heatmap'));
+  if (els.hmViewHeatmap)     els.hmViewHeatmap.addEventListener('click', () => setHmView('heatmap'));
+  if (els.hmViewProgress)    els.hmViewProgress.addEventListener('click', () => setHmView('progress'));
+  if (els.hmProgRefreshBtn)  els.hmProgRefreshBtn.addEventListener('click', onHmProgRefresh);
+  if (els.hmMandalBtns) els.hmMandalBtns.addEventListener('click', e => {
+    const btn = e.target.closest('.hm-mandal-btn');
+    if (!btn) return;
+    els.hmMandalBtns.querySelectorAll('.hm-mandal-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (els.hmBoothBtns) els.hmBoothBtns.querySelectorAll('.hm-booth-btn').forEach(b => b.classList.remove('active'));
+    renderHmBoothButtons(btn.dataset.mandal);
+    showHmPrompt('Select a booth above to load the heatmap.');
+  });
+  if (els.hmBoothBtns) els.hmBoothBtns.addEventListener('click', e => {
+    const btn = e.target.closest('.hm-booth-btn');
+    if (!btn) return;
+    els.hmBoothBtns.querySelectorAll('.hm-booth-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadHeatmapBooth(btn.dataset.booth);
+  });
+  if (els.hmGrid) els.hmGrid.addEventListener('click', e => {
+    const cell = e.target.closest('.hm-cell');
+    if (cell) onHeatmapCellClick(cell);
+  });
   if (els.runDataRefreshBtn) els.runDataRefreshBtn.addEventListener('click', onManualDataRefresh);
 
   // Voter list filter listeners
@@ -2916,10 +3372,10 @@ async function init() {
     state.vlPage = 1;
     loadVlBooth(els.vlBooth.value);           // fetch only this booth
   });
-  if (els.vlSearch)      els.vlSearch.addEventListener('input',  vlFilterChange);
-  if (els.vlGender)      els.vlGender.addEventListener('change', vlFilterChange);
-  if (els.vlBjp)         els.vlBjp.addEventListener('change',   vlFilterChange);
-  if (els.vlShowDeleted) els.vlShowDeleted.addEventListener('change', vlFilterChange);
+  if (els.vlSearch)  els.vlSearch.addEventListener('input',  vlFilterChange);
+  if (els.vlGender)  els.vlGender.addEventListener('change', vlFilterChange);
+  if (els.vlBjp)     els.vlBjp.addEventListener('change',   vlFilterChange);
+  if (els.vlPrintBtn)els.vlPrintBtn.addEventListener('click', printVoterList);
 
   // Delegated listeners on votersContainer — survive innerHTML replacement in renderVoters()
   if (els.votersContainer) {
@@ -2960,6 +3416,443 @@ async function init() {
   renderDataRefreshLog();
   renderAppTabs();
   updateSubmitButton();
+}
+
+// ── Heatmap view toggle ───────────────────────────────────────────────────────
+function setHmView(view) {
+  state.hmActiveView = view;
+  const isHeatmap = view === 'heatmap';
+  if (els.hmHeatmapView)  els.hmHeatmapView.style.display  = isHeatmap ? 'block' : 'none';
+  if (els.hmProgressView) els.hmProgressView.style.display = isHeatmap ? 'none'  : 'block';
+  if (els.hmViewHeatmap)  els.hmViewHeatmap.classList.toggle('active', isHeatmap);
+  if (els.hmViewProgress) els.hmViewProgress.classList.toggle('active', !isHeatmap);
+  if (!isHeatmap) renderHmProgressView();
+}
+
+// ── Voting Progress dashboard ─────────────────────────────────────────────────
+function getHmProgressData() {
+  const allBooths = state.allBooths || [];
+  const mandalMap = {};
+
+  allBooths.forEach(b => {
+    const boothNo = Number(b.booth);
+    const total   = Number(b.totalVoters) || 0;
+    const cache   = state.pageCache[boothNo];
+    // Read voted only from hmVotedBooths — never from background dashboard refresh
+    const voted   = Number(state.hmVotedBooths[boothNo] ?? 0);
+    const summary = cache?.summary || { A:0, B:0, C:0, D:0, E:0 };
+    const A = Number(summary.A||0), Bv = Number(summary.B||0),
+          C = Number(summary.C||0), D  = Number(summary.D||0), E = Number(summary.E||0);
+    const tagged   = A + Bv + C + D + E;
+    const nda      = A + Bv;           // committed BJP+NDA voters
+    const mandal   = String(b.mandal || '').trim() || 'Unknown';
+    const loaded   = !!cache;
+
+    if (!mandalMap[mandal]) mandalMap[mandal] = {
+      total:0, voted:0, A:0, B:0, C:0, D:0, E:0, nda:0, tagged:0, booths:[], loadedCount:0
+    };
+    const mm = mandalMap[mandal];
+    mm.total  += total;  mm.voted  += voted;
+    mm.A += A; mm.B += Bv; mm.C += C; mm.D += D; mm.E += E;
+    mm.nda    += nda;    mm.tagged += tagged;
+    mm.loadedCount += loaded ? 1 : 0;
+    mm.booths.push({ boothNo, name: b.village||'', total, voted, A, B:Bv, C, D, E, nda, tagged, loaded });
+  });
+
+  const overall = { total:0, voted:0, A:0, B:0, C:0, D:0, E:0, nda:0, tagged:0 };
+  Object.values(mandalMap).forEach(m => {
+    overall.total  += m.total;  overall.voted  += m.voted;
+    overall.A += m.A; overall.B += m.B; overall.C += m.C;
+    overall.D += m.D; overall.E += m.E;
+    overall.nda    += m.nda;    overall.tagged += m.tagged;
+  });
+  return { overall, mandalMap };
+}
+
+function hmProgressBar(voted, total, extraClass = '') {
+  const pct = total ? Math.min(100, (voted / total) * 100) : 0;
+  const pctRounded = Math.round(pct);
+  const color = pctRounded >= 60 ? '#2e7d32' : pctRounded >= 30 ? '#f57c00' : '#c62828';
+  return `<div class="hm-prog-bar-wrap${extraClass ? ' ' + extraClass : ''}">
+    <div class="hm-prog-bar-fill" style="width:${pct}%;background:${color};"></div>
+  </div>`;
+}
+
+// Returns {label, cls} for the mobilisation status
+function hmMobilisationStatus(voted, nda, total) {
+  if (!nda && !voted) return { label: 'No Data', cls: 'hm-status-nodata' };
+  if (!nda)           return { label: 'Not Tagged', cls: 'hm-status-nodata' };
+  const pct = total ? (voted / total) * 100 : 0;
+  if (voted >= nda)   return { label: '✓ NDA Mobilised', cls: 'hm-status-good' };
+  const gap = nda - voted;
+  if (pct >= 20)      return { label: `${gap} NDA votes pending`, cls: 'hm-status-warn' };
+  return               { label: `${gap} NDA votes pending`, cls: 'hm-status-bad' };
+}
+
+function hmAbcdeRow(A, B, C, D, E, tagged) {
+  if (!tagged) return '<span class="hm-abcde-none">Not tagged yet</span>';
+  return `<span class="hm-ab-chip hm-ab-a">A&nbsp;${A}</span>` +
+         `<span class="hm-ab-chip hm-ab-b">B&nbsp;${B}</span>` +
+         `<span class="hm-ab-chip hm-ab-c">C&nbsp;${C}</span>` +
+         `<span class="hm-ab-chip hm-ab-d">D&nbsp;${D}</span>` +
+         `<span class="hm-ab-chip hm-ab-e">E&nbsp;${E}</span>`;
+}
+
+function renderHmProgressView() {
+  if (!els.hmProgOverall || !els.hmProgMandals) return;
+
+  const { overall, mandalMap } = getHmProgressData();
+  const overallPct = overall.total ? ((overall.voted / overall.total) * 100).toFixed(1) : '0.0';
+  const loadedBooths = (state.allBooths || []).filter(b => !!state.pageCache[Number(b.booth)]).length;
+  const totalBooths  = (state.allBooths || []).length;
+  const overallStatus = hmMobilisationStatus(overall.voted, overall.nda, overall.total);
+
+  els.hmProgOverall.innerHTML = `
+    <div class="hm-prog-overall-card">
+      <div class="hm-prog-overall-top">
+        <div>
+          <div class="hm-prog-overall-nums">
+            <span class="hm-prog-big">${overall.voted.toLocaleString()}</span>
+            <span class="hm-prog-sep"> / </span>
+            <span class="hm-prog-total">${overall.total.toLocaleString()}</span>
+            <span class="hm-prog-pct-badge">${overallPct}%</span>
+          </div>
+          <div class="hm-prog-overall-label">Total Voted &nbsp;·&nbsp; AC 108 Overall</div>
+        </div>
+        <span class="hm-mob-status ${overallStatus.cls}">${overallStatus.label}</span>
+      </div>
+      ${hmProgressBar(overall.voted, overall.total, 'hm-prog-bar--lg')}
+      <div class="hm-prog-abcde-row">
+        <span class="hm-prog-nda-label">NDA Committed (A+B): <strong>${overall.nda.toLocaleString()}</strong></span>
+        <div class="hm-prog-chips">${hmAbcdeRow(overall.A, overall.B, overall.C, overall.D, overall.E, overall.tagged)}</div>
+      </div>
+      <div class="hm-prog-loaded-note">${Object.keys(state.hmVotedBooths).length} of ${totalBooths} booths tracked · <em>Voted counts come from Heatmap clicks. Press Refresh to load all from server.</em></div>
+    </div>`;
+
+  const mandalRows = Object.entries(mandalMap).sort((a, b) => a[0].localeCompare(b[0]));
+  els.hmProgMandals.innerHTML = mandalRows.map(([mandal, md]) => {
+    const mPct    = md.total ? ((md.voted / md.total) * 100).toFixed(1) : '0.0';
+    const mStatus = hmMobilisationStatus(md.voted, md.nda, md.total);
+
+    const boothRows = md.booths.sort((a, b) => a.boothNo - b.boothNo).map(bth => {
+      const bPct    = bth.total ? ((bth.voted / bth.total) * 100).toFixed(1) : '0.0';
+      const bStatus = hmMobilisationStatus(bth.voted, bth.nda, bth.total);
+      const abcde   = bth.loaded
+        ? hmAbcdeRow(bth.A, bth.B, bth.C, bth.D, bth.E, bth.tagged)
+        : '<span class="hm-abcde-none">—</span>';
+      return `<div class="hm-prog-booth-card">
+        <div class="hm-prog-booth-top">
+          <span class="hm-prog-booth-no">${bth.boothNo}</span>
+          <span class="hm-prog-booth-name">${bth.name}</span>
+          <div class="hm-prog-booth-right">
+            <span class="hm-prog-booth-nums">${bth.voted}/${bth.total} &nbsp; <strong>${bPct}%</strong></span>
+            <span class="hm-mob-status hm-mob-sm ${bStatus.cls}">${bStatus.label}</span>
+          </div>
+        </div>
+        <div class="hm-prog-booth-bar-row">
+          ${hmProgressBar(bth.voted, bth.total, 'hm-prog-bar--sm')}
+        </div>
+        <div class="hm-prog-booth-abcde">${abcde}
+          ${bth.nda ? `<span class="hm-prog-nda-inline">NDA: ${bth.nda}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="hm-prog-mandal-block">
+      <div class="hm-prog-mandal-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="hm-prog-mandal-name">${mandal}</span>
+        <span class="hm-prog-mandal-sub">${md.booths.length} booths · ${md.voted}/${md.total} voted</span>
+        <div class="hm-prog-mandal-right">
+          <span class="hm-prog-mandal-pct">${mPct}%</span>
+          <span class="hm-mob-status hm-mob-sm ${mStatus.cls}">${mStatus.label}</span>
+        </div>
+        <span class="hm-prog-chevron">▾</span>
+      </div>
+      ${hmProgressBar(md.voted, md.total)}
+      <div class="hm-prog-mandal-abcde">
+        ${hmAbcdeRow(md.A, md.B, md.C, md.D, md.E, md.tagged)}
+        <span class="hm-prog-nda-inline">NDA Committed: ${md.nda}</span>
+      </div>
+      <div class="hm-prog-booths-wrap">${boothRows}</div>
+    </div>`;
+  }).join('');
+}
+
+async function onHmProgRefresh() {
+  if (state.hmProgLoading) return;
+  state.hmProgLoading = true;
+  if (els.hmProgRefreshBtn) { els.hmProgRefreshBtn.disabled = true; els.hmProgRefreshBtn.textContent = 'Loading…'; }
+
+  // Load voted count + ABCDE summary for ALL booths from saved affinity
+  const allBooths = state.allBooths || [];
+  let done = 0;
+
+  for (const b of allBooths) {
+    try {
+      const boothNo = Number(b.booth);
+      const saved = await loadSavedAffinity(boothNo);
+
+      // Voted count — Refresh is authoritative: always use server data.
+      // Heatmap votes save immediately on each click, so nothing is ever unsaved.
+      const votedCount = saved.filter(r => readTruthyFlag(r.voted ?? r.Voted)).length;
+      state.hmVotedBooths[boothNo] = votedCount;
+
+      // ABCDE summary from affinity flags
+      const summary = { A:0, B:0, C:0, D:0, E:0 };
+      saved.forEach(r => {
+        const a = String(r.affinity || '').toUpperCase();
+        if (a && Object.prototype.hasOwnProperty.call(summary, a)) summary[a]++;
+      });
+
+      // Write summary into pageCache (create entry if absent)
+      if (!state.pageCache[boothNo]) {
+        state.pageCache[boothNo] = createBoothData(Number(b.totalVoters) || 0);
+      }
+      state.pageCache[boothNo].summary = summary;
+      state.pageCache[boothNo].votedCount = votedCount;
+
+      done++;
+      // Re-render every 20 booths so user sees progress
+      if (done % 20 === 0) renderHmProgressView();
+    } catch (_) {}
+  }
+
+  renderHmProgressView();
+  state.hmProgLoading = false;
+  if (els.hmProgRefreshBtn) { els.hmProgRefreshBtn.disabled = false; els.hmProgRefreshBtn.textContent = 'Refresh'; }
+}
+
+// ── Voter Heatmap ─────────────────────────────────────────────────────────────
+function initHeatmapIfNeeded() {
+  if (!canViewVotedFlag()) return;
+  if (!state.hmFiltersPopulated) {
+    populateHmMandalFilter();
+    state.hmFiltersPopulated = true;
+  }
+  if (!state.hmBoothNo) {
+    showHmPrompt();
+  }
+}
+
+function populateHmMandalFilter() {
+  if (!els.hmMandalBtns) return;
+  const all = state.allBooths || [];
+  const mandals = [...new Set(all.map(b => String(b.mandal || '').trim()).filter(Boolean))].sort();
+  els.hmMandalBtns.innerHTML = mandals.map(m => {
+    const count = all.filter(b => String(b.mandal || '').trim() === m).length;
+    return `<button type="button" class="hm-mandal-btn" data-mandal="${m}">${m}<span class="hm-mandal-count">${count}</span></button>`;
+  }).join('');
+}
+
+function renderHmBoothButtons(mandal) {
+  if (!els.hmBoothBtns) return;
+  const all = state.allBooths || [];
+  const src = mandal ? all.filter(b => String(b.mandal || '').trim() === mandal) : [];
+  const sorted = src.slice().sort((a, b) => Number(a.booth) - Number(b.booth));
+  if (!sorted.length) { els.hmBoothBtns.style.display = 'none'; return; }
+  els.hmBoothBtns.innerHTML = sorted.map(b =>
+    `<button type="button" class="hm-booth-btn" data-booth="${b.booth}">
+       <span class="hm-bb-no">${b.booth}</span>
+       <span class="hm-bb-name">${b.village || ''}</span>
+     </button>`
+  ).join('');
+  els.hmBoothBtns.style.display = 'flex';
+}
+
+function showHmPrompt(msg) {
+  if (els.hmLoading)    els.hmLoading.style.display = 'none';
+  if (els.hmGrid)       els.hmGrid.style.display    = 'none';
+  if (els.hmPrompt)  {  els.hmPrompt.textContent = msg || 'Select a Mandal above to begin.'; els.hmPrompt.style.display = 'block'; }
+  if (els.hmStats)      els.hmStats.innerHTML       = '';
+  if (els.hmSaveStatus) els.hmSaveStatus.textContent = '';
+}
+
+// Write hmVoters back into pageCache so Progress view always reads correct data.
+// Preserves existing summary (ABCDE) from cache; recomputes it from hmVoters if absent.
+function syncHmVotersToCache(boothNo) {
+  if (!boothNo || !state.hmVoters.length) return;
+  const existing = state.pageCache[boothNo];
+
+  // Compute ABCDE summary from hmVoters affinity data
+  const summary = { A:0, B:0, C:0, D:0, E:0 };
+  state.hmVoters.forEach(v => {
+    const a = String(v.affinity || '').toUpperCase();
+    if (a && Object.prototype.hasOwnProperty.call(summary, a)) summary[a]++;
+  });
+  // Prefer existing summary if it has data (entry page may have richer data)
+  const hasSummaryData = existing?.summary && Object.values(existing.summary).some(n => n > 0);
+
+  const entry = existing ? existing : createBoothData(state.hmVoters.length);
+  const votedCount = state.hmVoters.filter(v => v.voted).length;
+  entry.votedCount = votedCount;
+  if (!hasSummaryData) entry.summary = summary;
+
+  // Sync voted flags into voters array
+  if (entry.voters?.length) {
+    const hmMap = new Map(state.hmVoters.map(v => [v.slNo, v]));
+    entry.voters.forEach(cv => {
+      const hv = hmMap.get(cv.slNo);
+      if (hv) cv.voted = hv.voted;
+    });
+  }
+
+  state.pageCache[boothNo] = entry;
+
+  // Track voted count in dedicated map — used by Progress view
+  // so background dashboard refreshes never contaminate voting progress
+  state.hmVotedBooths[boothNo] = votedCount;
+}
+
+async function loadHeatmapBooth(boothNo) {
+  if (!canViewVotedFlag()) return;
+  if (!boothNo) { showHmPrompt(); return; }
+
+  boothNo = Number(boothNo);
+
+  // Already loaded — re-render immediately
+  if (state.hmBoothNo === boothNo && state.hmVoters.length) {
+    renderHeatmapGrid();
+    return;
+  }
+
+  if (els.hmPrompt)     els.hmPrompt.style.display     = 'none';
+  if (els.hmGrid)       els.hmGrid.style.display       = 'none';
+  if (els.hmLoading) {  els.hmLoading.style.display    = 'block'; els.hmLoading.textContent = `Loading Booth ${boothNo}…`; }
+  if (els.hmStats)      els.hmStats.innerHTML          = '';
+  if (els.hmSaveStatus) els.hmSaveStatus.textContent   = '';
+
+  try {
+    // Load voter serial numbers from local file (fast, no API needed)
+    const res = await fetch(`voter_data/${boothNo}.json`);
+    if (!res.ok) throw new Error(`Could not load voter data (HTTP ${res.status})`);
+    const raw = await res.json();
+
+    // Build voter list — only non-deleted entries
+    const voters = (raw.rows || [])
+      .filter(r => String(r[7] || '').toUpperCase() !== 'Y')   // index 7 = deleted
+      .map(r => ({ slNo: r[0], affinity: '', relocated: false, voted: false }));
+
+    // Overlay voted flags from page cache if already loaded
+    const cached = state.pageCache[boothNo];
+    if (cached?.voters?.length) {
+      const cachedMap = new Map(cached.voters.map(v => [v.slNo, v]));
+      voters.forEach(v => {
+        const cv = cachedMap.get(v.slNo);
+        if (cv) { v.affinity = cv.affinity || ''; v.relocated = !!cv.relocated; v.voted = !!cv.voted; }
+      });
+    } else {
+      // Try fetching saved affinity in background to get voted flags
+      try {
+        const savedRows = await loadSavedAffinity(boothNo);
+        const savedMap  = new Map(savedRows.map(r => [Number(r.slNo ?? r['Sl#']), r]));
+        voters.forEach(v => {
+          const s = savedMap.get(v.slNo);
+          if (s) { v.affinity = s.affinity || ''; v.relocated = readTruthyFlag(s.relocated); v.voted = readTruthyFlag(s.voted ?? s.Voted); }
+        });
+      } catch (_) { /* show without voted flags if API unavailable */ }
+    }
+
+    state.hmBoothNo = boothNo;
+    state.hmVoters  = voters;
+
+    // Always write a cache entry so the Progress view reads correct data
+    syncHmVotersToCache(boothNo);
+
+    renderHeatmapGrid();
+  } catch (err) {
+    if (els.hmLoading) els.hmLoading.style.display = 'none';
+    if (els.hmPrompt) {
+      els.hmPrompt.textContent = 'Error: ' + (err.message || err);
+      els.hmPrompt.style.display = 'block';
+    }
+  }
+}
+
+function renderHeatmapGrid() {
+  if (els.hmLoading) els.hmLoading.style.display = 'none';
+  if (!els.hmGrid) return;
+  if (!state.hmVoters.length) {
+    if (els.hmPrompt) { els.hmPrompt.textContent = 'No voter data found for this booth.'; els.hmPrompt.style.display = 'block'; }
+    return;
+  }
+
+  const voters    = state.hmVoters;
+  const total     = voters.length;
+  const votedCount = voters.filter(v => v.voted).length;
+  const pct       = total ? Math.round((votedCount / total) * 100) : 0;
+
+  if (els.hmStats) {
+    els.hmStats.innerHTML =
+      `<span class="hm-stat-voted">${votedCount}</span> / <span class="hm-stat-total">${total}</span> voted &nbsp; <span class="hm-stat-pct">${pct}%</span>`;
+  }
+
+  els.hmGrid.innerHTML = voters.map(v =>
+    `<div class="hm-cell ${v.voted ? 'hm-cell--voted' : 'hm-cell--not-voted'}" data-sl="${v.slNo}" title="Sl# ${v.slNo}">${v.slNo}</div>`
+  ).join('');
+
+  els.hmGrid.style.display = 'grid';
+  if (els.hmPrompt) els.hmPrompt.style.display = 'none';
+}
+
+async function onHeatmapCellClick(cell) {
+  if (!canEditVotedFlag() || state.hmSaving) return;
+  const slNo = Number(cell.dataset.sl);
+  const voter = state.hmVoters.find(v => v.slNo === slNo);
+  if (!voter) return;
+
+  // Optimistic toggle
+  voter.voted = !voter.voted;
+  cell.classList.toggle('hm-cell--voted',     voter.voted);
+  cell.classList.toggle('hm-cell--not-voted', !voter.voted);
+
+  // Update stats immediately
+  const votedCount = state.hmVoters.filter(v => v.voted).length;
+  const total      = state.hmVoters.length;
+  const pct        = total ? Math.round((votedCount / total) * 100) : 0;
+  if (els.hmStats) {
+    els.hmStats.innerHTML =
+      `<span class="hm-stat-voted">${votedCount}</span> / <span class="hm-stat-total">${total}</span> voted &nbsp; <span class="hm-stat-pct">${pct}%</span>`;
+  }
+
+  // Save to Google Sheets
+  state.hmSaving = true;
+  if (els.hmSaveStatus) els.hmSaveStatus.textContent = 'Saving…';
+
+  try {
+    const boothData = {
+      voters: state.hmVoters.map(v => ({
+        slNo:      v.slNo,
+        affinity:  v.affinity,
+        relocated: v.relocated,
+        voted:     v.voted,
+      }))
+    };
+    const payload = {
+      action: 'saveBoothAffinities',
+      booth:  state.hmBoothNo,
+      voters: boothData.voters,
+    };
+    const result = await postApi(payload);
+    if (result && result.ok === false) throw new Error(result.message || 'Save failed');
+
+    // Always sync cache (creates entry if absent) so Progress view stays accurate
+    syncHmVotersToCache(state.hmBoothNo);
+    if (els.hmSaveStatus) {
+      els.hmSaveStatus.textContent = `Saved — Sl# ${slNo} marked ${voter.voted ? 'voted' : 'unvoted'}`;
+      setTimeout(() => { if (els.hmSaveStatus) els.hmSaveStatus.textContent = ''; }, 3000);
+    }
+  } catch (err) {
+    // Revert on error
+    voter.voted = !voter.voted;
+    cell.classList.toggle('hm-cell--voted',     voter.voted);
+    cell.classList.toggle('hm-cell--not-voted', !voter.voted);
+    if (els.hmSaveStatus) {
+      els.hmSaveStatus.textContent = 'Save failed: ' + (err.message || err);
+      els.hmSaveStatus.style.color = 'var(--red, #c00)';
+    }
+  } finally {
+    state.hmSaving = false;
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -35,11 +35,12 @@
 
         <label for="password">Password</label>
         <input id="password" type="password" />
+        <p class="auth-pwd-hint">Call the numbers below for password | கடவுச்சொல்லுக்கு கீழே உள்ள எண்களை அழைக்கவும்</p>
 
         <div id="loginError" class="login-error"></div>
 
         <button type="submit">Login</button>
-        <p class="auth-help">For assistance Call 99625 41214 /97400 67042</p>
+        <p class="auth-help">For assistance Call 99625 41214 / 97400 67042 / 87789 24707 / 89396 18618</p>
         <p class="auth-disclaimer">Properitory Data of BJP. Do not share</p>
       </form>
     </section>
@@ -61,6 +62,7 @@
         <button id="dashboardTabBtn" class="app-tab" type="button">Dashboard</button>
         <button id="dataRefreshTabBtn" class="app-tab" type="button">Data Refresh</button>
         <button id="voterListTabBtn" class="app-tab" type="button" style="display:none;">Voter List</button>
+        <button id="heatmapTabBtn" class="app-tab" type="button" style="display:none;">Voted Heatmap</button>
       </div>
 
       <section id="entrySection">
@@ -201,9 +203,7 @@
             <option value="">All Voters</option>
             <option value="1">BJP Members only</option>
           </select>
-          <label class="vl-checkbox-label">
-            <input id="vlShowDeleted" type="checkbox" /> Show deleted
-          </label>
+          <button id="vlPrintBtn" type="button" class="vl-print-btn">Print / PDF</button>
         </div>
 
         <div id="vlPrompt" class="vl-prompt">Select a Booth above to load voter data.</div>
@@ -216,9 +216,9 @@
             <table class="vl-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Sl#</th><th>EPIC No</th><th>Voter Name</th>
-                  <th>Relation</th><th>House</th><th>Age</th><th>Gender</th>
-                  <th>Phone</th><th>BJP</th><th>Del</th>
+                  <th>Sl#</th><th>EPIC No</th><th>Voter Name</th>
+                  <th>Relationship Name</th><th>House</th><th>Age</th><th>Gender</th>
+                  <th>Phone</th><th>BJP</th><th>Religion</th>
                 </tr>
               </thead>
               <tbody id="vlBody"></tbody>
@@ -226,6 +226,44 @@
           </div>
           <div class="vl-pagination" id="vlPagination"></div>
         </div>
+      </section>
+
+      <!-- ── Voted Heatmap ────────────────────────────────────────────────── -->
+      <section id="heatmapSection" class="card heatmap-card" style="display:none;">
+
+        <!-- View toggle -->
+        <div class="hm-view-toggle">
+          <button id="hmViewHeatmap" type="button" class="hm-view-btn active">Heatmap</button>
+          <button id="hmViewProgress" type="button" class="hm-view-btn">Voting Progress</button>
+        </div>
+
+        <!-- ── Heatmap view ── -->
+        <div id="hmHeatmapView">
+          <div class="hm-header">
+            <div>
+              <h3>Voted Heatmap — வாக்களித்தவர் வரைபடம்</h3>
+              <p class="muted hm-subtitle">Click a serial number to mark as voted. Green = voted, Red = not yet voted.</p>
+            </div>
+            <div id="hmStats" class="hm-stats"></div>
+          </div>
+          <div id="hmMandalBtns" class="hm-mandal-btns"></div>
+          <div id="hmBoothBtns" class="hm-booth-btns" style="display:none;"></div>
+          <div id="hmSaveStatus" class="hm-save-status muted"></div>
+          <div id="hmPrompt" class="hm-prompt">Select a Mandal above to begin.</div>
+          <div id="hmLoading" class="hm-loading" style="display:none;">Loading…</div>
+          <div id="hmGrid" class="hm-grid" style="display:none;"></div>
+        </div>
+
+        <!-- ── Progress view ── -->
+        <div id="hmProgressView" style="display:none;">
+          <div class="hm-prog-header">
+            <h3>Voting Progress — வாக்களிப்பு முன்னேற்றம்</h3>
+            <button id="hmProgRefreshBtn" type="button" class="hm-prog-refresh-btn">Refresh</button>
+          </div>
+          <div id="hmProgOverall" class="hm-prog-overall"></div>
+          <div id="hmProgMandals" class="hm-prog-mandals"></div>
+        </div>
+
       </section>
 
       <section id="dataRefreshSection" class="card data-refresh-card" style="display:none;">

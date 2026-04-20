@@ -52,6 +52,8 @@ function doGet(e) {
       out = getDashboardSummary_(p);
     } else if (action === 'getSavedAffinity') {
       out = getSavedAffinity_(p);
+    } else if (action === 'getSheetHeaders') {
+      out = getSheetHeaders_();
     } else {
       out = { ok: false, message: 'Unknown action: ' + action };
     }
@@ -221,7 +223,10 @@ function getSavedAffinity_(params) {
     var affinity = String(row[iAffinity] == null ? '' : row[iAffinity]).trim().toUpperCase();
 
     if (!slNo) continue;
-    if (!/^[A-E]$/.test(affinity)) continue;
+    var hasAffinity = /^[A-E]$/.test(affinity);
+    var isVoted = iVoted >= 0 ? readBooleanFlag_(row[iVoted]) : false;
+    var isRelocated = iRelocated >= 0 ? readBooleanFlag_(row[iRelocated]) : false;
+    if (!hasAffinity && !isVoted && !isRelocated) continue;
 
     var ts = r;
     if (iUpdatedAt >= 0) {
@@ -269,6 +274,7 @@ function saveBoothAffinities_(body) {
   try {
     var sheet = getAffinitySheet_();
     ensureAffinityHeaders_(sheet);
+    SpreadsheetApp.flush(); // ensure column additions are visible before reading headers
 
     var data = sheet.getDataRange().getValues();
     var headers = data[0].map(function(h) {
@@ -322,20 +328,22 @@ function saveBoothAffinities_(body) {
       .forEach(function(slNo) {
         var incoming_row = incoming[slNo];
         var affinity = incoming_row.affinity;
-        if (!/^[A-E]$/.test(affinity)) return;
+        var hasAffinity = /^[A-E]$/.test(affinity);
+        // Save row if it has affinity, voted flag, or relocated flag — skip truly blank rows
+        if (!hasAffinity && !incoming_row.voted && !incoming_row.relocated) return;
 
         var row = [];
         for (var c = 0; c < width; c++) row.push('');
 
         row[iBooth] = boothNo;
         row[iSlNo] = slNo;
-        row[iAffinity] = affinity;
+        row[iAffinity] = affinity;  // may be '' for voted-only rows
         if (iRelocated >= 0) row[iRelocated] = incoming_row.relocated ? 'Yes' : '';
         if (iVoted >= 0) row[iVoted] = incoming_row.voted ? 'Yes' : '';
         if (iUpdatedAt >= 0) row[iUpdatedAt] = now;
 
         boothRows.push(row);
-        summary[affinity]++;
+        if (hasAffinity) summary[affinity]++;
         if (incoming_row.relocated) relocatedCount++;
         if (incoming_row.voted) votedCount++;
       });
@@ -503,6 +511,28 @@ function upsertBoothMasterSummary_(boothNo, summary, completed, relocatedTotal, 
   if (iVotedTot >= 0) sh.getRange(targetRow, iVotedTot + 1).setValue(Number(votedTotal || 0));
 
   return completionPct;
+}
+
+function getSheetHeaders_() {
+  try {
+    var sheet = getAffinitySheet_();
+    var lastCol = sheet.getLastColumn();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 1 || lastCol < 1) return { ok: true, headers: [], rows: 0 };
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var iVoted = headers.map(function(h) {
+      return String(h || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }).indexOf('voted');
+    return {
+      ok: true,
+      headers: headers,
+      rows: lastRow - 1,
+      iVoted: iVoted,
+      votedColumnFound: iVoted >= 0
+    };
+  } catch (err) {
+    return { ok: false, message: err.message };
+  }
 }
 
 function getAffinitySheet_() {

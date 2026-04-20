@@ -58,7 +58,7 @@ function seedTestData() {
     for (let sl = 1; sl <= fillCount; sl++) {
       const r        = Math.random();
       const affinity = r < 0.40 ? 'A' : r < 0.65 ? 'B' : r < 0.80 ? 'C' : r < 0.90 ? 'D' : 'E';
-      store[boothNo][sl] = { affinity, relocated: sl % 20 === 0, voted: sl % 15 === 0 };
+      store[boothNo][sl] = { affinity, relocated: sl % 20 === 0, voted: false };
     }
   });
   console.log('  Test data seeded for first 40 booths.');
@@ -185,13 +185,14 @@ function handleMockApi(req, res) {
           body.voters.forEach(v => {
             const slNo     = Number(v.slNo);
             const affinity = String(v.affinity || '').trim().toUpperCase();
-            if (!slNo || !/^[A-E]$/.test(affinity)) return;
+            const hasAffinity = /^[A-E]$/.test(affinity);
+            if (!slNo || (!hasAffinity && !v.relocated && !v.voted)) return;
             store[boothNo][slNo] = {
-              affinity,
+              affinity:  hasAffinity ? affinity : '',
               relocated: !!v.relocated,
               voted:     !!v.voted,
             };
-            summary[affinity]++;
+            if (hasAffinity) summary[affinity]++;
             if (v.relocated) relocated++;
             if (v.voted)     voted++;
           });
@@ -202,7 +203,10 @@ function handleMockApi(req, res) {
           const completionPct = totalVoters ? Math.round((completed / totalVoters) * 100) : 0;
 
           result = { ok: true, summary, completionPct, relocatedTotal: relocated, votedTotal: voted };
-          console.log(`  [mock] saved booth ${boothNo}: ${completed} voters tagged`);
+
+          // Log voted rows so we can verify the payload is correct
+          const votedRows = body.voters.filter(v => v.voted).map(v => `SL${v.slNo}`);
+          console.log(`  [mock] saved booth ${boothNo}: tagged=${completed}, voted=${voted}${votedRows.length ? ' (' + votedRows.join(',') + ')' : ''}`);
         }
 
       } else if (action === 'clearBoothData') {
