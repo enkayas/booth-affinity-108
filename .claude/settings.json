@@ -56,7 +56,8 @@
       "Bash(echo \"Server PID: $!\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8099/)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "/Users/nk/Library/CloudStorage/OneDrive-Personal/BJP/02_data_mgmt/2026/Output"
