@@ -34,6 +34,7 @@ const state = {
   prefetchToken: 0,
   localDrafts: {},
   editingRows: new Set(),
+  pendingVotersFilter: false,
   pendingSaveTimer: null,
   pendingDraftPersistTimer: null,
   retrySyncTimer: null,
@@ -57,8 +58,12 @@ const state = {
   hmFiltersPopulated: false, // heatmap: booth dropdowns built
   hmSaving: false,           // heatmap: save in progress
   hmActiveView: 'heatmap',   // 'heatmap' | 'progress'
+  hmProgSubView: 'nda',      // 'nda' | 'opp'
+  hmProgActiveMandal: null,  // currently selected mandal tab
   hmProgLoading: false,
+  hmProgAutoRefreshed: false, // auto-fetch affinity data once on first Progress view open
   hmVotedBooths: {},         // boothNo → votedCount, only from heatmap clicks or explicit refresh
+  hmVotedSlNos:  {},         // boothNo → [slNo, ...] of voters who have voted (from refresh)
 };
 
 const els = {};
@@ -129,7 +134,7 @@ function canEditVotedFlag() {
 }
 
 function canSubmitBoothChanges() {
-  return canEditAnyRows() || canEditRelocatedFlag() || canEditVotedFlag();
+  return canEditAnyRows() || canEditRelocatedFlag();
 }
 
 function readTruthyFlag(value) {
@@ -229,6 +234,7 @@ function callApi(payload) {
     const callbackName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
     const params = new URLSearchParams(payload);
     params.set('callback', callbackName);
+    params.set('_t', Date.now()); // prevent Apps Script GET cache
 
     const script = document.createElement('script');
     script.src = `${API_URL}?${params.toString()}`;
@@ -592,7 +598,10 @@ function getBoothContacts(booth) {
   const roleOrder = ['Mandal President', 'Sakthi Kendra', 'BLA2', 'Booth President'];
 
   return state.staticData.users
-    .filter(u => Array.isArray(u.booths) && u.booths.includes(boothNo) && roleOrder.includes(u.role))
+    .filter(u => {
+      const ub = Array.isArray(u.booths) ? u.booths : (u.booths != null ? [u.booths] : []);
+      return ub.map(Number).includes(boothNo) && roleOrder.includes(u.role);
+    })
     .sort((a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role));
 }
 
@@ -956,6 +965,9 @@ function renderAppTabs() {
   if (els.voterListTabBtn) els.voterListTabBtn.classList.toggle('active', voterListActive);
   if (els.heatmapTabBtn)   els.heatmapTabBtn.classList.toggle('active', heatmapActive);
 
+  if (entryActive) {
+    renderVoters();
+  }
   if (dashboardActive) {
     renderDashboard();
   }
@@ -1749,8 +1761,13 @@ function affinityButton(code, current, slNo, locked) {
   `;
 }
 
-function getCurrentPageBounds() {
+function getDisplayVoters() {
   const voters = state.boothData?.voters || [];
+  return state.pendingVotersFilter ? voters.filter(v => !v.affinity) : voters;
+}
+
+function getCurrentPageBounds() {
+  const voters = getDisplayVoters();
   const totalPages = Math.max(1, Math.ceil(voters.length / state.pageSize));
   if (state.currentPage > totalPages) state.currentPage = totalPages;
 
@@ -1778,9 +1795,7 @@ function isRowLocked(slNo) {
   const voter = state.boothData?.voters?.find(v => v.slNo === slNo);
   if (!voter) return false;
   if (!canEditAnyRows()) return true;
-  if (!voter.affinity) return false; // Not locked if no affinity selected
-  // Row is locked if it has affinity selected and edit checkbox is not checked
-  return !state.editingRows.has(slNo);
+  return !!voter.affinity;
 }
 
 function cancelBoothPrefetch() {
@@ -1824,13 +1839,13 @@ function renderVoterRow(v) {
   const selectedAffinity = v.affinity || '';
   const showRelocated = canViewRelocatedFlag();
   const showVoted = canViewVotedFlag();
-  const locked = !canEditRows || (saved && !state.editingRows.has(v.slNo));
+  const locked = !canEditRows || saved;
   return `
     <div class="voter-row${rowClass}" data-voter-sl="${v.slNo}">
       <div class="voter-row-header">
         <div class="sl-box">வாக்காளர் வரிசை எண் : ${v.slNo}</div>
         ${selectedAffinity ? `<div class="selected-affinity"><strong>${selectedAffinity}</strong></div>` : ''}
-        ${saved ? `<label class="edit-checkbox"><input type="checkbox" data-sl="${v.slNo}" ${state.editingRows.has(v.slNo) ? 'checked' : ''}> Edit</label>` : ''}
+        ${saved ? `<span class="voter-row-locked-badge">Saved</span>` : ''}
       </div>
       <div class="voter-flags">
         ${showRelocated ? `
@@ -1841,7 +1856,7 @@ function renderVoterRow(v) {
         ` : ''}
         ${showVoted ? `
           <label class="voter-flag-checkbox${v.voted ? ' is-checked' : ''}">
-            <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} ${canEditVotedFlag() ? '' : 'disabled'}>
+            <input type="checkbox" class="voter-flag-input" data-sl="${v.slNo}" data-flag="voted" ${v.voted ? 'checked' : ''} disabled>
             <span>Voted</span>
           </label>
         ` : ''}
@@ -1866,8 +1881,8 @@ function updateVoterRowEl(slNo) {
 }
 
 function renderVoters() {
-  const voters = state.boothData?.voters || [];
-  if (!voters.length) {
+  const allVoters = state.boothData?.voters || [];
+  if (!allVoters.length) {
     els.votersContainer.innerHTML = isEntryAggregateViewActive()
       ? `<div class="muted">${getEntryAggregateStatusMessage()}</div>`
       : state.selectedBooth
@@ -1876,8 +1891,12 @@ function renderVoters() {
     return;
   }
 
+  const pendingCount = allVoters.filter(v => !v.affinity).length;
+  const voters = getDisplayVoters();
   const { start, end, totalPages } = getCurrentPageBounds();
   const pageRows = voters.slice(start, end);
+  const showingFrom = voters.length ? start + 1 : 0;
+  const showingTo = Math.min(end, voters.length);
 
   els.votersContainer.innerHTML = `
     <div class="voters-toolbar">
@@ -1885,7 +1904,13 @@ function renderVoters() {
         <button id="prevPageBtn" type="button" ${state.currentPage === 1 ? 'disabled' : ''}>Previous</button>
         <button id="nextPageBtn" type="button" ${state.currentPage === totalPages ? 'disabled' : ''}>Next</button>
         <span><strong>Page ${state.currentPage} of ${totalPages}</strong></span>
-        <span class="muted">Showing SL# ${start + 1} to ${Math.min(end, voters.length)}</span>
+        <span class="muted">${state.pendingVotersFilter ? `${showingFrom}–${showingTo} of ${voters.length} pending` : `SL# ${showingFrom} to ${showingTo}`}</span>
+      </div>
+      <div class="voters-toolbar-group">
+        <label class="pending-filter-label">
+          <input type="checkbox" id="pendingVotersChk" ${state.pendingVotersFilter ? 'checked' : ''}>
+          Pending Voters <span class="pending-filter-count">(${pendingCount})</span>
+        </label>
       </div>
       <div class="toolbar-buttons">
         <button id="submitAffinityBtn" type="button">Submit</button>
@@ -1893,7 +1918,7 @@ function renderVoters() {
       </div>
     </div>
 
-    ${pageRows.map(renderVoterRow).join('')}
+    ${pageRows.length ? pageRows.map(renderVoterRow).join('') : '<div class="muted" style="padding:16px 0;">No pending voters — all entries are complete.</div>'}
   `;
 
   els.submitAffinityBtn = byId('submitAffinityBtn') || els.submitAffinityBtn;
@@ -1988,7 +2013,7 @@ function updateLocalSelection(slNo, affinity) {
   if (!voter) return;
 
   if (!canEditAnyRows()) return;
-  if (voter.affinity && !state.editingRows.has(slNo) && !canEditSavedRows()) return;
+  if (voter.affinity) return;
 
   const oldAffinity = voter.affinity;
   voter.affinity = affinity;
@@ -2010,7 +2035,11 @@ function updateLocalSelection(slNo, affinity) {
   cacheCurrentBoothData();
 
   renderSummary();
-  updateVoterRowEl(slNo);
+  if (state.pendingVotersFilter) {
+    renderVoters();
+  } else {
+    updateVoterRowEl(slNo);
+  }
   setAffinitySaveStatus('Saving changes...', 'warning');
   queueBackgroundSave();
 }
@@ -2051,8 +2080,8 @@ function onVoterFlagChange(e) {
     checkbox.checked = !checkbox.checked;
     return;
   }
-  if (flag === 'voted' && !canEditVotedFlag()) {
-    checkbox.checked = !checkbox.checked;
+  if (flag === 'voted') {
+    checkbox.checked = !checkbox.checked; // voted is read-only in Entry; managed by Heatmap tab
     return;
   }
 
@@ -2187,9 +2216,8 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
   boothData.votedCount = Number(result.votedTotal ?? boothData.votedCount ?? 0);
   state.pageCache[boothNo] = cloneBoothData(boothData);
 
-  // Keep Voting Progress in sync — don't let a background dashboard refresh zero this out
-  const prevHm = state.hmVotedBooths[boothNo] ?? 0;
-  state.hmVotedBooths[boothNo] = Math.max(prevHm, boothData.votedCount);
+  // Use server-authoritative vote count from save response
+  state.hmVotedBooths[boothNo] = boothData.votedCount;
   if (state.activeView === 'heatmap' && state.hmActiveView === 'progress') {
     renderHmProgressView();
   }
@@ -2209,6 +2237,7 @@ function finalizeSaveSuccess(boothNo, boothData, result) {
     state.boothData.votedCount = boothData.votedCount;
     cacheCurrentBoothData();
     renderSummary();
+    renderVoters();
   }
 }
 
@@ -2332,7 +2361,7 @@ function flushPendingBoothData() {
 async function changePage(direction) {
   if (!state.boothData?.voters?.length) return;
 
-  const totalPages = Math.max(1, Math.ceil(state.boothData.voters.length / state.pageSize));
+  const totalPages = Math.max(1, Math.ceil(getDisplayVoters().length / state.pageSize));
   const newPage = state.currentPage + direction;
 
   if (newPage < 1 || newPage > totalPages) return;
@@ -2398,11 +2427,9 @@ function fetchBoothData(booth, options = {}) {
 
   state.pendingBoothLoads[boothNo] = request;
 
-  return request
-    .then(cloneBoothData)
-    .finally(() => {
-      delete state.pendingBoothLoads[boothNo];
-    });
+  return request.finally(() => {
+    delete state.pendingBoothLoads[boothNo];
+  });
 }
 
 function warmBoothCache(options = {}) {
@@ -2413,10 +2440,10 @@ function warmBoothCache(options = {}) {
   const boothNumbers = getPrefetchBoothOrder(options.priorityBoothNo);
   const totalBooths = boothNumbers.length;
   const concurrency = totalBooths > 60
-    ? 1
+    ? 3
     : totalBooths > 18
-      ? 2
-      : Math.min(2, totalBooths);
+      ? 3
+      : Math.min(3, totalBooths);
   let nextIndex = 0;
 
   const worker = async () => {
@@ -2537,11 +2564,12 @@ async function loadBoothData(booth) {
   const selected = getBoothConfig(booth);
   if (!selected) throw new Error('Booth not found');
   const loadId = ++state.activeBoothLoadId;
-  cancelBoothPrefetch();
-
+  // Do NOT cancel prefetch — let background warm-up continue so subsequent booth
+  // selections hit the cache. Only reprioritise so the next booths are fetched first.
   state.selectedBoothAll = false;
   state.selectedBooth = selected;
   state.currentPage = 1;
+  state.pendingVotersFilter = false;
   state.editingRows.clear();
   if (state.pendingSaveTimer) {
     clearTimeout(state.pendingSaveTimer);
@@ -2577,6 +2605,14 @@ async function loadBoothData(booth) {
 async function onBoothChange() {
   const rawValue = els.boothSelect.value;
   if (!rawValue) {
+    if (state.pendingSaveTimer) {
+      clearTimeout(state.pendingSaveTimer);
+      state.pendingSaveTimer = null;
+      const prevBoothNo = getCurrentBoothNumber();
+      if (prevBoothNo && getDraftForBooth(prevBoothNo)) {
+        await saveCurrentBoothSilently({ boothNo: prevBoothNo, silentStatus: true });
+      }
+    }
     state.activeBoothLoadId++;
     state.selectedBoothAll = false;
     state.selectedBooth = null;
@@ -2592,20 +2628,34 @@ async function onBoothChange() {
   }
 
   if (rawValue === '__all__') {
+    if (state.pendingSaveTimer) {
+      clearTimeout(state.pendingSaveTimer);
+      state.pendingSaveTimer = null;
+      const prevBoothNo = getCurrentBoothNumber();
+      if (prevBoothNo && getDraftForBooth(prevBoothNo)) {
+        await saveCurrentBoothSilently({ boothNo: prevBoothNo, silentStatus: true });
+      }
+    }
     state.activeBoothLoadId++;
     state.selectedBoothAll = true;
     state.selectedBooth = null;
     state.currentPage = 1;
     state.editingRows.clear();
-    if (state.pendingSaveTimer) {
-      clearTimeout(state.pendingSaveTimer);
-      state.pendingSaveTimer = null;
-    }
     renderEntryAggregateView();
     return;
   }
 
   const booth = Number(rawValue);
+
+  // Flush any pending save for the current booth before switching
+  if (state.pendingSaveTimer) {
+    clearTimeout(state.pendingSaveTimer);
+    state.pendingSaveTimer = null;
+    const prevBoothNo = getCurrentBoothNumber();
+    if (prevBoothNo && getDraftForBooth(prevBoothNo)) {
+      await saveCurrentBoothSilently({ boothNo: prevBoothNo, silentStatus: true });
+    }
+  }
 
   let loadingTimer = null;
 
@@ -2652,9 +2702,8 @@ function getBoothsForUser(user) {
     return [...state.staticData.booths].sort((a, b) => a.booth - b.booth);
   }
 
-  const allowed = Array.isArray(user.booths)
-    ? user.booths.map(x => Number(x))
-    : [];
+  const rawBooths = Array.isArray(user.booths) ? user.booths : (user.booths != null ? [user.booths] : []);
+  const allowed = rawBooths.map(x => Number(x));
 
   return state.staticData.booths
     .filter(b => allowed.includes(Number(b.booth)))
@@ -2981,8 +3030,12 @@ function logout() {
   state.hmVoters           = [];
   state.hmFiltersPopulated = false;
   state.hmActiveView       = 'heatmap';
-  state.hmProgLoading      = false;
-  state.hmVotedBooths      = {};
+  state.hmProgSubView      = 'nda';
+  state.hmProgActiveMandal = null;
+  state.hmProgLoading        = false;
+  state.hmProgAutoRefreshed  = false;
+  state.hmVotedBooths        = {};
+  state.hmVotedSlNos         = {};
   state.activeView    = 'entry';
   updateSubmitButton();
 }
@@ -3092,6 +3145,7 @@ function applyVlFilters() {
   const bjpOnly = els.vlBjp?.value === '1';
 
   state.vlFiltered = data.filter(r => {
+    if (r.deleted === 'Y') return false;
     if (gender  && r.gender !== gender) return false;
     if (bjpOnly && !r.bjp) return false;
     if (search) {
@@ -3108,7 +3162,7 @@ function applyVlFilters() {
 
 function renderVlStats() {
   if (!els.vlStats || !state.vlBoothData) return;
-  const all  = state.vlBoothData;
+  const all  = state.vlBoothData.filter(r => r.deleted !== 'Y');
   const filt = state.vlFiltered;
   const bjp  = all.filter(r => r.bjp).length;
   const phone= all.filter(r => r.phone).length;
@@ -3260,6 +3314,9 @@ async function init() {
   els.hmBoothBtns       = byId('hmBoothBtns');
   els.hmStats           = byId('hmStats');
   els.hmGrid            = byId('hmGrid');
+  els.hmLegend          = byId('hmLegend');
+  els.hmVotedFilterChk  = byId('hmVotedFilterChk');
+  els.hmVotedReport     = byId('hmVotedReport');
   els.hmPrompt          = byId('hmPrompt');
   els.hmLoading         = byId('hmLoading');
   els.hmSaveStatus      = byId('hmSaveStatus');
@@ -3267,9 +3324,13 @@ async function init() {
   els.hmProgressView    = byId('hmProgressView');
   els.hmViewHeatmap     = byId('hmViewHeatmap');
   els.hmViewProgress    = byId('hmViewProgress');
-  els.hmProgOverall     = byId('hmProgOverall');
-  els.hmProgMandals     = byId('hmProgMandals');
-  els.hmProgRefreshBtn  = byId('hmProgRefreshBtn');
+  els.hmProgOverall      = byId('hmProgOverall');
+  els.hmProgAlerts       = byId('hmProgAlerts');
+  els.hmProgAnalytics    = byId('hmProgAnalytics');
+  els.hmProgMandals      = byId('hmProgMandals');
+  els.hmProgRefreshBtn   = byId('hmProgRefreshBtn');
+  els.hmProgLastUpdated  = byId('hmProgLastUpdated');
+  els.hmSectionHeading   = byId('hmSectionHeading');
   els.vlSearch          = byId('vlSearch');
   els.vlMandal          = byId('vlMandal');
   els.vlBooth           = byId('vlBooth');
@@ -3360,6 +3421,24 @@ async function init() {
     if (cell) onHeatmapCellClick(cell);
   });
   if (els.runDataRefreshBtn) els.runDataRefreshBtn.addEventListener('click', onManualDataRefresh);
+  if (els.hmVotedFilterChk) els.hmVotedFilterChk.addEventListener('change', renderHmVotedReport);
+
+  // Mandal perf card click → show booth detail table
+  if (els.hmProgAlerts) {
+    els.hmProgAlerts.addEventListener('click', e => {
+      const closeBtn = e.target.closest('.hm-dt-close');
+      if (closeBtn) {
+        if (els.hmProgMandals) els.hmProgMandals.innerHTML = '';
+        document.querySelectorAll('.hm-perf-card--active').forEach(c => c.classList.remove('hm-perf-card--active'));
+        return;
+      }
+      const card = e.target.closest('.hm-perf-card[data-mandal]');
+      if (!card) return;
+      document.querySelectorAll('.hm-perf-card--active').forEach(c => c.classList.remove('hm-perf-card--active'));
+      card.classList.add('hm-perf-card--active');
+      renderHmBoothDetailTable(card.dataset.mandal);
+    });
+  }
 
   // Voter list filter listeners
   const vlFilterChange = () => applyVlFilters();
@@ -3393,8 +3472,10 @@ async function init() {
     els.votersContainer.addEventListener('change', e => {
       const input = e.target;
       if (!input) return;
-      if (input.closest('.edit-checkbox')) {
-        onEditCheckboxChange(e);
+      if (input.id === 'pendingVotersChk') {
+        state.pendingVotersFilter = input.checked;
+        state.currentPage = 1;
+        renderVoters();
       } else if (input.classList.contains('voter-flag-input')) {
         onVoterFlagChange(e);
       }
@@ -3426,6 +3507,10 @@ function setHmView(view) {
   if (els.hmProgressView) els.hmProgressView.style.display = isHeatmap ? 'none'  : 'block';
   if (els.hmViewHeatmap)  els.hmViewHeatmap.classList.toggle('active', isHeatmap);
   if (els.hmViewProgress) els.hmViewProgress.classList.toggle('active', !isHeatmap);
+  if (els.hmProgRefreshBtn) els.hmProgRefreshBtn.style.display = isHeatmap ? 'none' : '';
+  if (els.hmSectionHeading) els.hmSectionHeading.textContent = isHeatmap
+    ? 'Voted Heatmap — வாக்களித்தவர் வரைபடம்'
+    : 'Voting Progress — வாக்களிப்பு முன்னேற்றம்';
   if (!isHeatmap) renderHmProgressView();
 }
 
@@ -3469,113 +3554,763 @@ function getHmProgressData() {
   return { overall, mandalMap };
 }
 
-function hmProgressBar(voted, total, extraClass = '') {
-  const pct = total ? Math.min(100, (voted / total) * 100) : 0;
-  const pctRounded = Math.round(pct);
-  const color = pctRounded >= 60 ? '#2e7d32' : pctRounded >= 30 ? '#f57c00' : '#c62828';
+
+function calcProjectedBJP(A, B, C, D, E) {
+  return Math.round((A || 0) * 1.0 + (B || 0) * 0.8 + (C || 0) * 0.55 + (D || 0) * 0.20);
+}
+
+function hmProgressBar(pct, extraClass = '') {
+  const p = Math.min(100, Math.max(0, pct));
+  const color = p >= 60 ? '#2e7d32' : p >= 30 ? '#f57c00' : '#c62828';
   return `<div class="hm-prog-bar-wrap${extraClass ? ' ' + extraClass : ''}">
-    <div class="hm-prog-bar-fill" style="width:${pct}%;background:${color};"></div>
+    <div class="hm-prog-bar-fill" style="width:${p}%;background:${color};"></div>
   </div>`;
 }
 
-// Returns {label, cls} for the mobilisation status
-function hmMobilisationStatus(voted, nda, total) {
-  if (!nda && !voted) return { label: 'No Data', cls: 'hm-status-nodata' };
-  if (!nda)           return { label: 'Not Tagged', cls: 'hm-status-nodata' };
-  const pct = total ? (voted / total) * 100 : 0;
-  if (voted >= nda)   return { label: '✓ NDA Mobilised', cls: 'hm-status-good' };
-  const gap = nda - voted;
-  if (pct >= 20)      return { label: `${gap} NDA votes pending`, cls: 'hm-status-warn' };
-  return               { label: `${gap} NDA votes pending`, cls: 'hm-status-bad' };
+function hmTurnoutClass(pct) {
+  return pct >= 60 ? 'hm-turn-good' : pct >= 30 ? 'hm-turn-warn' : 'hm-turn-bad';
 }
 
 function hmAbcdeRow(A, B, C, D, E, tagged) {
-  if (!tagged) return '<span class="hm-abcde-none">Not tagged yet</span>';
-  return `<span class="hm-ab-chip hm-ab-a">A&nbsp;${A}</span>` +
-         `<span class="hm-ab-chip hm-ab-b">B&nbsp;${B}</span>` +
-         `<span class="hm-ab-chip hm-ab-c">C&nbsp;${C}</span>` +
-         `<span class="hm-ab-chip hm-ab-d">D&nbsp;${D}</span>` +
-         `<span class="hm-ab-chip hm-ab-e">E&nbsp;${E}</span>`;
+  if (!tagged) return '<span class="hm-abcde-none">Not tagged</span>';
+  return `<span class="hm-ab-chip hm-ab-a">A ${A}</span>` +
+         `<span class="hm-ab-chip hm-ab-b">B ${B}</span>` +
+         `<span class="hm-ab-chip hm-ab-c">C ${C}</span>` +
+         `<span class="hm-ab-chip hm-ab-d">D ${D}</span>` +
+         `<span class="hm-ab-chip hm-ab-e">E ${E}</span>`;
+}
+
+// Returns status colour for a mandal header based on 2021 performance + current composition
+// Green=Sure Win/Likely Win, Amber=Swing, Red=Tough Fight
+// Strong past performance always shows green; composition only modulates shade
+function hmMandalStatus(won, lost, A, B, E) {
+  const totalBooths = won + lost;
+  const perfScore  = totalBooths > 0 ? (won - lost) / totalBooths : 0; // -1 to +1
+  const ndaVsOpp   = A + B + E;
+  const compScore  = ndaVsOpp  > 0 ? ((A + B) - E) / ndaVsOpp  : 0; // -1 to +1
+
+  if (perfScore > 0.3) {
+    // Historically strong — never red
+    if (compScore >= 0)
+      return { bg: 'linear-gradient(135deg,#1b5e20,#2e7d32)', text: '#fff', label: 'Sure Win',   solid: '#2e7d32' };
+    // Good history but composition uncertain → lighter green
+    return   { bg: 'linear-gradient(135deg,#43a047,#81c784)', text: '#fff', label: 'Likely Win', solid: '#43a047' };
+  }
+
+  const score = perfScore * 0.6 + compScore * 0.4;
+  if (score > 0.1)  return { bg: 'linear-gradient(135deg,#1b5e20,#2e7d32)', text: '#fff', label: 'Sure Win',    solid: '#2e7d32' };
+  if (score < -0.1) return { bg: 'linear-gradient(135deg,#b71c1c,#c62828)', text: '#fff', label: 'Tough Fight', solid: '#c62828' };
+  return               { bg: 'linear-gradient(135deg,#bf360c,#e65100)',       text: '#fff', label: 'Swing',       solid: '#e65100' };
+}
+
+// SVG donut showing A/B/C/D/E voter composition
+function hmAbcdeDonut(A, B, C, D, E, size) {
+  const total = A + B + C + D + E;
+  const sz = size || 72;
+  const r = sz * 0.36, cx = sz / 2, cy = sz / 2;
+  const circ = 2 * Math.PI * r;
+  const segs = [
+    { v: A, c: '#1565c0', l: 'A' },
+    { v: B, c: '#2e7d32', l: 'B' },
+    { v: C, c: '#e65100', l: 'C' },
+    { v: D, c: '#6a1b9a', l: 'D' },
+    { v: E, c: '#c62828', l: 'E' },
+  ];
+  if (total === 0) {
+    return `<svg class="hm-donut-svg" viewBox="0 0 ${sz} ${sz}">
+      <circle r="${r}" cx="${cx}" cy="${cy}" fill="none" stroke="#e0e0e0" stroke-width="${sz*0.17}"/>
+      <text x="${cx}" y="${cy}" text-anchor="middle" dy="0.35em" class="hm-donut-total">—</text>
+    </svg>`;
+  }
+  let acc = 0;
+  const circles = segs.filter(s => s.v > 0).map(s => {
+    const len = (s.v / total) * circ;
+    const dashoffset = (circ * 0.25) - acc;
+    acc += len;
+    return `<circle r="${r}" cx="${cx}" cy="${cy}" fill="none" stroke="${s.c}"
+      stroke-width="${sz*0.17}" stroke-dasharray="${len.toFixed(2)} ${(circ-len).toFixed(2)}"
+      stroke-dashoffset="${dashoffset.toFixed(2)}"/>`;
+  });
+  return `<svg class="hm-donut-svg" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">
+    <circle r="${r}" cx="${cx}" cy="${cy}" fill="none" stroke="#eee" stroke-width="${sz*0.17}"/>
+    ${circles.join('')}
+    <text x="${cx}" y="${cy}" text-anchor="middle" dy="0.35em" class="hm-donut-total">${total}</text>
+  </svg>`;
+}
+
+// A/B/C grade based on 2021 margin vs INC: A=won>10%(green), B=±10%(amber), C=lost>10%(red)
+function hmMarginGradeBadge(cfg) {
+  const m = cfg?.marginVsInc;
+  if (m === null || m === undefined) return '—';
+  if (m > 0.10)  return `<span class="hm-br-badge hm-mg-a" title="Won by ${(m*100).toFixed(1)}% in 2021">A</span>`;
+  if (m >= -0.10) return `<span class="hm-br-badge hm-mg-b" title="${m>=0?'+':''}${(m*100).toFixed(1)}% margin in 2021">B</span>`;
+  return                 `<span class="hm-br-badge hm-mg-c" title="Lost by ${Math.abs(m*100).toFixed(1)}% in 2021">C</span>`;
+}
+
+function hmBoothRatingBadge(boothNo) {
+  const cfg = state.allBoothMap.get(Number(boothNo));
+  const r = String(cfg?.boothRating || '').toUpperCase();
+  if (!r) return '';
+  const tip = cfg?.boothGrade || r;
+  return `<span class="hm-br-badge hm-br-${r.toLowerCase()}" title="${tip}">${r}</span>`;
+}
+
+// Insights from Booth Entry for a given booth: tagging completion + NDA strength
+function hmBoothEntryInsights(boothNo, totalVoters) {
+  const cache   = state.pageCache[Number(boothNo)];
+  const summary = cache?.summary || {};
+  const A = Number(summary.A || 0), B = Number(summary.B || 0),
+        C = Number(summary.C || 0), D = Number(summary.D || 0),
+        E = Number(summary.E || 0);
+  const tagged   = A + B + C + D + E;
+  const taggedPct = totalVoters > 0 ? (tagged / totalVoters) * 100 : 0;
+  const ndaStrength = tagged > 0 ? ((A + B) / tagged) * 100 : 0;
+  return { tagged, taggedPct, ndaStrength, A, B, C, D, E };
+}
+
+// Colour palette for mandal tab headers (cycles by index)
+const HM_MANDAL_COLORS = [
+  { bg: 'linear-gradient(90deg,#1565c0,#1976d2)', text: '#fff', solid: '#1565c0' },
+  { bg: 'linear-gradient(90deg,#2e7d32,#388e3c)', text: '#fff', solid: '#2e7d32' },
+  { bg: 'linear-gradient(90deg,#6a1b9a,#7b1fa2)', text: '#fff', solid: '#6a1b9a' },
+  { bg: 'linear-gradient(90deg,#e65100,#f57c00)', text: '#fff', solid: '#e65100' },
+  { bg: 'linear-gradient(90deg,#00695c,#00897b)', text: '#fff', solid: '#00695c' },
+  { bg: 'linear-gradient(90deg,#ad1457,#c2185b)', text: '#fff', solid: '#ad1457' },
+  { bg: 'linear-gradient(90deg,#283593,#3949ab)', text: '#fff', solid: '#283593' },
+  { bg: 'linear-gradient(90deg,#4e342e,#6d4c41)', text: '#fff', solid: '#4e342e' },
+];
+
+function setHmProgMandal(name) {
+  state.hmProgActiveMandal = name;
+  // Swap tab active styles without full re-render
+  document.querySelectorAll('.hm-mandal-tab').forEach(t => {
+    const on = t.dataset.mandal === name;
+    t.classList.toggle('active', on);
+    t.style.background = on ? t.dataset.bg : '';
+    t.style.color      = on ? '#fff' : '';
+    t.style.borderBottomColor = on ? 'transparent' : t.dataset.solid;
+  });
+  document.querySelectorAll('.hm-mandal-tab-panel').forEach(p => {
+    p.style.display = p.dataset.mandal === name ? '' : 'none';
+  });
+}
+
+// Shared helper — renders mandal tabs + panels into els.hmProgMandals
+// mandalRows: [[name, md], ...]  sorted by caller
+// tabMetaFn(mandal, md, idx) → { metric, subtext, ndaBadge }
+// boothCardsFn(md) → HTML string of booth cards
+function hmRenderMandalTabs(mandalRows, tabMetaFn, boothCardsFn) {
+  // Preserve or default active mandal
+  const names = mandalRows.map(([m]) => m);
+  if (!names.includes(state.hmProgActiveMandal)) {
+    state.hmProgActiveMandal = names[0] || null;
+  }
+  const active = state.hmProgActiveMandal;
+
+  const tabs = mandalRows.map(([mandal, md], idx) => {
+    const palette = HM_MANDAL_COLORS[idx % HM_MANDAL_COLORS.length];
+    const { metric, subtext } = tabMetaFn(mandal, md, idx);
+    const on = mandal === active;
+    const inlineStyle = on
+      ? `background:${palette.bg};color:#fff;border-bottom-color:transparent;`
+      : `border-bottom-color:${palette.solid};`;
+    return `<button class="hm-mandal-tab${on ? ' active' : ''}"
+      data-mandal="${mandal.replace(/"/g,'&quot;')}"
+      data-bg="${palette.bg.replace(/"/g,'&quot;')}"
+      data-solid="${palette.solid}"
+      onclick="setHmProgMandal(this.dataset.mandal)"
+      style="${inlineStyle}">
+      <span class="hm-mandal-tab-name">${mandal}</span>
+      <span class="hm-mandal-tab-metric">${metric}</span>
+      ${subtext ? `<span class="hm-mandal-tab-sub">${subtext}</span>` : ''}
+    </button>`;
+  }).join('');
+
+  const panels = mandalRows.map(([mandal, md], idx) => {
+    const palette = HM_MANDAL_COLORS[idx % HM_MANDAL_COLORS.length];
+    const { panelBar, panelStats, ndaBadge } = tabMetaFn(mandal, md, idx);
+    const on = mandal === active;
+    return `<div class="hm-mandal-tab-panel" data-mandal="${mandal.replace(/"/g,'&quot;')}"
+        style="${on ? '' : 'display:none'}">
+      <div class="hm-mandal-panel-header" style="border-left:4px solid ${palette.solid}">
+        <div class="hm-mandal-panel-header-top">
+          <span class="hm-mandal-panel-name">${mandal}</span>
+          <div class="hm-mandal-panel-badges">${ndaBadge}</div>
+        </div>
+        ${panelBar}
+        <div class="hm-mandal-panel-stats">${panelStats}</div>
+      </div>
+      <div class="hm-prog-booths-wrap">${boothCardsFn(md)}</div>
+    </div>`;
+  }).join('');
+
+  if (els.hmProgMandals) {
+    els.hmProgMandals.innerHTML = `
+      <div class="hm-mandal-tabs">${tabs}</div>
+      <div class="hm-mandal-tab-panels">${panels}</div>`;
+  }
+}
+
+// Segmented ABCDE proportion bar
+function hmSegBar(A, B, C, D, E, total) {
+  if (!total) return '<div class="hm-seg-bar hm-seg-bar--empty"></div>';
+  const segs = [
+    { val: A, cls: 'hm-seg-a', label: 'A' },
+    { val: B, cls: 'hm-seg-b', label: 'B' },
+    { val: C, cls: 'hm-seg-c', label: 'C' },
+    { val: D, cls: 'hm-seg-d', label: 'D' },
+    { val: E, cls: 'hm-seg-e', label: 'E' },
+  ];
+  const tagged = A + B + C + D + E;
+  const untagged = Math.max(0, total - tagged);
+  const parts = segs.filter(s => s.val > 0).map(s => {
+    const w = ((s.val / total) * 100).toFixed(2);
+    return `<div class="hm-seg-part ${s.cls}" style="width:${w}%" title="${s.label}: ${s.val}"></div>`;
+  });
+  if (untagged > 0) {
+    const w = ((untagged / total) * 100).toFixed(2);
+    parts.push(`<div class="hm-seg-part hm-seg-u" style="width:${w}%" title="Untagged: ${untagged}"></div>`);
+  }
+  return `<div class="hm-seg-bar">${parts.join('')}</div>`;
+}
+
+// SVG ring (donut) for a percentage
+function hmRing(pct, color = '#f97316', size = 56) {
+  const p = Math.min(100, Math.max(0, pct));
+  const r = 22, cx = size / 2, cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = (p / 100) * circ;
+  return `<svg class="hm-ring-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eee" stroke-width="6"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="6"
+      stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}"
+      stroke-dashoffset="${(circ / 4).toFixed(2)}"
+      stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+      class="hm-ring-label" fill="${color}">${p.toFixed(0)}%</text>
+  </svg>`;
 }
 
 function renderHmProgressView() {
   if (!els.hmProgOverall || !els.hmProgMandals) return;
 
+  if (els.hmProgLastUpdated) {
+    els.hmProgLastUpdated.textContent = `Updated ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  // Auto-fetch all booth affinity data on first open so tiles show real tagging counts
+  if (!state.hmProgAutoRefreshed && !state.hmProgLoading) {
+    state.hmProgAutoRefreshed = true;
+    onHmProgRefresh();
+    return; // onHmProgRefresh calls renderHmProgressView() when done
+  }
+
+  renderHmNdaView();
+}
+
+function renderHmNdaView() {
   const { overall, mandalMap } = getHmProgressData();
-  const overallPct = overall.total ? ((overall.voted / overall.total) * 100).toFixed(1) : '0.0';
-  const loadedBooths = (state.allBooths || []).filter(b => !!state.pageCache[Number(b.booth)]).length;
-  const totalBooths  = (state.allBooths || []).length;
-  const overallStatus = hmMobilisationStatus(overall.voted, overall.nda, overall.total);
+  const overallPct    = overall.total ? (overall.voted / overall.total) * 100 : 0;
+  const overallPctStr = overallPct.toFixed(1);
+  const ndaGap        = Math.max(0, overall.nda - overall.voted);
+  const ndaMobilised  = overall.nda > 0 && overall.voted >= overall.nda;
+  const ringColor     = overallPct >= 60 ? '#2e7d32' : overallPct >= 30 ? '#f57c00' : '#c62828';
+
+  // Computed once; used in both the hero mandal summary and the tabs below
+  const mandalRows = Object.entries(mandalMap).sort((a, b) => {
+    const aPct = a[1].total ? a[1].voted / a[1].total : 0;
+    const bPct = b[1].total ? b[1].voted / b[1].total : 0;
+    return aPct - bPct; // worst turnout first
+  });
 
   els.hmProgOverall.innerHTML = `
-    <div class="hm-prog-overall-card">
-      <div class="hm-prog-overall-top">
-        <div>
-          <div class="hm-prog-overall-nums">
-            <span class="hm-prog-big">${overall.voted.toLocaleString()}</span>
-            <span class="hm-prog-sep"> / </span>
-            <span class="hm-prog-total">${overall.total.toLocaleString()}</span>
-            <span class="hm-prog-pct-badge">${overallPct}%</span>
-          </div>
-          <div class="hm-prog-overall-label">Total Voted &nbsp;·&nbsp; AC 108 Overall</div>
+    <div class="hm-prog-hero">
+
+      <!-- ── 3 top-level stat cards ── -->
+      <div class="hm-top-cards">
+        <div class="hm-top-card hm-top-card--votes">
+          <div class="hm-top-card-label">Total Votes Cast</div>
+          <div class="hm-top-card-val">${overall.voted.toLocaleString('en-IN')}</div>
+          <div class="hm-top-card-sub">of ${overall.total.toLocaleString('en-IN')} enrolled</div>
+          ${hmProgressBar(overallPct, 'hm-prog-bar--hero')}
         </div>
-        <span class="hm-mob-status ${overallStatus.cls}">${overallStatus.label}</span>
+        <div class="hm-top-card hm-top-card--pct">
+          <div class="hm-top-card-label">Turnout</div>
+          <div class="hm-top-card-val ${hmTurnoutClass(overallPct)}">${overallPctStr}%</div>
+          <div class="hm-top-card-sub">AC 108 · Overall</div>
+          ${hmRing(overallPct, ringColor, 60)}
+        </div>
+        <div class="hm-top-card hm-top-card--bjp">
+          <div class="hm-top-card-label">Projected BJP Votes</div>
+          <div class="hm-top-card-val hm-bjp-proj-val">${calcProjectedBJP(overall.A, overall.B, overall.C, overall.D, overall.E).toLocaleString('en-IN')}</div>
+          <div class="hm-top-card-sub">A×1.0 + B×0.8 + C×0.55 + D×0.20</div>
+          <div class="hm-bjp-proj-abcd">
+            <span title="A — confirmed BJP">A <b>${overall.A}</b></span>
+            <span title="B — NDA allied">B <b>${overall.B}</b></span>
+            <span title="C — sympathiser">C <b>${overall.C}</b></span>
+            <span title="D — undecided">D <b>${overall.D}</b></span>
+            <span title="E — opposition">E <b>${overall.E}</b></span>
+          </div>
+        </div>
       </div>
-      ${hmProgressBar(overall.voted, overall.total, 'hm-prog-bar--lg')}
-      <div class="hm-prog-abcde-row">
-        <span class="hm-prog-nda-label">NDA Committed (A+B): <strong>${overall.nda.toLocaleString()}</strong></span>
-        <div class="hm-prog-chips">${hmAbcdeRow(overall.A, overall.B, overall.C, overall.D, overall.E, overall.tagged)}</div>
+
+      <!-- ── 1 tile per mandal (3 per row) ── -->
+      <div class="hm-mandal-tiles">
+        ${mandalRows.map(([mandal, md]) => {
+          const mPct  = md.total ? (md.voted / md.total) * 100 : 0;
+          const mCls  = hmTurnoutClass(mPct);
+          const ndaOk = md.nda > 0 && md.voted >= md.nda;
+          // compute won/lost for this mandal from V6 ratings
+          let mWon = 0, mLost = 0;
+          md.booths.forEach(b => {
+            const r = String(state.allBoothMap.get(Number(b.boothNo))?.boothRating || '').toUpperCase();
+            if (['A','B','C'].includes(r)) mWon++;
+            else if (['D','E','F'].includes(r)) mLost++;
+          });
+          const status = hmMandalStatus(mWon, mLost, md.A, md.B, md.E);
+          return `<div class="hm-mt" style="border-top:3px solid ${status.solid}">
+            <div class="hm-mt-hdr" style="background:${status.bg};color:${status.text}">
+              <span class="hm-mt-name">${mandal} <span class="hm-mt-booth-count">${md.booths.length}</span></span>
+              <span class="hm-mt-status-lbl">${status.label}</span>
+            </div>
+            <div class="hm-mt-body">
+              ${hmProgressBar(mPct, 'hm-prog-bar--booth')}
+              <div class="hm-mt-row">
+                <span class="hm-mt-pct ${mCls}">${mPct.toFixed(1)}%</span>
+                <span class="hm-mt-nums">${md.voted.toLocaleString('en-IN')} / ${md.total.toLocaleString('en-IN')}</span>
+              </div>
+              ${md.nda ? `<div class="hm-mt-nda ${ndaOk ? 'hm-mt-nda--ok' : ''}">NDA ${md.nda.toLocaleString('en-IN')}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
       </div>
-      <div class="hm-prog-loaded-note">${Object.keys(state.hmVotedBooths).length} of ${totalBooths} booths tracked · <em>Voted counts come from Heatmap clicks. Press Refresh to load all from server.</em></div>
+
+      <!-- ── NDA mobilisation status ── -->
+      <div class="hm-prog-nda-strip ${ndaMobilised ? 'hm-nda-ok' : 'hm-nda-pending'}">
+        ${ndaMobilised
+          ? `✓ All NDA committed voters mobilised`
+          : `NDA Gap: <strong>${ndaGap.toLocaleString('en-IN')}</strong> committed voters yet to vote`}
+      </div>
     </div>`;
 
-  const mandalRows = Object.entries(mandalMap).sort((a, b) => a[0].localeCompare(b[0]));
-  els.hmProgMandals.innerHTML = mandalRows.map(([mandal, md]) => {
-    const mPct    = md.total ? ((md.voted / md.total) * 100).toFixed(1) : '0.0';
-    const mStatus = hmMobilisationStatus(md.voted, md.nda, md.total);
+  // ── Per-mandal past performance summary ─────────────────────────────────────
+  if (els.hmProgAlerts) {
+    const perfCards = mandalRows.map(([mandal, md]) => {
+      const booths  = md.booths;
 
-    const boothRows = md.booths.sort((a, b) => a.boothNo - b.boothNo).map(bth => {
-      const bPct    = bth.total ? ((bth.voted / bth.total) * 100).toFixed(1) : '0.0';
-      const bStatus = hmMobilisationStatus(bth.voted, bth.nda, bth.total);
-      const abcde   = bth.loaded
-        ? hmAbcdeRow(bth.A, bth.B, bth.C, bth.D, bth.E, bth.tagged)
-        : '<span class="hm-abcde-none">—</span>';
-      return `<div class="hm-prog-booth-card">
-        <div class="hm-prog-booth-top">
-          <span class="hm-prog-booth-no">${bth.boothNo}</span>
-          <span class="hm-prog-booth-name">${bth.name}</span>
-          <div class="hm-prog-booth-right">
-            <span class="hm-prog-booth-nums">${bth.voted}/${bth.total} &nbsp; <strong>${bPct}%</strong></span>
-            <span class="hm-mob-status hm-mob-sm ${bStatus.cls}">${bStatus.label}</span>
+      // Grade breakdown from V6 boothRating; BJP 2021 votes = nda2021 × totalVoters × poll2021
+      let won = 0, lost = 0, margins = [], bjpVoteCount = 0, bjpShareSum = 0, bjpWeightTotal = 0;
+      booths.forEach(b => {
+        const cfg = state.allBoothMap.get(Number(b.boothNo)) || {};
+        const r = String(cfg.boothRating || '').toUpperCase();
+        if (['A','B','C'].includes(r)) won++;
+        if (['D','E','F'].includes(r)) lost++;
+        if (cfg.marginVsInc !== null && cfg.marginVsInc !== undefined) margins.push(cfg.marginVsInc);
+        if (cfg.nda2021 != null && cfg.totalVoters) {
+          const polled = cfg.poll2021 != null ? cfg.poll2021 : 1;
+          bjpVoteCount  += Math.round(cfg.nda2021 * cfg.totalVoters * polled);
+          bjpShareSum    += cfg.nda2021 * cfg.totalVoters;
+          bjpWeightTotal += cfg.totalVoters;
+        }
+      });
+      const avgMargin    = margins.length ? margins.reduce((s, v) => s + v, 0) / margins.length : null;
+      const avgMarginPct = avgMargin !== null ? (avgMargin * 100).toFixed(1) : null;
+      const avgBjpShare  = bjpWeightTotal > 0 ? ((bjpShareSum / bjpWeightTotal) * 100).toFixed(1) : null;
+
+      // NDA committed from affinity
+      const ndaComm = md.A + md.B;
+      const ndaTagged = md.tagged;
+      const ndaStrPct = ndaTagged > 0 ? Math.round((ndaComm / ndaTagged) * 100) : 0;
+
+      // Turnout status
+      const mPct = md.total ? (md.voted / md.total) * 100 : 0;
+      const mCls = hmTurnoutClass(mPct);
+
+      const status = hmMandalStatus(won, lost, md.A, md.B, md.E);
+
+      // Mobilisation bar: votes cast today vs NDA committed target
+      const mobPct    = md.nda > 0 ? Math.min(100, (md.voted / md.nda) * 100) : 0;
+      const mobCls    = mobPct >= 100 ? 'hm-mob-ok' : mobPct >= 60 ? 'hm-mob-mid' : 'hm-mob-low';
+      const mobExcess = md.nda > 0 && md.voted > md.nda;
+
+      return `<div class="hm-perf-card" data-mandal="${mandal.replace(/"/g,'&quot;')}" style="border-top:3px solid ${status.solid}; cursor:pointer;">
+        <div class="hm-perf-mandal" style="background:${status.bg};color:${status.text}">
+          <span>${mandal} <span class="hm-perf-booth-count">No. of Booths: ${booths.length}</span></span>
+          <span class="hm-perf-status-badge">${status.label}</span>
+        </div>
+        <div class="hm-perf-body">
+
+          <!-- Past Performance tile -->
+          <div class="hm-perf-section-lbl">Past Performance</div>
+          <div class="hm-pp-tile">
+            <div class="hm-pp-stat hm-perf-won" title="Booths won in 2021">
+              <span class="hm-pp-val">${won}</span>
+              <span class="hm-pp-lbl">Won</span>
+            </div>
+            <div class="hm-pp-stat hm-perf-lost" title="Booths lost in 2021">
+              <span class="hm-pp-val">${lost}</span>
+              <span class="hm-pp-lbl">Lost</span>
+            </div>
+            ${avgMarginPct !== null ? `<div class="hm-pp-stat ${Number(avgMarginPct) >= 0 ? 'hm-perf-margin-pos':'hm-perf-margin-neg'}"
+                title="Avg BJP margin vs INC in 2021">
+              <span class="hm-pp-val">${Number(avgMarginPct) >= 0 ? '+' : ''}${avgMarginPct}%</span>
+              <span class="hm-pp-lbl">Avg Margin</span>
+            </div>` : ''}
+            ${avgBjpShare !== null ? `<div class="hm-pp-stat hm-pp-bjp" title="BJP/NDA votes in 2021 (share × total voters × turnout)">
+              <span class="hm-pp-val">${bjpVoteCount.toLocaleString('en-IN')}</span>
+              <span class="hm-pp-val hm-pp-val--sub">${avgBjpShare}%</span>
+              <span class="hm-pp-lbl">BJP Votes 2021</span>
+            </div>` : ''}
           </div>
-        </div>
-        <div class="hm-prog-booth-bar-row">
-          ${hmProgressBar(bth.voted, bth.total, 'hm-prog-bar--sm')}
-        </div>
-        <div class="hm-prog-booth-abcde">${abcde}
-          ${bth.nda ? `<span class="hm-prog-nda-inline">NDA: ${bth.nda}</span>` : ''}
+
+          <!-- Projected BJP Votes from tagging -->
+          <div class="hm-perf-section-lbl">Projected BJP Votes</div>
+          <div class="hm-pp-tile hm-pp-tile--bjp">
+            <div class="hm-pp-stat hm-pp-bjp-proj" title="A×1.0 + B×0.8 + C×0.55 + D×0.20">
+              <span class="hm-pp-val hm-bjp-proj-val">${calcProjectedBJP(md.A, md.B, md.C, md.D, md.E).toLocaleString('en-IN')}</span>
+              <span class="hm-pp-lbl">Projected</span>
+            </div>
+            <div class="hm-pp-stat" title="A — confirmed BJP">
+              <span class="hm-pp-val">${md.A}</span><span class="hm-pp-lbl hm-pp-lbl--a">A ×1.0</span>
+            </div>
+            <div class="hm-pp-stat" title="B — NDA allied">
+              <span class="hm-pp-val">${md.B}</span><span class="hm-pp-lbl hm-pp-lbl--b">B ×0.8</span>
+            </div>
+            <div class="hm-pp-stat" title="C — sympathiser">
+              <span class="hm-pp-val">${md.C}</span><span class="hm-pp-lbl hm-pp-lbl--c">C ×0.55</span>
+            </div>
+            <div class="hm-pp-stat" title="D — undecided">
+              <span class="hm-pp-val">${md.D}</span><span class="hm-pp-lbl hm-pp-lbl--d">D ×0.20</span>
+            </div>
+          </div>
+
+          <!-- Voter Composition stacked bar -->
+          <div class="hm-perf-section-lbl">Voter Composition (Tagged)</div>
+          ${hmSegBar(md.A, md.B, md.C, md.D, md.E, md.total)}
+          <div class="hm-comp-legend">
+            <span><span class="hm-seg-dot hm-seg-a"></span>A ${md.A}</span>
+            <span><span class="hm-seg-dot hm-seg-b"></span>B ${md.B}</span>
+            <span><span class="hm-seg-dot hm-seg-c"></span>C ${md.C}</span>
+            <span><span class="hm-seg-dot hm-seg-d"></span>D ${md.D}</span>
+            <span><span class="hm-seg-dot hm-seg-e"></span>E ${md.E}</span>
+            <span class="hm-comp-nda-pct">${ndaStrPct}% NDA</span>
+          </div>
+
+          <!-- Mobilisation bar: votes cast vs NDA committed (only if tagged NDA voters exist) -->
+          ${md.nda > 0 ? `
+          <div class="hm-perf-section-lbl hm-perf-section-lbl--mob">Today vs Committed</div>
+          <div class="hm-mob-bar-wrap">
+            <div class="hm-mob-bar">
+              ${mobPct > 0 ? `<div class="hm-mob-fill ${mobCls}" style="width:${mobPct.toFixed(1)}%"></div>` : ''}
+            </div>
+            <div class="hm-mob-nums">
+              <span>${md.voted.toLocaleString('en-IN')} voted</span>
+              <span class="hm-mob-target ${mobCls}">/ ${md.nda.toLocaleString('en-IN')} committed ${mobExcess ? '✓' : mobPct.toFixed(0)+'%'}</span>
+            </div>
+          </div>` : ''}
+
+          <!-- Live today -->
+          <div class="hm-perf-row hm-perf-row--footer">
+            <span class="hm-perf-today ${mCls}">${mPct.toFixed(1)}% overall turnout</span>
+          </div>
         </div>
       </div>`;
-    }).join('');
+    });
+    els.hmProgAlerts.innerHTML = `<div class="hm-perf-grid">${perfCards.join('')}</div>`;
+  }
 
-    return `<div class="hm-prog-mandal-block">
-      <div class="hm-prog-mandal-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="hm-prog-mandal-name">${mandal}</span>
-        <span class="hm-prog-mandal-sub">${md.booths.length} booths · ${md.voted}/${md.total} voted</span>
-        <div class="hm-prog-mandal-right">
-          <span class="hm-prog-mandal-pct">${mPct}%</span>
-          <span class="hm-mob-status hm-mob-sm ${mStatus.cls}">${mStatus.label}</span>
-        </div>
-        <span class="hm-prog-chevron">▾</span>
-      </div>
-      ${hmProgressBar(md.voted, md.total)}
-      <div class="hm-prog-mandal-abcde">
-        ${hmAbcdeRow(md.A, md.B, md.C, md.D, md.E, md.tagged)}
-        <span class="hm-prog-nda-inline">NDA Committed: ${md.nda}</span>
-      </div>
-      <div class="hm-prog-booths-wrap">${boothRows}</div>
+  // ── Mandal tabs (NDA view — mandalRows already sorted above) ────────────────
+  // Tabs removed — booth details shown in table on card click (see renderHmBoothDetailTable)
+  if (els.hmProgMandals) els.hmProgMandals.innerHTML = '';
+
+  renderHmAnalytics();
+}
+
+function renderHmAnalytics() {
+  if (!els.hmProgAnalytics) return;
+  const allBooths = state.allBooths || [];
+  if (!allBooths.length) { els.hmProgAnalytics.innerHTML = ''; return; }
+
+  // Build per-booth analytics rows
+  const rows = allBooths.map(b => {
+    const boothNo    = Number(b.booth);
+    const total      = Number(b.totalVoters) || 0;
+    const voted      = Number(state.hmVotedBooths[boothNo] ?? 0);
+    const turnoutPct = total ? (voted / total) * 100 : 0;
+    const minority   = (Number(b.rChristian || 0) + Number(b.rMuslim || 0));
+    const minPct     = total ? (minority / total) * 100 : 0;
+    const cache      = state.pageCache[boothNo];
+    const vs         = cache?.votedSummary || { A:0, B:0, C:0, D:0, E:0 };
+    return { boothNo, village: b.village || '', mandal: b.mandal || '', total, voted, turnoutPct, minority, minPct, vs };
+  }).filter(r => r.total > 0);
+
+  const TOP_N = 15;
+  const loaded = rows.filter(r => state.pageCache[r.boothNo] || r.voted > 0);
+
+  const highTurnout  = [...loaded].sort((a, b) => b.turnoutPct - a.turnoutPct).slice(0, TOP_N);
+  const lowTurnout   = [...loaded].sort((a, b) => a.turnoutPct - b.turnoutPct).slice(0, TOP_N);
+  const highMinority = [...rows].sort((a, b) => b.minPct - a.minPct).slice(0, TOP_N);
+
+  const vsBar = (vs) => {
+    const total = vs.A + vs.B + vs.C + vs.D + vs.E;
+    if (!total) return '';
+    return `<div class="hm-an-vs-row">
+      ${['A','B','C','D','E'].map(k => vs[k] > 0
+        ? `<span class="hm-an-vs-chip hm-an-vs-${k.toLowerCase()}" title="${k}: ${vs[k]} voted">${k}<b>${vs[k]}</b></span>`
+        : '').join('')}
     </div>`;
-  }).join('');
+  };
+
+  const boothCard = (r, metricHtml, badgeClass) => `
+    <div class="hm-an-card ${badgeClass}">
+      <div class="hm-an-booth">#${r.boothNo}</div>
+      <div class="hm-an-village">${r.village}</div>
+      <div class="hm-an-mandal">${r.mandal}</div>
+      ${metricHtml}
+      ${vsBar(r.vs)}
+    </div>`;
+
+  const turnoutMetric = (r) => {
+    const cls = r.turnoutPct >= 60 ? 'hm-an-val--green' : r.turnoutPct >= 30 ? 'hm-an-val--amber' : 'hm-an-val--red';
+    return `<div class="hm-an-metric">
+      <span class="hm-an-val ${cls}">${r.turnoutPct.toFixed(1)}%</span>
+      <span class="hm-an-sub">${r.voted}/${r.total} voted</span>
+    </div>`;
+  };
+
+  const minorityMetric = (r) => {
+    const turnCls = r.turnoutPct >= 60 ? 'hm-an-val--green' : r.turnoutPct >= 30 ? 'hm-an-val--amber' : 'hm-an-val--red';
+    return `<div class="hm-an-metric">
+      <span class="hm-an-val hm-an-val--purple">${r.minPct.toFixed(1)}%</span>
+      <span class="hm-an-sub">Chr+Mus · ${r.minority} voters</span>
+      <span class="hm-an-sub">Turnout: <span class="${turnCls}">${r.turnoutPct.toFixed(1)}%</span></span>
+    </div>`;
+  };
+
+  const section = (title, icon, cards, emptyMsg) => `
+    <div class="hm-an-section">
+      <div class="hm-an-title">${icon} ${title}</div>
+      ${cards.length ? `<div class="hm-an-scroll">${cards}</div>` : `<p class="muted" style="padding:8px">${emptyMsg}</p>`}
+    </div>`;
+
+  els.hmProgAnalytics.innerHTML = `
+    <div class="hm-an-wrap">
+      ${section('High Turnout Booths', '🔥', highTurnout.map(r => boothCard(r, turnoutMetric(r), 'hm-an-card--high')).join(''), 'No data yet — click Refresh')}
+      ${section('Low Turnout Booths', '⚠️', lowTurnout.map(r => boothCard(r, turnoutMetric(r), 'hm-an-card--low')).join(''), 'No data yet — click Refresh')}
+      ${section('High Minority Booths', '🕌', highMinority.map(r => boothCard(r, minorityMetric(r), 'hm-an-card--min')).join(''), 'No booth data')}
+    </div>`;
+}
+
+function renderHmBoothDetailTable(mandalName) {
+  if (!els.hmProgMandals) return;
+  const { mandalMap } = getHmProgressData();
+  const md = mandalMap[mandalName];
+  if (!md) { els.hmProgMandals.innerHTML = ''; return; }
+
+  // Compute status colour to match the mandal card header
+  let dtWon = 0, dtLost = 0;
+  md.booths.forEach(b => {
+    const r = String(state.allBoothMap.get(Number(b.boothNo))?.boothRating || '').toUpperCase();
+    if (['A','B','C'].includes(r)) dtWon++;
+    else if (['D','E','F'].includes(r)) dtLost++;
+  });
+  const dtStatus = hmMandalStatus(dtWon, dtLost, md.A, md.B, md.E);
+
+  const booths = md.booths.slice().sort((a, b) => a.boothNo - b.boothNo);
+  const rows = booths.map(bth => {
+    const cfg      = state.allBoothMap.get(Number(bth.boothNo)) || {};
+    const bPct     = bth.total ? (bth.voted / bth.total) * 100 : 0;
+    const bCls     = hmTurnoutClass(bPct);
+    const insights = hmBoothEntryInsights(bth.boothNo, bth.total);
+    const marginCell = cfg.marginVsInc !== undefined && cfg.marginVsInc !== null
+      ? `<span class="${cfg.marginVsInc >= 0 ? 'hm-bc-margin--won' : 'hm-bc-margin--lost'}">${cfg.marginVsInc >= 0 ? '+' : ''}${(cfg.marginVsInc * 100).toFixed(1)}%</span>`
+      : '—';
+    const projBJP = calcProjectedBJP(bth.A, bth.B, bth.C, bth.D, bth.E);
+    return `<tr>
+      <td>${bth.boothNo}</td>
+      <td class="hm-dt-name">${bth.name}</td>
+      <td>${bth.total.toLocaleString('en-IN')}</td>
+      <td>${bth.voted.toLocaleString('en-IN')}</td>
+      <td class="${bCls}">${bPct.toFixed(1)}%</td>
+      <td>${bth.nda ? bth.nda.toLocaleString('en-IN') : '—'}</td>
+      <td class="hm-bjp-proj-val">${projBJP > 0 ? projBJP : '—'}</td>
+      <td>${hmMarginGradeBadge(cfg)}</td>
+      <td>${marginCell}</td>
+      <td>${insights.tagged > 0 ? insights.taggedPct.toFixed(0) + '%' : '—'}</td>
+      <td>${insights.tagged > 0 ? insights.ndaStrength.toFixed(0) + '%' : '—'}</td>
+    </tr>`;
+  });
+
+  els.hmProgMandals.innerHTML = `
+    <div class="hm-dt-wrap">
+      <div class="hm-dt-header" style="background:${dtStatus.bg};color:${dtStatus.text}">
+        <span class="hm-dt-title">${mandalName} — Booth Details <span style="opacity:0.8;font-size:11px;font-weight:500">(${dtStatus.label})</span></span>
+        <button class="hm-dt-close" type="button">✕ Close</button>
+      </div>
+      <div class="hm-dt-scroll">
+        <table class="hm-dt-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Booth Name</th><th>Total</th><th>Voted</th>
+              <th>Turnout</th><th>NDA</th><th>Proj. BJP</th><th>Grade</th><th>2021 Margin</th>
+              <th>Tagged%</th><th>NDA Str%</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  els.hmProgMandals.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderHmOppositionView() {
+  const { overall, mandalMap } = getHmProgressData();
+  const totalBooths   = (state.allBooths || []).length;
+  const overallPct    = overall.total ? (overall.voted / overall.total) * 100 : 0;
+  const oppPct        = overall.tagged ? (overall.E / overall.tagged) * 100 : 0;
+  const swingTotal    = overall.D;
+  const strongholds   = Object.values(mandalMap).flatMap(m => m.booths).filter(b => b.E > b.nda && b.E > 0).length;
+  const swingBooths   = Object.values(mandalMap).flatMap(m => m.booths).filter(b => b.D > b.nda && b.D > 0).length;
+  const ringColor     = oppPct >= 40 ? '#c62828' : oppPct >= 20 ? '#f57c00' : '#2e7d32';
+  const turnoutColor  = overallPct >= 60 ? '#2e7d32' : overallPct >= 30 ? '#f57c00' : '#c62828';
+
+  els.hmProgOverall.innerHTML = `
+    <div class="hm-prog-hero hm-prog-hero--opp">
+      <div class="hm-prog-hero-top-row">
+        <div class="hm-prog-hero-left">
+          <div class="hm-prog-hero-label hm-opp-label">Opposition Analysis · AC 108</div>
+          <div class="hm-prog-hero-row">
+            <span class="hm-prog-hero-voted">${overall.voted.toLocaleString('en-IN')}</span>
+            <span class="hm-prog-hero-sep"> / </span>
+            <span class="hm-prog-hero-total">${overall.total.toLocaleString('en-IN')}</span>
+            <span class="hm-prog-hero-pct ${hmTurnoutClass(overallPct)}">${overallPct.toFixed(1)}%</span>
+          </div>
+          <div class="hm-prog-hero-sublabel">Total turnout · Opposition (E): ${overall.E.toLocaleString('en-IN')} of ${overall.tagged.toLocaleString('en-IN')} tagged (${oppPct.toFixed(1)}%)</div>
+        </div>
+        <div class="hm-prog-hero-ring">${hmRing(oppPct, ringColor, 72)}</div>
+      </div>
+      ${hmProgressBar(overallPct, 'hm-prog-bar--hero')}
+      <div class="hm-prog-stat-tiles">
+        <div class="hm-prog-tile hm-tile-opp">
+          <div class="hm-prog-tile-val hm-opp-val">${overall.E.toLocaleString('en-IN')}</div>
+          <div class="hm-prog-tile-label">Opposition (E)</div>
+        </div>
+        <div class="hm-prog-tile hm-tile-swing">
+          <div class="hm-prog-tile-val hm-swing-val">${swingTotal.toLocaleString('en-IN')}</div>
+          <div class="hm-prog-tile-label">Swing (D)</div>
+        </div>
+        <div class="hm-prog-tile">
+          <div class="hm-prog-tile-val ${strongholds > 0 ? 'hm-opp-val' : 'hm-tile-ok'}">${strongholds}</div>
+          <div class="hm-prog-tile-label">Opp Strongholds</div>
+        </div>
+        <div class="hm-prog-tile">
+          <div class="hm-prog-tile-val ${swingBooths > 0 ? 'hm-swing-val' : 'hm-tile-ok'}">${swingBooths}</div>
+          <div class="hm-prog-tile-label">Swing-Risk Booths</div>
+        </div>
+      </div>
+      <div class="hm-prog-seg-wrap">
+        <div class="hm-prog-seg-label">Voter Composition across AC 108</div>
+        ${hmSegBar(overall.A, overall.B, overall.C, overall.D, overall.E, overall.total)}
+        <div class="hm-seg-legend">
+          <span class="hm-seg-dot hm-seg-a"></span>A BJP ${overall.A}
+          <span class="hm-seg-dot hm-seg-b"></span>B NDA ${overall.B}
+          <span class="hm-seg-dot hm-seg-c"></span>C Supp ${overall.C}
+          <span class="hm-seg-dot hm-seg-d"></span>D Swing ${overall.D}
+          <span class="hm-seg-dot hm-seg-e"></span>E Opp ${overall.E}
+        </div>
+      </div>
+      <div class="hm-prog-nda-strip hm-opp-vs-nda">
+        NDA ${overall.nda.toLocaleString('en-IN')} vs Opposition ${overall.E.toLocaleString('en-IN')}
+        — ${overall.nda >= overall.E
+          ? `NDA leads by <strong>${(overall.nda - overall.E).toLocaleString('en-IN')}</strong>`
+          : `Opposition leads by <strong>${(overall.E - overall.nda).toLocaleString('en-IN')}</strong>`}
+        — Swing voters: <strong>${overall.D.toLocaleString('en-IN')}</strong>
+      </div>
+    </div>`;
+
+  // ── Opposition hotspots ──────────────────────────────────────────────────────
+  if (els.hmProgAlerts) {
+    const hotspots = Object.values(mandalMap).flatMap(m => m.booths)
+      .filter(b => b.tagged > 0)
+      .map(b => ({ ...b, oppPct: (b.E / b.tagged) * 100, threat: b.E - b.nda }))
+      .filter(b => b.E > 0)
+      .sort((a, b) => b.threat - a.threat)
+      .slice(0, 6);
+
+    if (hotspots.length) {
+      els.hmProgAlerts.innerHTML = `
+        <div class="hm-alerts-block hm-alerts-block--opp">
+          <div class="hm-alerts-title hm-opp-alert-title">Opposition Hotspots — top ${hotspots.length} booths by threat</div>
+          <div class="hm-alerts-list">
+            ${hotspots.map(b => {
+              const oppBar = `<div class="hm-opp-vs-bar">
+                <div class="hm-opp-vs-nda" style="width:${b.nda && b.tagged ? ((b.nda/b.tagged)*100).toFixed(1) : 0}%" title="NDA"></div>
+                <div class="hm-opp-vs-e"   style="width:${b.tagged ? ((b.E/b.tagged)*100).toFixed(1) : 0}%" title="Opp"></div>
+              </div>`;
+              return `<div class="hm-alert-row">
+                <span class="hm-alert-booth">#${b.boothNo}</span>
+                <span class="hm-alert-name">${b.name}</span>
+                <div class="hm-alert-right">
+                  ${oppBar}
+                  <span class="hm-alert-pct hm-opp-val">E ${b.E}</span>
+                  <span class="hm-alert-nda hm-nda-badge">NDA ${b.nda}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    } else {
+      els.hmProgAlerts.innerHTML = '';
+    }
+  }
+
+  // ── Mandal tabs (Opposition view — same sort/logic as NDA) ──────────────────
+  const mandalRows = Object.entries(mandalMap).sort((a, b) => {
+    const aPct = a[1].total ? a[1].voted / a[1].total : 0;
+    const bPct = b[1].total ? b[1].voted / b[1].total : 0;
+    return aPct - bPct; // worst turnout first — same as NDA view
+  });
+
+  hmRenderMandalTabs(
+    mandalRows,
+    (mandal, md) => {
+      const mPct    = md.total ? (md.voted / md.total) * 100 : 0;
+      const mNdaWin = md.nda >= md.E;
+      return {
+        metric:    mPct.toFixed(1) + '%',
+        subtext:   md.booths.length + ' booths',
+        panelBar:  hmProgressBar(mPct, 'hm-prog-bar--mandal'),
+        panelStats:`<span>${md.voted.toLocaleString('en-IN')} voted / ${md.total.toLocaleString('en-IN')}</span>
+                    <span class="hm-opp-val">E ${md.E} opp</span>
+                    <span class="hm-swing-val">D ${md.D} swing</span>
+                    <span class="hm-panel-stat-nda ${mNdaWin ? 'hm-panel-stat-nda--ok' : 'hm-panel-stat-nda--behind'}">NDA ${md.nda.toLocaleString('en-IN')}</span>`,
+        ndaBadge:  `<span class="${mNdaWin ? 'hm-bc-nda hm-bc-nda--ok' : 'hm-bc-threat'}">
+                      ${mNdaWin ? 'NDA leads' : 'Opp leads +' + (md.E - md.nda)}</span>`,
+      };
+    },
+    (md) => md.booths.sort((a, b) => a.boothNo - b.boothNo).map(bth => {
+      const bPct    = bth.total ? (bth.voted / bth.total) * 100 : 0;
+      const bCls    = hmTurnoutClass(bPct);
+      const threat  = bth.E - bth.nda;
+      const ndaTag  = bth.nda ? `<span class="hm-bc-nda ${bth.nda >= bth.E ? 'hm-bc-nda--ok' : ''}">NDA ${bth.nda}</span>` : '';
+      const swingTag= bth.D   ? `<span class="hm-bc-swing">D ${bth.D}</span>` : '';
+      const eTag    = bth.E   ? `<span class="hm-bc-e-badge ${threat > 0 ? 'hm-bc-e-badge--threat' : ''}">E ${bth.E}</span>` : '';
+      return `<div class="hm-bc hm-bc--${bCls.replace('hm-turn-','')}">
+        <div class="hm-bc-top">
+          <span class="hm-bc-no">${bth.boothNo}</span>
+          ${hmBoothRatingBadge(bth.boothNo)}
+          <span class="hm-bc-pct ${bCls}">${bPct.toFixed(1)}%</span>
+        </div>
+        <div class="hm-bc-name">${bth.name}</div>
+        ${hmProgressBar(bPct, 'hm-prog-bar--booth')}
+        <div class="hm-bc-bottom">
+          <span class="hm-bc-nums">${bth.voted}/${bth.total}</span>
+          ${ndaTag}${eTag}
+        </div>
+        ${bth.D || bth.E ? `<div class="hm-bc-opp-row">${swingTag}${threat > 0 ? `<span class="hm-bc-threat">+${threat} risk</span>` : ''}</div>` : ''}
+      </div>`;
+    }).join('')
+  );
 }
 
 async function onHmProgRefresh() {
@@ -3583,39 +4318,56 @@ async function onHmProgRefresh() {
   state.hmProgLoading = true;
   if (els.hmProgRefreshBtn) { els.hmProgRefreshBtn.disabled = true; els.hmProgRefreshBtn.textContent = 'Loading…'; }
 
-  // Load voted count + ABCDE summary for ALL booths from saved affinity
   const allBooths = state.allBooths || [];
+  const total = allBooths.length;
   let done = 0;
 
-  for (const b of allBooths) {
+  const processOneBooth = async (b) => {
+    const boothNo = Number(b.booth);
     try {
-      const boothNo = Number(b.booth);
       const saved = await loadSavedAffinity(boothNo);
+      const totalVoters = Number(b.totalVoters) || 0;
 
-      // Voted count — Refresh is authoritative: always use server data.
-      // Heatmap votes save immediately on each click, so nothing is ever unsaved.
-      const votedCount = saved.filter(r => readTruthyFlag(r.voted ?? r.Voted)).length;
+      // Voted counts
+      const votedRows = saved.filter(r => readTruthyFlag(r.voted ?? r.Voted));
+      const votedCount = votedRows.length;
       state.hmVotedBooths[boothNo] = votedCount;
+      state.hmVotedSlNos[boothNo]  = votedRows.map(r => Number(r.slNo ?? r.SlNo ?? 0)).filter(Boolean);
+      const votedSlSet = new Set(state.hmVotedSlNos[boothNo]);
 
-      // ABCDE summary from affinity flags
-      const summary = { A:0, B:0, C:0, D:0, E:0 };
+      // Always rebuild the cache entry from fresh server data so summary + voters are consistent.
+      // Drafts are re-applied on-demand in fetchBoothData when the Entry tab opens the booth.
+      const entry = state.pageCache[boothNo] || createBoothData(totalVoters);
+      applySavedAffinity(saved, entry, totalVoters);
+      state.pageCache[boothNo] = entry;
+
+      // Compute votedSummary (ABCDE of voters who have BOTH a tag AND voted)
+      const votedSummary = { A:0, B:0, C:0, D:0, E:0 };
       saved.forEach(r => {
         const a = String(r.affinity || '').toUpperCase();
-        if (a && Object.prototype.hasOwnProperty.call(summary, a)) summary[a]++;
+        const sl = Number(r.slNo ?? r.SlNo ?? 0);
+        if (a && Object.prototype.hasOwnProperty.call(votedSummary, a) && votedSlSet.has(sl)) {
+          votedSummary[a]++;
+        }
       });
+      state.pageCache[boothNo].votedSummary = votedSummary;
+      state.pageCache[boothNo].votedCount   = votedCount;
+    } catch (err) {
+      console.warn(`[Refresh] Booth ${boothNo} failed:`, err.message || err);
+    }
+    done++;
+    if (els.hmProgRefreshBtn) els.hmProgRefreshBtn.textContent = `Loading… ${done}/${total}`;
+    if (done % 20 === 0) renderHmProgressView();
+  };
 
-      // Write summary into pageCache (create entry if absent)
-      if (!state.pageCache[boothNo]) {
-        state.pageCache[boothNo] = createBoothData(Number(b.totalVoters) || 0);
-      }
-      state.pageCache[boothNo].summary = summary;
-      state.pageCache[boothNo].votedCount = votedCount;
-
-      done++;
-      // Re-render every 20 booths so user sees progress
-      if (done % 20 === 0) renderHmProgressView();
-    } catch (_) {}
-  }
+  // Concurrency pool — 8 parallel requests instead of sequential
+  let idx = 0;
+  const worker = async () => {
+    while (idx < allBooths.length) {
+      await processOneBooth(allBooths[idx++]);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(20, total) }, worker));
 
   renderHmProgressView();
   state.hmProgLoading = false;
@@ -3644,18 +4396,83 @@ function populateHmMandalFilter() {
   }).join('');
 }
 
+function renderHmVotedReport() {
+  if (!els.hmVotedReport || !els.hmVotedFilterChk) return;
+  if (!els.hmVotedFilterChk.checked) {
+    els.hmVotedReport.style.display = 'none';
+    return;
+  }
+
+  const allBooths = state.allBooths || [];
+  const withVotes = allBooths
+    .filter(b => (state.hmVotedBooths[Number(b.booth)] || 0) > 0)
+    .map(b => {
+      const bn   = Number(b.booth);
+      const slNos = (state.hmVotedSlNos[bn] || []).slice().sort((a, x) => a - x);
+      return { bn, name: b.village || '', mandal: String(b.mandal || '').trim(), count: state.hmVotedBooths[bn], slNos };
+    })
+    .sort((a, b) => a.bn - b.bn);
+
+  if (!withVotes.length) {
+    els.hmVotedReport.innerHTML = '<div class="hm-vr-empty">No votes recorded yet. Click Refresh to load latest data.</div>';
+    els.hmVotedReport.style.display = 'block';
+    return;
+  }
+
+  // Group by mandal preserving sort order
+  const mandalOrder = [], mandalGroups = {};
+  withVotes.forEach(b => {
+    if (!mandalGroups[b.mandal]) { mandalGroups[b.mandal] = []; mandalOrder.push(b.mandal); }
+    mandalGroups[b.mandal].push(b);
+  });
+
+  const totalVoted = withVotes.reduce((s, b) => s + b.count, 0);
+
+  els.hmVotedReport.innerHTML = `
+    <div class="hm-vr-wrap">
+      <div class="hm-vr-summary">
+        <strong>${totalVoted}</strong> votes cast across <strong>${withVotes.length}</strong> booths
+      </div>
+      ${mandalOrder.map(mandal => `
+        <div class="hm-vr-mandal">
+          <div class="hm-vr-mandal-hdr">${mandal}</div>
+          ${mandalGroups[mandal].map(b => `
+            <div class="hm-vr-booth">
+              <div class="hm-vr-booth-hdr">
+                <span class="hm-vr-booth-no">#${b.bn}</span>
+                <span class="hm-vr-booth-name">${b.name}</span>
+                <span class="hm-vr-booth-count">${b.count} voted</span>
+              </div>
+              ${b.slNos.length ? `<div class="hm-vr-sl-grid">${b.slNos.map(sl => `<span class="hm-vr-sl">${sl}</span>`).join('')}</div>` : ''}
+            </div>`).join('')}
+        </div>`).join('')}
+    </div>`;
+  els.hmVotedReport.style.display = 'block';
+}
+
 function renderHmBoothButtons(mandal) {
   if (!els.hmBoothBtns) return;
   const all = state.allBooths || [];
   const src = mandal ? all.filter(b => String(b.mandal || '').trim() === mandal) : [];
   const sorted = src.slice().sort((a, b) => Number(a.booth) - Number(b.booth));
   if (!sorted.length) { els.hmBoothBtns.style.display = 'none'; return; }
-  els.hmBoothBtns.innerHTML = sorted.map(b =>
-    `<button type="button" class="hm-booth-btn" data-booth="${b.booth}">
+  els.hmBoothBtns.innerHTML = sorted.map(b => {
+    const cfg    = state.allBoothMap?.get(Number(b.booth)) || {};
+    const rating = String(cfg.boothRating || '').toUpperCase();
+    const ratingClass = rating ? `hm-booth-btn--grade-${rating.toLowerCase()}` : '';
+    const cache  = state.pageCache[Number(b.booth)];
+    const summary = cache?.summary || {};
+    const A=Number(summary.A||0), B=Number(summary.B||0);
+    const total  = Number(b.voters || b.totalVoters || 0);
+    const ndaPct = total > 0 ? Math.round(((A+B)/total)*100) : 0;
+    return `<button type="button" class="hm-booth-btn ${ratingClass}" data-booth="${b.booth}"
+              title="${cfg.boothGrade || ''}">
        <span class="hm-bb-no">${b.booth}</span>
        <span class="hm-bb-name">${b.village || ''}</span>
-     </button>`
-  ).join('');
+       ${rating ? `<span class="hm-bb-rating">${rating}</span>` : ''}
+       ${ndaPct > 0 ? `<span class="hm-bb-nda">${ndaPct}%</span>` : ''}
+     </button>`;
+  }).join('');
   els.hmBoothBtns.style.display = 'flex';
 }
 
@@ -3665,6 +4482,7 @@ function showHmPrompt(msg) {
   if (els.hmPrompt)  {  els.hmPrompt.textContent = msg || 'Select a Mandal above to begin.'; els.hmPrompt.style.display = 'block'; }
   if (els.hmStats)      els.hmStats.innerHTML       = '';
   if (els.hmSaveStatus) els.hmSaveStatus.textContent = '';
+  if (els.hmLegend)     els.hmLegend.style.display  = 'none';
 }
 
 // Write hmVoters back into pageCache so Progress view always reads correct data.
@@ -3679,13 +4497,19 @@ function syncHmVotersToCache(boothNo) {
     const a = String(v.affinity || '').toUpperCase();
     if (a && Object.prototype.hasOwnProperty.call(summary, a)) summary[a]++;
   });
-  // Prefer existing summary if it has data (entry page may have richer data)
-  const hasSummaryData = existing?.summary && Object.values(existing.summary).some(n => n > 0);
-
   const entry = existing ? existing : createBoothData(state.hmVoters.length);
-  const votedCount = state.hmVoters.filter(v => v.voted).length;
+  const votedCount = state.hmVoters.filter(v => v.voted && !v.deleted).length;
   entry.votedCount = votedCount;
-  if (!hasSummaryData) entry.summary = summary;
+  entry.summary = summary; // always use fresh server data from hmVoters
+
+  // Voted-by-affinity: only voters who have BOTH a tag AND voted
+  const votedSummary = { A:0, B:0, C:0, D:0, E:0 };
+  state.hmVoters.forEach(v => {
+    if (!v.voted || v.deleted) return;
+    const a = String(v.affinity || '').toUpperCase();
+    if (a && Object.prototype.hasOwnProperty.call(votedSummary, a)) votedSummary[a]++;
+  });
+  entry.votedSummary = votedSummary;
 
   // Sync voted flags into voters array
   if (entry.voters?.length) {
@@ -3698,9 +4522,21 @@ function syncHmVotersToCache(boothNo) {
 
   state.pageCache[boothNo] = entry;
 
-  // Track voted count in dedicated map — used by Progress view
-  // so background dashboard refreshes never contaminate voting progress
+  // Track voted count + SL numbers in dedicated maps — used by Progress view and voted report
   state.hmVotedBooths[boothNo] = votedCount;
+  state.hmVotedSlNos[boothNo]  = state.hmVoters.filter(v => v.voted && !v.deleted).map(v => v.slNo);
+  renderHmVotedReport(); // keep report in sync if checkbox is active
+
+  // If Entry tab is currently showing this booth, sync voted flags into live boothData
+  if (boothNo === getCurrentBoothNumber() && state.boothData?.voters?.length) {
+    const hmMap = new Map(state.hmVoters.map(v => [v.slNo, v]));
+    state.boothData.voters.forEach(cv => {
+      const hv = hmMap.get(cv.slNo);
+      if (hv) cv.voted = hv.voted;
+    });
+    updateBoothFlagCounts(state.boothData);
+    renderVoters();
+  }
 }
 
 async function loadHeatmapBooth(boothNo) {
@@ -3727,10 +4563,9 @@ async function loadHeatmapBooth(boothNo) {
     if (!res.ok) throw new Error(`Could not load voter data (HTTP ${res.status})`);
     const raw = await res.json();
 
-    // Build voter list — only non-deleted entries
+    // Build voter list — include deleted entries but flag them
     const voters = (raw.rows || [])
-      .filter(r => String(r[7] || '').toUpperCase() !== 'Y')   // index 7 = deleted
-      .map(r => ({ slNo: r[0], affinity: '', relocated: false, voted: false }));
+      .map(r => ({ slNo: r[0], affinity: '', relocated: false, voted: false, deleted: String(r[7] || '').toUpperCase() === 'Y' }));
 
     // Overlay voted flags from page cache if already loaded
     const cached = state.pageCache[boothNo];
@@ -3776,29 +4611,76 @@ function renderHeatmapGrid() {
     return;
   }
 
-  const voters    = state.hmVoters;
-  const total     = voters.length;
-  const votedCount = voters.filter(v => v.voted).length;
-  const pct       = total ? Math.round((votedCount / total) * 100) : 0;
+  const voters     = state.hmVoters;
+  const active     = voters.filter(v => !v.deleted);
+  const total      = active.length;
+  const votedCount = active.filter(v => v.voted).length;
+  const pct        = total ? Math.round((votedCount / total) * 100) : 0;
 
   if (els.hmStats) {
     els.hmStats.innerHTML =
       `<span class="hm-stat-voted">${votedCount}</span> / <span class="hm-stat-total">${total}</span> voted &nbsp; <span class="hm-stat-pct">${pct}%</span>`;
   }
 
-  els.hmGrid.innerHTML = voters.map(v =>
-    `<div class="hm-cell ${v.voted ? 'hm-cell--voted' : 'hm-cell--not-voted'}" data-sl="${v.slNo}" title="Sl# ${v.slNo}">${v.slNo}</div>`
-  ).join('');
+  els.hmGrid.innerHTML = voters.map(v => {
+    if (v.deleted) {
+      return `<div class="hm-cell hm-cell--deleted" title="Sl# ${v.slNo} (Deleted)">${v.slNo}</div>`;
+    }
+    const af = String(v.affinity || '').toUpperCase();
+    const afClass = af && 'ABCDE'.includes(af) ? ` hm-cell--af-${af.toLowerCase()}` : '';
+    const votedClass = v.voted ? ' hm-cell--voted' : ' hm-cell--not-voted';
+    const label = af && 'ABCDE'.includes(af) ? af : '';
+    return `<div class="hm-cell${afClass}${votedClass}" data-sl="${v.slNo}" title="Sl# ${v.slNo}${af ? ' · ' + af : ''}">${v.slNo}${label ? `<span class="hm-cell-af">${label}</span>` : ''}</div>`;
+  }).join('');
 
   els.hmGrid.style.display = 'grid';
   if (els.hmPrompt) els.hmPrompt.style.display = 'none';
+
+  if (els.hmLegend) {
+    els.hmLegend.innerHTML = `
+      <div class="hm-legend-title">Colour Guide</div>
+      <div class="hm-legend-groups">
+        <div class="hm-legend-group">
+          <div class="hm-legend-group-label">Voted ✓</div>
+          <div class="hm-legend-items">
+            <span class="hm-legend-cell hm-cell--af-a hm-cell--voted">A</span>
+            <span class="hm-legend-cell hm-cell--af-b hm-cell--voted">B</span>
+            <span class="hm-legend-cell hm-cell--af-c hm-cell--voted">C</span>
+            <span class="hm-legend-cell hm-cell--af-d hm-cell--voted">D</span>
+            <span class="hm-legend-cell hm-cell--af-e hm-cell--voted">E</span>
+            <span class="hm-legend-cell hm-cell--voted hm-legend-cell--untagged">?</span>
+          </div>
+        </div>
+        <div class="hm-legend-group">
+          <div class="hm-legend-group-label">Not Yet Voted</div>
+          <div class="hm-legend-items">
+            <span class="hm-legend-cell hm-cell--af-a hm-cell--not-voted">A</span>
+            <span class="hm-legend-cell hm-cell--af-b hm-cell--not-voted">B</span>
+            <span class="hm-legend-cell hm-cell--af-c hm-cell--not-voted">C</span>
+            <span class="hm-legend-cell hm-cell--af-d hm-cell--not-voted">D</span>
+            <span class="hm-legend-cell hm-cell--af-e hm-cell--not-voted">E</span>
+            <span class="hm-legend-cell hm-cell--not-voted hm-legend-cell--untagged">?</span>
+          </div>
+        </div>
+      </div>
+      <div class="hm-legend-labels">
+        <span><span class="hm-legend-dot" style="background:#1565c0"></span>A — BJP confirmed</span>
+        <span><span class="hm-legend-dot" style="background:#2e7d32"></span>B — NDA supporter</span>
+        <span><span class="hm-legend-dot" style="background:#e65100"></span>C — BJP sympathiser</span>
+        <span><span class="hm-legend-dot" style="background:#6a1b9a"></span>D — Undecided</span>
+        <span><span class="hm-legend-dot" style="background:#c62828"></span>E — Opposition</span>
+        <span><span class="hm-legend-dot" style="background:#aaa"></span>? — Not tagged</span>
+      </div>`;
+    els.hmLegend.style.display = 'block';
+  }
 }
 
 async function onHeatmapCellClick(cell) {
   if (!canEditVotedFlag() || state.hmSaving) return;
+  if (cell.classList.contains('hm-cell--deleted')) return;
   const slNo = Number(cell.dataset.sl);
   const voter = state.hmVoters.find(v => v.slNo === slNo);
-  if (!voter) return;
+  if (!voter || voter.deleted) return;
 
   // Optimistic toggle
   voter.voted = !voter.voted;
@@ -3806,7 +4688,7 @@ async function onHeatmapCellClick(cell) {
   cell.classList.toggle('hm-cell--not-voted', !voter.voted);
 
   // Update stats immediately
-  const votedCount = state.hmVoters.filter(v => v.voted).length;
+  const votedCount = state.hmVoters.filter(v => v.voted && !v.deleted).length;
   const total      = state.hmVoters.length;
   const pct        = total ? Math.round((votedCount / total) * 100) : 0;
   if (els.hmStats) {
@@ -3846,9 +4728,12 @@ async function onHeatmapCellClick(cell) {
     voter.voted = !voter.voted;
     cell.classList.toggle('hm-cell--voted',     voter.voted);
     cell.classList.toggle('hm-cell--not-voted', !voter.voted);
+    const errMsg = 'Save failed: ' + (err.message || err);
+    console.error('[Heatmap]', errMsg);
     if (els.hmSaveStatus) {
-      els.hmSaveStatus.textContent = 'Save failed: ' + (err.message || err);
+      els.hmSaveStatus.textContent = errMsg;
       els.hmSaveStatus.style.color = 'var(--red, #c00)';
+      setTimeout(() => { if (els.hmSaveStatus) { els.hmSaveStatus.textContent = ''; els.hmSaveStatus.style.color = ''; } }, 6000);
     }
   } finally {
     state.hmSaving = false;

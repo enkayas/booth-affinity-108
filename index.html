@@ -31,10 +31,10 @@
 
       <form id="loginForm">
         <label for="phone">Phone Number</label>
-        <input id="phone" type="text" placeholder="Enter 10-digit phone" />
+        <input id="phone" type="tel" placeholder="Enter 10-digit phone" autocomplete="username" />
 
         <label for="password">Password</label>
-        <input id="password" type="password" />
+        <input id="password" type="password" autocomplete="current-password" />
         <p class="auth-pwd-hint">Call the numbers below for password | கடவுச்சொல்லுக்கு கீழே உள்ள எண்களை அழைக்கவும்</p>
 
         <div id="loginError" class="login-error"></div>
@@ -62,7 +62,7 @@
         <button id="dashboardTabBtn" class="app-tab" type="button">Dashboard</button>
         <button id="dataRefreshTabBtn" class="app-tab" type="button">Data Refresh</button>
         <button id="voterListTabBtn" class="app-tab" type="button" style="display:none;">Voter List</button>
-        <button id="heatmapTabBtn" class="app-tab" type="button" style="display:none;">Voted Heatmap</button>
+        <button id="heatmapTabBtn" class="app-tab" type="button" style="display:none;">Voting Day</button>
       </div>
 
       <section id="entrySection">
@@ -192,7 +192,7 @@
 
         <!-- Sub-filters (visible only after booth loaded) -->
         <div class="vl-filters" id="vlSubFilters" style="display:none;">
-          <input id="vlSearch" type="search" placeholder="Search name / EPIC / House No…" class="vl-search" />
+          <input id="vlSearch" type="search" placeholder="Search name / EPIC / House No…" class="vl-search" aria-label="Search voters" />
           <select id="vlGender" class="vl-select">
             <option value="">All Genders</option>
             <option value="Male">Male</option>
@@ -231,36 +231,45 @@
       <!-- ── Voted Heatmap ────────────────────────────────────────────────── -->
       <section id="heatmapSection" class="card heatmap-card" style="display:none;">
 
-        <!-- View toggle -->
-        <div class="hm-view-toggle">
-          <button id="hmViewHeatmap" type="button" class="hm-view-btn active">Heatmap</button>
-          <button id="hmViewProgress" type="button" class="hm-view-btn">Voting Progress</button>
+        <!-- Top control row: heading + view toggles + refresh -->
+        <div class="hm-top-row">
+          <div class="hm-top-title">
+            <span id="hmSectionHeading" class="hm-section-heading">Voted Heatmap — வாக்களித்தவர் வரைபடம்</span>
+            <span id="hmProgLastUpdated" class="hm-prog-last-updated"></span>
+          </div>
+          <div class="hm-top-controls">
+            <button id="hmViewHeatmap" type="button" class="hm-view-btn active">Heatmap</button>
+            <button id="hmViewProgress" type="button" class="hm-view-btn">Voting Progress</button>
+            <button id="hmProgRefreshBtn" type="button" class="hm-prog-refresh-btn" style="display:none;">Refresh</button>
+          </div>
         </div>
 
         <!-- ── Heatmap view ── -->
         <div id="hmHeatmapView">
           <div class="hm-header">
-            <div>
-              <h3>Voted Heatmap — வாக்களித்தவர் வரைபடம்</h3>
-              <p class="muted hm-subtitle">Click a serial number to mark as voted. Green = voted, Red = not yet voted.</p>
-            </div>
             <div id="hmStats" class="hm-stats"></div>
           </div>
+          <div class="hm-voted-filter-row">
+            <label class="hm-voted-filter-label">
+              <input type="checkbox" id="hmVotedFilterChk">
+              Show booths with votes cast
+            </label>
+          </div>
+          <div id="hmVotedReport" style="display:none;"></div>
           <div id="hmMandalBtns" class="hm-mandal-btns"></div>
           <div id="hmBoothBtns" class="hm-booth-btns" style="display:none;"></div>
           <div id="hmSaveStatus" class="hm-save-status muted"></div>
           <div id="hmPrompt" class="hm-prompt">Select a Mandal above to begin.</div>
           <div id="hmLoading" class="hm-loading" style="display:none;">Loading…</div>
           <div id="hmGrid" class="hm-grid" style="display:none;"></div>
+          <div id="hmLegend" class="hm-legend" style="display:none;"></div>
         </div>
 
         <!-- ── Progress view ── -->
         <div id="hmProgressView" style="display:none;">
-          <div class="hm-prog-header">
-            <h3>Voting Progress — வாக்களிப்பு முன்னேற்றம்</h3>
-            <button id="hmProgRefreshBtn" type="button" class="hm-prog-refresh-btn">Refresh</button>
-          </div>
           <div id="hmProgOverall" class="hm-prog-overall"></div>
+          <div id="hmProgAlerts" class="hm-prog-alerts"></div>
+          <div id="hmProgAnalytics" class="hm-prog-analytics"></div>
           <div id="hmProgMandals" class="hm-prog-mandals"></div>
         </div>
 
