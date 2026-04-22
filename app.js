@@ -217,12 +217,8 @@ function formatTimestamp(value = Date.now()) {
 }
 
 async function loadStaticData(options = {}) {
-  const url = options.forceRefresh
-    ? `booth_affinity_static_data.json?ts=${Date.now()}`
-    : 'booth_affinity_static_data.json';
-  const res = await fetch(url, {
-    cache: options.forceRefresh ? 'no-store' : 'default'
-  });
+  const url = `booth_affinity_static_data.json?ts=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Unable to load static data');
   const data = await res.json();
   state.staticData = data;

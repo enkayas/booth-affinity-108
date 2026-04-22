@@ -47,7 +47,16 @@
       "Bash(curl -s -L -v -X POST https://script.google.com/macros/s/AKfycbxPKgX704pUFmDWtVnlJMEraV1dKohtw4zF5Cwj7E-I0ffvP9D0jUwLavtt8HZcEGo01g/exec -H 'Content-Type: text/plain;charset=utf-8' -d '{\"action\":\"saveBoothAffinities\",\"booth\":229,\"voters\":[{\"slNo\":2,\"affinity\":\"B\",\"relocated\":false,\"voted\":true}]}')",
       "Bash(curl -s \"http://localhost:3001/mock-api?action=getSavedAffinity&booth=229\")",
       "Bash(curl -s -X POST http://localhost:3001/mock-api -H 'Content-Type: application/json' -d '{ *)",
-      "Bash(python3 -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2\\)\\)\")",
+      "WebFetch(domain:script.google.com)",
+      "WebFetch(domain:script.googleusercontent.com)",
+      "Bash(python3 enrich_static_data.py)",
+      "Bash(node --input-type=module)",
+      "Bash(python3 -m http.server 8099)",
+      "Bash(echo \"Server PID: $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8099/)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "/Users/nk/Library/CloudStorage/OneDrive-Personal/BJP/02_data_mgmt/2026/Output"
