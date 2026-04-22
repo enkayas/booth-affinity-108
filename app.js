@@ -2250,6 +2250,31 @@ function scheduleRetrySync() {
   }, RETRY_SYNC_DELAY_MS);
 }
 
+// Returns the number of voters that should be in Sheets (those with any data set).
+function countSaveable(voters) {
+  return (voters || []).filter(v => v.affinity || v.relocated || v.voted).length;
+}
+
+// Reads back from Sheets and confirms the saved row count matches what was sent.
+// Returns { ok: true } or { ok: false, sent, received }.
+async function verifySave(boothNo, sentVoters) {
+  const sent = countSaveable(sentVoters);
+  if (sent === 0) return { ok: true, sent: 0, received: 0 };
+  try {
+    const saved = await loadSavedAffinity(boothNo);
+    const received = saved.length;
+    if (received < sent) {
+      console.warn(`Booth ${boothNo} save mismatch: sent ${sent} rows, Sheets has ${received}`);
+      return { ok: false, sent, received };
+    }
+    return { ok: true, sent, received };
+  } catch (err) {
+    // If the readback itself fails treat it as unverified — don't clear the draft.
+    console.warn(`Booth ${boothNo} save verification fetch failed:`, err.message || err);
+    return { ok: false, sent, received: -1 };
+  }
+}
+
 async function saveCurrentBoothSilently(options = {}) {
   const boothNo = Number(options.boothNo || getCurrentBoothNumber());
   if (!boothNo) return true;
@@ -2257,8 +2282,10 @@ async function saveCurrentBoothSilently(options = {}) {
   const boothData = getBoothDataForSave(boothNo, options.boothData || null);
   if (!boothData) return true;
 
+  const isCurrentBooth = boothNo === getCurrentBoothNumber();
+
   try {
-    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+    if (!options.silentStatus && isCurrentBooth) {
       setAffinitySaveStatus('Saving changes...', 'warning');
     }
 
@@ -2268,21 +2295,39 @@ async function saveCurrentBoothSilently(options = {}) {
 
     if (!result.ok) {
       console.error(result.message || 'Background save failed');
-      if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+      if (!options.silentStatus && isCurrentBooth) {
         setAffinitySaveStatus('Save failed. Changes kept on device and will retry.', 'error');
       }
       scheduleRetrySync();
       return false;
     }
 
+    // Verify Sheets actually received all rows before clearing the local draft.
+    if (!options.silentStatus && isCurrentBooth) {
+      setAffinitySaveStatus('Verifying save...', 'warning');
+    }
+    const verification = await verifySave(boothNo, boothData.voters);
+    if (!verification.ok) {
+      const msg = verification.received === -1
+        ? 'Could not verify save. Changes kept on device and will retry.'
+        : `Save incomplete — Sheets has ${verification.received} of ${verification.sent} rows. Will retry.`;
+      console.error(`Booth ${boothNo}: ${msg}`);
+      if (!options.silentStatus && isCurrentBooth) {
+        setAffinitySaveStatus(msg, 'error');
+      }
+      scheduleRetrySync();
+      return false;
+    }
+
     finalizeSaveSuccess(boothNo, boothData, result);
-    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
-      setAffinitySaveStatus('All changes saved.', 'success');
+    if (!options.silentStatus && isCurrentBooth) {
+      const rowLabel = verification.sent > 0 ? ` (${verification.sent} rows verified)` : '';
+      setAffinitySaveStatus(`All changes saved${rowLabel}.`, 'success');
     }
     return true;
   } catch (err) {
     console.error(err.message || 'Background save failed');
-    if (!options.silentStatus && boothNo === getCurrentBoothNumber()) {
+    if (!options.silentStatus && isCurrentBooth) {
       setAffinitySaveStatus('Save failed. Changes kept on device and will retry.', 'error');
     }
     scheduleRetrySync();
