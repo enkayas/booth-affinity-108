@@ -57,7 +57,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8099/)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(python3 update_e_affinity.py)"
     ],
     "additionalDirectories": [
       "/Users/nk/Library/CloudStorage/OneDrive-Personal/BJP/02_data_mgmt/2026/Output"
